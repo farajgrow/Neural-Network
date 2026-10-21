@@ -135,8 +135,17 @@ def stories(
 
 
 @app.get("/api/clusters")
-def clusters() -> dict | None:
-    return load_graphs().get("clusters")
+def clusters(scam_type: str | None = None) -> dict | None:
+    """Cross-type clusters, or one type's variants when `scam_type` is given.
+
+    Falls back to the cross-type view for "all" or a type without its own clustering.
+    """
+    graphs = load_graphs()
+    if scam_type and scam_type != "all":
+        by_type = graphs.get("clusters_by_type") or {}
+        if scam_type in by_type:
+            return by_type[scam_type]
+    return graphs.get("clusters")
 
 
 # ---- Matcher ---------------------------------------------------------------

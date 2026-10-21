@@ -65,6 +65,18 @@ def test_clusters_null(client):
     assert r.json() is None
 
 
+def test_clusters_by_type(client, monkeypatch, tmp_path):
+    src = json.loads(open(os.environ["SCAM_GRAPHS_PATH"]).read())
+    src["clusters"] = {"clusters": [{"id": "c0"}]}
+    src["clusters_by_type"] = {"fake_job": {"clusters": [{"id": "fj0"}]}}
+    path = tmp_path / "graphs.json"
+    path.write_text(json.dumps(src))
+    monkeypatch.setenv("SCAM_GRAPHS_PATH", str(path))
+    assert client.get("/api/clusters?scam_type=fake_job").json()["clusters"][0]["id"] == "fj0"
+    assert client.get("/api/clusters?scam_type=romance").json()["clusters"][0]["id"] == "c0"
+    assert client.get("/api/clusters?scam_type=all").json()["clusters"][0]["id"] == "c0"
+
+
 def test_missing_graphs_503(client, monkeypatch, tmp_path):
     monkeypatch.setenv("SCAM_GRAPHS_PATH", str(tmp_path / "missing.json"))
     r = client.get("/api/scam-types")
