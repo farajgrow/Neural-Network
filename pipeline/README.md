@@ -36,14 +36,26 @@ Tests (no network, no API key):
 
 Requests share a limit of one request per second and retry with backoff (5, 10, 20, 40 s) on HTTP 429, 5xx, network errors and Arctic Shift's 422 "Timeout" overload reply. Posts are deduplicated by id across sources.
 
-All 487 stories in the current `data/stories.json` come from Reddit; CFPB contributed none. TODO: per-source and per-query counts from the scrape summary (`per fetched_via:`).
+All 487 stories in the current `data/stories.json` come from Reddit through Arctic Shift; CFPB contributed none. Per source (the `fetched_via` field):
+
+| Source | Raw posts | Stories |
+|---|---|---|
+| `arctic:new` (newest posts) | 200 | 195 |
+| `arctic:top` (high-score slice) | 135 | 134 |
+| `arctic:task job` | 40 | 39 |
+| `arctic:remote job recruiter` | 40 | 39 |
+| `arctic:IRS` | 40 | 40 |
+| `arctic:zelle` | 40 | 40 |
+| **Total** | **495** | **487** |
+
+The current `data/raw/posts.jsonl` predates the query list above: only four keyword queries appear in it, at 40 posts each rather than 35.
 
 ### Counts
 
 | Stage | Posts | Notes |
 |---|---|---|
 | Scraped (`data/raw/posts.jsonl`) | 495 | |
-| Cleaned (`data/clean/posts.jsonl`) | 493 | 2 dropped by the filters below. TODO: which filters |
+| Cleaned (`data/clean/posts.jsonl`) | 493 | 2 dropped by the filters below: 1 meta post and 1 exact duplicate body |
 | Stories (`data/stories.json`) | 487 | 5 near-duplicates and 1 fictional post removed. TODO: say how they were found and removed (by hand or a script) |
 
 TODO: extraction split: ok / invalid (failed schema validation) / api error / not in cache.
@@ -85,7 +97,16 @@ The current `data/stories.json` was built with `--from-cache-only`. No API key w
 
 `python -m pipeline.spotcheck` shows a seeded sample of 20 stories next to their clean posts and asks, for each one, whether `scam_type`, `events`, `outcome` and `amount_lost_usd` are right. `--report` prints accuracy per field and overall.
 
-TODO: spot-check accuracy (n = 20): scam_type __%, events __%, outcome __%, amount __%, overall __%.
+Spot-check accuracy (n = 20). These checks were made by a model review of each story against its post, not by hand (every row in `data/spotcheck/results.jsonl` is noted "model review"):
+
+| Field | Correct |
+|---|---|
+| `scam_type` | 100% (19/19; one story was not checked on this field) |
+| `events` | 90% (18/20) |
+| `outcome` | 90% (18/20) |
+| `amount_lost_usd` | 100% (20/20) |
+| All four fields right | 85% (17/20) |
+| Overall (field checks) | 94.9% (75/79) |
 
 ### Caveats
 
