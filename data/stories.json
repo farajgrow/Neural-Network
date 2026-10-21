@@ -1,172 +1,3087 @@
 [
   {
-    "id": "mock-001",
+    "id": "reddit-ewghvj",
     "source": "reddit",
-    "scam_type": "pig_butchering",
+    "scam_type": "other",
     "events": [
-      {"step": "initial_contact", "actor": "scammer", "detail": "Wrong-number text asking about a golf booking"},
-      {"step": "trust_building", "actor": "scammer", "detail": "Weeks of friendly daily chat and photos"},
-      {"step": "platform_switch", "actor": "scammer", "detail": "Moved the conversation to WhatsApp"},
-      {"step": "fake_proof_shown", "actor": "scammer", "detail": "Screenshots of big crypto trading profits"},
-      {"step": "small_payment", "actor": "victim", "detail": "Deposited $1,000 on a trading site"},
-      {"step": "large_payment", "actor": "victim", "detail": "Added savings after a small test withdrawal worked"},
-      {"step": "withdrawal_blocked", "actor": "scammer", "detail": "Site demanded a 20% tax before withdrawal"},
-      {"step": "money_lost", "actor": "victim", "detail": "Account frozen and contact went silent"}
-    ],
-    "outcome": "lost_money",
-    "amount_lost_usd": 42000,
-    "snippet": "A wrong-number text turned into a weeks-long friendship and a crypto 'opportunity'. After a small withdrawal worked, the victim deposited their savings and the platform then demanded a tax to release it."
-  },
-  {
-    "id": "mock-002",
-    "source": "reddit",
-    "scam_type": "pig_butchering",
-    "events": [
-      {"step": "initial_contact", "actor": "scammer", "detail": "Match on a dating app"},
-      {"step": "platform_switch", "actor": "scammer", "detail": "Asked to move to Telegram"},
-      {"step": "trust_building", "actor": "scammer", "detail": "Talked about a future together"},
-      {"step": "fake_proof_shown", "actor": "scammer", "detail": "Showed an uncle's insider trading app"},
-      {"step": "small_payment", "actor": "victim", "detail": "Started with $500"},
-      {"step": "large_payment", "actor": "victim", "detail": "Took a loan to invest more"},
-      {"step": "withdrawal_blocked", "actor": "scammer", "detail": "Account 'flagged', needed a security deposit"},
-      {"step": "victim_suspicious", "actor": "victim", "detail": "Reverse image search found the photos elsewhere"},
-      {"step": "money_lost", "actor": "victim", "detail": "Funds never recovered"}
-    ],
-    "outcome": "lost_money",
-    "amount_lost_usd": 18500,
-    "snippet": "A dating match moved the chat to Telegram and introduced a 'family' trading app. The victim borrowed to invest more before withdrawals were blocked."
-  },
-  {
-    "id": "mock-003",
-    "source": "reddit",
-    "scam_type": "pig_butchering",
-    "events": [
-      {"step": "initial_contact", "actor": "scammer", "detail": "Wrong-number text from a 'business owner'"},
-      {"step": "platform_switch", "actor": "scammer", "detail": "Moved to WhatsApp"},
-      {"step": "trust_building", "actor": "scammer", "detail": "Shared lifestyle photos and daily check-ins"},
-      {"step": "fake_proof_shown", "actor": "scammer", "detail": "Sent a link to a crypto platform with fake gains"},
-      {"step": "victim_suspicious", "actor": "victim", "detail": "Noticed the site was registered a month ago"},
-      {"step": "third_party_intervened", "actor": "third_party", "detail": "A friend recognised the pattern"},
-      {"step": "victim_exits", "actor": "victim", "detail": "Blocked the number before depositing"}
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Noticed alerts for large packages never ordered"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Found fraudulent card and address on credit report"
+      },
+      {
+        "step": "third_party_intervened",
+        "actor": "third_party",
+        "detail": "Retailer and bank confirmed fraud and opened investigation"
+      }
     ],
     "outcome": "escaped",
     "amount_lost_usd": null,
-    "snippet": "A friendly wrong-number contact pushed a new crypto platform. A friend recognised the script and the victim blocked them before sending any money."
+    "snippet": "A person received many unordered packages after a fraudster opened a credit card in their name. They reported the fraud to the retailer and bank and froze their credit."
   },
   {
-    "id": "mock-004",
+    "id": "reddit-ewnfjd",
     "source": "reddit",
-    "scam_type": "pig_butchering",
+    "scam_type": "other",
     "events": [
-      {"step": "initial_contact", "actor": "scammer", "detail": "Message on a dating app"},
-      {"step": "trust_building", "actor": "scammer", "detail": "Long conversations about family and careers"},
-      {"step": "platform_switch", "actor": "scammer", "detail": "Moved to WhatsApp"},
-      {"step": "fake_proof_shown", "actor": "scammer", "detail": "Walked the victim through a 'guaranteed' trade"},
-      {"step": "small_payment", "actor": "victim", "detail": "Deposited $500 to try it"},
-      {"step": "withdrawal_blocked", "actor": "scammer", "detail": "Minimum balance required before withdrawing"},
-      {"step": "victim_suspicious", "actor": "victim", "detail": "Searched the platform name and found scam reports"},
-      {"step": "victim_exits", "actor": "victim", "detail": "Stopped replying and reported the site"}
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Driver asked rider to cancel the order so he could collect a fee"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Rider refused to cancel and asked driver to do it"
+      }
     ],
-    "outcome": "lost_money",
-    "amount_lost_usd": 500,
-    "snippet": "After a first small deposit, the victim was told they needed a bigger balance to withdraw. They searched the platform, found scam reports and walked away down $500."
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A ride-hailing driver asked a passenger to cancel an order, which could have triggered a cancellation fee. The passenger refused and the scheme did not work."
   },
   {
-    "id": "mock-005",
+    "id": "reddit-ewtdr0",
     "source": "reddit",
-    "scam_type": "pig_butchering",
+    "scam_type": "other",
     "events": [
-      {"step": "initial_contact", "actor": "scammer", "detail": "Connection request from a 'finance professional'"},
-      {"step": "trust_building", "actor": "scammer", "detail": "Mentorship-style chats about markets"},
-      {"step": "platform_switch", "actor": "scammer", "detail": "Invited to a private Telegram group"},
-      {"step": "fake_proof_shown", "actor": "scammer", "detail": "Group members posting profit screenshots"},
-      {"step": "urgency_pressure", "actor": "scammer", "detail": "Limited window to join a 'signal' trade"}
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Stranger at work exchanged numbers and started a conversation"
+      },
+      {
+        "step": "trust_building",
+        "actor": "scammer",
+        "detail": "Met for coffee and pitched an introduction to a wealthy mentor"
+      },
+      {
+        "step": "trust_building",
+        "actor": "scammer",
+        "detail": "Proposed a multi-week vetting process and a five year investing plan"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Victim unsure whether the pitch was legitimate and asked for advice"
+      }
     ],
     "outcome": "unknown",
     "amount_lost_usd": null,
-    "snippet": "A self-described finance mentor invited the poster into a private trading group full of profit screenshots. The poster asked whether to join the time-limited trade."
+    "snippet": "A person was approached by a stranger who built rapport and then pitched an investing opportunity through a mentor. The target was unsure whether it was a scam and asked for advice."
   },
   {
-    "id": "mock-006",
+    "id": "reddit-fsmdjq",
     "source": "reddit",
-    "scam_type": "fake_job",
+    "scam_type": "marketplace",
     "events": [
-      {"step": "initial_contact", "actor": "scammer", "detail": "Unsolicited text offering remote work"},
-      {"step": "platform_switch", "actor": "scammer", "detail": "Moved to Telegram with a 'trainer'"},
-      {"step": "authority_claim", "actor": "scammer", "detail": "Claimed to represent a known staffing agency"},
-      {"step": "fake_proof_shown", "actor": "scammer", "detail": "Dashboard showing commission from 'tasks'"},
-      {"step": "small_payment", "actor": "victim", "detail": "Topped up $100 to unlock a task set"},
-      {"step": "urgency_pressure", "actor": "scammer", "detail": "Combo task would expire unless funded now"},
-      {"step": "large_payment", "actor": "victim", "detail": "Kept depositing to clear a negative balance"},
-      {"step": "withdrawal_blocked", "actor": "scammer", "detail": "Earnings locked until more tasks were paid"},
-      {"step": "money_lost", "actor": "victim", "detail": "Account closed by the 'company'"}
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Facebook ad advertised very cheap dumbbells from an online retailer"
+      },
+      {
+        "step": "fake_proof_shown",
+        "actor": "scammer",
+        "detail": "Site looked legitimate with many positive comments"
+      },
+      {
+        "step": "small_payment",
+        "actor": "victim",
+        "detail": "Paid 89 dollars by credit card for dumbbells"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Researched afterward and found the site was a known scam"
+      }
     ],
     "outcome": "lost_money",
-    "amount_lost_usd": 3200,
-    "snippet": "A remote 'task' job required topping up the account to unlock work. Each round needed a bigger deposit, and the earnings were never released."
+    "amount_lost_usd": 89,
+    "snippet": "A person bought dumbbells from a fake online retailer advertised on Facebook, paying 89 dollars by credit card. They later confirmed the site was fraudulent and sought a chargeback."
   },
   {
-    "id": "mock-007",
-    "source": "cfpb",
-    "scam_type": "fake_job",
+    "id": "reddit-fsm4r9",
+    "source": "reddit",
+    "scam_type": "impersonation",
     "events": [
-      {"step": "initial_contact", "actor": "scammer", "detail": "Recruiter message on a job board"},
-      {"step": "authority_claim", "actor": "scammer", "detail": "Offer letter on a real company's letterhead"},
-      {"step": "platform_switch", "actor": "scammer", "detail": "Interview held over a chat app"},
-      {"step": "fake_proof_shown", "actor": "scammer", "detail": "Mailed a check to buy home-office equipment"},
-      {"step": "victim_suspicious", "actor": "victim", "detail": "Asked to send leftover funds to a 'vendor'"},
-      {"step": "third_party_intervened", "actor": "third_party", "detail": "Bank teller flagged the check as fraudulent"},
-      {"step": "victim_exits", "actor": "victim", "detail": "Did not send any money"}
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Phone call claimed the victim owed money for an ambulance bill"
+      },
+      {
+        "step": "authority_claim",
+        "actor": "scammer",
+        "detail": "Caller posed as a debt collector and cited accurate personal details"
+      },
+      {
+        "step": "urgency_pressure",
+        "actor": "scammer",
+        "detail": "Pressed for immediate settlement and refused to send written terms"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Checked insurance statement and confirmed nothing was owed"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "Hung up after realising the call was a scam"
+      }
     ],
     "outcome": "escaped",
     "amount_lost_usd": null,
-    "snippet": "A chat-only 'interview' led to a check for home-office equipment and a request to forward the extra to a vendor. A bank teller flagged the check before any money moved."
+    "snippet": "A person received a call from someone posing as a debt collector who knew details of their recent surgery. They checked their insurance statement, confirmed nothing was owed, and hung up."
   },
   {
-    "id": "mock-008",
-    "source": "cfpb",
-    "scam_type": "fake_job",
+    "id": "reddit-fskijw",
+    "source": "reddit",
+    "scam_type": "other",
     "events": [
-      {"step": "initial_contact", "actor": "scammer", "detail": "Email inviting an application for a data entry role"},
-      {"step": "platform_switch", "actor": "scammer", "detail": "Onboarding moved to a messaging app"},
-      {"step": "trust_building", "actor": "scammer", "detail": "Professional-looking onboarding documents"},
-      {"step": "credentials_shared", "actor": "victim", "detail": "Gave SSN and bank login for 'direct deposit'"},
-      {"step": "money_lost", "actor": "victim", "detail": "Bank account drained"}
+      {
+        "step": "small_payment",
+        "actor": "victim",
+        "detail": "Card charged 3 dollars roughly twice a month for months"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Found vague direct marketing charges and a suspicious website"
+      }
     ],
     "outcome": "lost_money",
-    "amount_lost_usd": 1200,
-    "snippet": "A data entry 'onboarding' asked for an SSN and bank login to set up payroll. The account was emptied within days."
+    "amount_lost_usd": null,
+    "snippet": "A person was repeatedly charged small amounts by an unknown direct marketing company for about three months. They spotted the charges on their transaction history and replaced their card."
   },
   {
-    "id": "mock-009",
+    "id": "reddit-i1eh5p",
     "source": "reddit",
-    "scam_type": "fake_job",
+    "scam_type": "romance",
     "events": [
-      {"step": "initial_contact", "actor": "scammer", "detail": "Text claiming the poster's resume was shortlisted"},
-      {"step": "authority_claim", "actor": "scammer", "detail": "Named a large online retailer as the employer"},
-      {"step": "urgency_pressure", "actor": "scammer", "detail": "Must confirm today or lose the spot"},
-      {"step": "victim_suspicious", "actor": "victim", "detail": "Never applied to that company"},
-      {"step": "victim_exits", "actor": "victim", "detail": "Ignored and reported the number"}
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Fake celebrity charity Facebook page drew in an elderly woman"
+      },
+      {
+        "step": "trust_building",
+        "actor": "scammer",
+        "detail": "Chatted for months posing as a celebrity and sent flowers"
+      },
+      {
+        "step": "small_payment",
+        "actor": "victim",
+        "detail": "Repeatedly donated to a fake charity"
+      },
+      {
+        "step": "third_party_intervened",
+        "actor": "third_party",
+        "detail": "Family contacted authorities and tried to get the page removed"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Refused to believe it was a scam despite family evidence"
+      }
+    ],
+    "outcome": "lost_money",
+    "amount_lost_usd": null,
+    "snippet": "An elderly woman was romantically targeted by someone posing as a celebrity through a fake charity page, and she made repeated donations. Her family contacted authorities and tried to take the page down without success."
+  },
+  {
+    "id": "reddit-i1241j",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Stranger on a chat site asked for social media account"
+      },
+      {
+        "step": "platform_switch",
+        "actor": "scammer",
+        "detail": "Asked to move to a video call on another app"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Tested the caller with a hand sign and noticed the video was fake"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "Blocked the stranger on both platforms and deactivated account"
+      }
     ],
     "outcome": "escaped",
     "amount_lost_usd": null,
-    "snippet": "A text claimed the poster was shortlisted at a big retailer and had to confirm the same day. They had never applied, so they reported it."
+    "snippet": "A young man was targeted by a blackmail attempt after a stranger from a chat site asked him to switch to a video call. He tested the caller, noticed the video was fake, and blocked the stranger."
   },
   {
-    "id": "mock-010",
+    "id": "reddit-i1h1ra",
+    "source": "reddit",
+    "scam_type": "impersonation",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Call showed a local police department name on caller ID"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Did not answer unfamiliar number and no voicemail was left"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A person received a call with a disguised caller ID showing a city police department from another state. They did not answer and the caller left no voicemail."
+  },
+  {
+    "id": "reddit-j2iubc",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "third_party_intervened",
+        "actor": "third_party",
+        "detail": "PayPal sided with former employer on two refund disputes"
+      },
+      {
+        "step": "large_payment",
+        "actor": "scammer",
+        "detail": "Former boss issued another refund for May 2020 work"
+      },
+      {
+        "step": "money_lost",
+        "actor": "victim",
+        "detail": "Lost two months of salary to refunds for delivered work"
+      }
+    ],
+    "outcome": "lost_money",
+    "amount_lost_usd": null,
+    "snippet": "A freelance video editor says a former employer used PayPal buyer refunds to take back payment for completed work. The editor says PayPal sided with the employer in two disputes."
+  },
+  {
+    "id": "reddit-j2ep9d",
+    "source": "reddit",
+    "scam_type": "impersonation",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Hacked friend sent link asking to vote for a CS:GO team"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "third_party",
+        "detail": "Poster warned others not to enter login details on the site"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A user warns Steam account holders about a phishing link sent from a hacked friend account. The link asked for login details on a fake login page."
+  },
+  {
+    "id": "reddit-j2mlcc",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Discord message offered random users free bitcoin"
+      },
+      {
+        "step": "fake_proof_shown",
+        "actor": "scammer",
+        "detail": "Site showed a bitcoin balance after redeeming a code"
+      },
+      {
+        "step": "withdrawal_blocked",
+        "actor": "scammer",
+        "detail": "Withdrawal required a 0.03 BTC deposit to stop bots"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "Poster refused the deposit and warned others away"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A user was offered free bitcoin through a Discord message and found the withdrawal required a deposit. They refused to pay and warned others about the site."
+  },
+  {
+    "id": "reddit-k3pzod",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Stranger on an app asked for explicit photos"
+      },
+      {
+        "step": "platform_switch",
+        "actor": "scammer",
+        "detail": "Asked to move to Instagram and then sent threats"
+      },
+      {
+        "step": "urgency_pressure",
+        "actor": "scammer",
+        "detail": "Threatened to send photos to followers unless paid"
+      },
+      {
+        "step": "small_payment",
+        "actor": "victim",
+        "detail": "Agreed to send 250 dollars through a money transfer service"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "Cancelled the transfer and blocked the scammer"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A man sent explicit photos to a stranger who then threatened to share them unless he paid. He cancelled the payment before it was collected and blocked the scammers."
+  },
+  {
+    "id": "reddit-k3sk23",
+    "source": "reddit",
+    "scam_type": "romance",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Matched with a profile on a dating app"
+      },
+      {
+        "step": "trust_building",
+        "actor": "scammer",
+        "detail": "Chatted and later revealed she was a cam performer"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Asked for video chat after she pushed a sketchy website"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "Ghosted the match after she became defensive"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A man matched with a profile on a dating app and was pushed to sign up for a sketchy website. He asked for a video chat instead, then stopped responding."
+  },
+  {
+    "id": "reddit-k43dg3",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Girl messaged and obtained explicit photos from a minor"
+      },
+      {
+        "step": "urgency_pressure",
+        "actor": "scammer",
+        "detail": "Threatened to send photos to parents and friends on Instagram"
+      },
+      {
+        "step": "third_party_intervened",
+        "actor": "third_party",
+        "detail": "Parents, a lawyer and police became involved"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "Deleted social media and blocked the scammer on all platforms"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A teenager was sextorted after sending photos to someone online who threatened to share them. Family, a lawyer and police became involved, and the photos were reportedly not shared."
+  },
+  {
+    "id": "reddit-mhap0a",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Throwaway account messaged offering a brand ambassador role"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Recognised the pattern as a known brand ambassador scam"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A person received a brand ambassador offer from a spam account and recognised it as a scam. They played along to test it and paid nothing."
+  },
+  {
+    "id": "reddit-mhil2a",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Man met online claimed to teach access to hidden trust funds"
+      },
+      {
+        "step": "trust_building",
+        "actor": "scammer",
+        "detail": "Visited the family home and talked with parents for hours"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "third_party",
+        "detail": "Poster doubts the trust fund claim but mother believes it"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A person's mother became convinced that an online contact could unlock a secret trust fund tied to a social security number. The poster doubts the claim and asks for information."
+  },
+  {
+    "id": "reddit-mhgkfy",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Gmail flooded with hundreds of subscription confirmation emails"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Suspects compromised account and temporarily blocked bank cards"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A person's email account was flooded with subscription confirmations, which they suspect is meant to hide a warning or purchase email from an attacker. They temporarily blocked their bank cards."
+  },
+  {
+    "id": "reddit-np86xq",
+    "source": "reddit",
+    "scam_type": "impersonation",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Fake Messenger account impersonated a relative and texted the victim"
+      },
+      {
+        "step": "authority_claim",
+        "actor": "scammer",
+        "detail": "Directed victim to an attorney to apply for a government grant"
+      },
+      {
+        "step": "urgency_pressure",
+        "actor": "scammer",
+        "detail": "Texts grew more aggressive when victim delayed"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Refused the grant process and considered contacting law enforcement"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "Someone impersonated a relative on social media and contacted family members, pushing a fake government grant through an attorney. The target refused and considered contacting law enforcement."
+  },
+  {
+    "id": "reddit-np6g6d",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Dating app match moved the conversation to Instagram"
+      },
+      {
+        "step": "platform_switch",
+        "actor": "scammer",
+        "detail": "Moved to a video call and recorded the victim"
+      },
+      {
+        "step": "urgency_pressure",
+        "actor": "scammer",
+        "detail": "Threatened to share video and messaged the victim's sister"
+      },
+      {
+        "step": "small_payment",
+        "actor": "victim",
+        "detail": "Paid 280 euros by PayPal under pressure"
+      },
+      {
+        "step": "urgency_pressure",
+        "actor": "scammer",
+        "detail": "Demanded a further 200 euros later"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Realised ignoring the demands would have been the better choice"
+      }
+    ],
+    "outcome": "lost_money",
+    "amount_lost_usd": 300,
+    "snippet": "A man was lured from a dating app to a video call that was recorded and used to threaten him. He paid 280 euros by PayPal and was told to pay more."
+  },
+  {
+    "id": "reddit-nom006",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Stranger messaged offering money after a donation post"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Asked for a phone account login to receive money"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "Refused to share the login and the stranger vanished"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A person who was struggling financially was contacted by a stranger offering money after a donation post. When they refused to share a phone account login, the stranger disappeared."
+  },
+  {
+    "id": "reddit-ouw4ta",
+    "source": "reddit",
+    "scam_type": "marketplace",
+    "events": [
+      {
+        "step": "fake_proof_shown",
+        "actor": "scammer",
+        "detail": "Poster set up a fake audiobook listing with imported book data"
+      },
+      {
+        "step": "third_party_intervened",
+        "actor": "third_party",
+        "detail": "Marketplace removed the listing for copyright infringement"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A researcher posted a fake audiobook listing on a creator marketplace to test whether it screens rights holders. Two auditions were submitted before the platform took the listing down, and no money changed hands."
+  },
+  {
+    "id": "reddit-ov33az",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "third_party_intervened",
+        "actor": "third_party",
+        "detail": "Domain registrars and hosts can take down scam sites"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A user shares a guide for reporting scam websites to their domain registrar and hosting provider. No victim loss is described."
+  },
+  {
+    "id": "reddit-ovaojj",
+    "source": "reddit",
+    "scam_type": "pig_butchering",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Met a man on a dating app who pursued her quickly"
+      },
+      {
+        "step": "platform_switch",
+        "actor": "scammer",
+        "detail": "Moved conversation to WhatsApp and daily phone calls"
+      },
+      {
+        "step": "trust_building",
+        "actor": "scammer",
+        "detail": "Built a romantic relationship with daily messages and sweet talk"
+      },
+      {
+        "step": "small_payment",
+        "actor": "victim",
+        "detail": "Moved 600 dollars into crypto and onto a trading app"
+      },
+      {
+        "step": "fake_proof_shown",
+        "actor": "scammer",
+        "detail": "Trading app showed balances growing to millions"
+      },
+      {
+        "step": "large_payment",
+        "actor": "victim",
+        "detail": "Added larger sums under pressure to fund trading plans"
+      },
+      {
+        "step": "withdrawal_blocked",
+        "actor": "scammer",
+        "detail": "Account frozen and a penalty demanded before withdrawal"
+      },
+      {
+        "step": "money_lost",
+        "actor": "victim",
+        "detail": "Realised the money sent could not be recovered"
+      }
+    ],
+    "outcome": "lost_money",
+    "amount_lost_usd": null,
+    "snippet": "A woman was drawn into a romantic crypto trading scam through a dating app and lost the money she sent. The fake trading app then froze her account and demanded a penalty."
+  },
+  {
+    "id": "reddit-pyptg5",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Chatted with a profile on a dating app after sharing photos"
+      },
+      {
+        "step": "platform_switch",
+        "actor": "scammer",
+        "detail": "Asked for phone number and sent a blackmail text"
+      },
+      {
+        "step": "urgency_pressure",
+        "actor": "scammer",
+        "detail": "Demanded a 500 dollar gift card within 25 minutes"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "Repeated the message back and friends called the blocked number"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A man was blackmailed after a dating app chat, with a demand for a gift card within minutes. He refused to pay and his friends called the scammer back."
+  },
+  {
+    "id": "reddit-pyrr8y",
+    "source": "reddit",
+    "scam_type": "impersonation",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Fake CEO email asked an employee for his phone number"
+      },
+      {
+        "step": "platform_switch",
+        "actor": "scammer",
+        "detail": "Contacted the employee on WhatsApp and asked for gift cards"
+      },
+      {
+        "step": "large_payment",
+        "actor": "victim",
+        "detail": "Employee bought large amount of gift cards for scammer"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Employee realised it was a scam after repeated demands"
+      },
+      {
+        "step": "third_party_intervened",
+        "actor": "third_party",
+        "detail": "IT worker called other staff and stopped another purchase"
+      }
+    ],
+    "outcome": "lost_money",
+    "amount_lost_usd": null,
+    "snippet": "A new employee was tricked by a fake CEO email into buying gift cards for a large amount. An IT worker found other targets and stopped a second employee from buying cards."
+  },
+  {
+    "id": "reddit-pyms37",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Noticed flood of newsletter signup emails and suspected fraud"
+      },
+      {
+        "step": "third_party_intervened",
+        "actor": "third_party",
+        "detail": "Bank found deposits and closed the compromised account"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A person's sibling was hit with a flood of subscription emails used to hide a fraudulent transfer from her savings account. The bank closed the account and opened a new one."
+  },
+  {
+    "id": "reddit-r5rxya",
+    "source": "reddit",
+    "scam_type": "pig_butchering",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Met a man through a food-related Instagram account"
+      },
+      {
+        "step": "platform_switch",
+        "actor": "scammer",
+        "detail": "Moved conversation to WhatsApp and a trading app"
+      },
+      {
+        "step": "trust_building",
+        "actor": "scammer",
+        "detail": "Built a romantic relationship and a wealthy backstory"
+      },
+      {
+        "step": "fake_proof_shown",
+        "actor": "scammer",
+        "detail": "Trading app shown to encourage investment"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Researched the scam and recognised the pattern"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "Ended the relationship and did not send further money"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A person was targeted in a romance-based crypto investment scam through social media and messaging apps. They ended the relationship and did not lose money."
+  },
+  {
+    "id": "reddit-r5fdlf",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Message from a coworker's hacked account asked for a code"
+      },
+      {
+        "step": "credentials_shared",
+        "actor": "victim",
+        "detail": "Shared a two-factor verification code with the scammer"
+      },
+      {
+        "step": "money_lost",
+        "actor": "victim",
+        "detail": "Over 1000 dollars sent out via payment app to friends"
+      },
+      {
+        "step": "third_party_intervened",
+        "actor": "third_party",
+        "detail": "Bank and card issuer cancelled the card and secured the account"
+      }
+    ],
+    "outcome": "lost_money",
+    "amount_lost_usd": 1000,
+    "snippet": "A person shared a two-factor code after a message from a friend's hacked account. The scammer took over the account and drained over 1000 dollars through the payment app before the card was cancelled."
+  },
+  {
+    "id": "reddit-r5usfl",
+    "source": "reddit",
+    "scam_type": "impersonation",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Text asked the victim to call about a drug test result"
+      },
+      {
+        "step": "authority_claim",
+        "actor": "scammer",
+        "detail": "Caller claimed to be a medical review officer"
+      },
+      {
+        "step": "urgency_pressure",
+        "actor": "scammer",
+        "detail": "Claimed a positive drug test and threatened the new job"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "third_party",
+        "detail": "Partner checked the number and found reports of similar scams"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A man was called about a failed pre-employment drug test and asked to verify his identity details. His partner found reports of the same number targeting others, and he froze his credit."
+  },
+  {
+    "id": "reddit-sgqlds",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "fake_proof_shown",
+        "actor": "scammer",
+        "detail": "Friend of a relative was given a 27k check to deposit"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "third_party",
+        "detail": "Poster declined to deposit the check and suspected a scam"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A relative was asked to deposit a large out-of-state check and pass cash back to a friend. The poster declined, correctly suspecting the arrangement was a scam."
+  },
+  {
+    "id": "reddit-shd0w2",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "urgency_pressure",
+        "actor": "scammer",
+        "detail": "Email threatened to use photos against the recipient"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Did not enter login details on the suspicious share link"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A person received an anonymous email threatening to use photos against them, with a link that asked for login details. They did not enter their information."
+  },
+  {
+    "id": "reddit-shblf6",
+    "source": "reddit",
+    "scam_type": "impersonation",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Messenger notified of a 700 dollar PayPal payment from a friend"
+      },
+      {
+        "step": "fake_proof_shown",
+        "actor": "scammer",
+        "detail": "Pending payment request with a pay button shown"
+      },
+      {
+        "step": "urgency_pressure",
+        "actor": "scammer",
+        "detail": "Messages and calls demanded the money be returned"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Called mutual friend who confirmed the account had been hacked"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A person received a fake PayPal payment notice from a friend's hacked Messenger account and was pressured to return money. They confirmed with a mutual friend that the account was compromised and did not pay."
+  },
+  {
+    "id": "reddit-ttc3sd",
+    "source": "reddit",
+    "scam_type": "marketplace",
+    "events": [
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Checked the gift card and found a zero balance"
+      },
+      {
+        "step": "money_lost",
+        "actor": "victim",
+        "detail": "Found two 100 dollar cards bought online elsewhere"
+      },
+      {
+        "step": "third_party_intervened",
+        "actor": "third_party",
+        "detail": "Police said nothing could be done to recover the money"
+      }
+    ],
+    "outcome": "lost_money",
+    "amount_lost_usd": 200,
+    "snippet": "A person was paid 200 dollars for an Xbox in a prepaid gift card that was later drained. Two gift cards were bought online and shipped to another city, and police did not pursue it."
+  },
+  {
+    "id": "reddit-ttapsv",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Text claimed the victim faced charges over a website contact"
+      },
+      {
+        "step": "authority_claim",
+        "actor": "scammer",
+        "detail": "Caller posed as parent and then as an investigator"
+      },
+      {
+        "step": "urgency_pressure",
+        "actor": "scammer",
+        "detail": "Demanded payments to avoid charges and rehab costs"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Second caller prompted questions about whether to block number"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A former soldier was extorted with threats of criminal charges after a website contact, first by someone claiming to be a parent and then by a caller posing as an investigator. He questioned whether to pay or block the number."
+  },
+  {
+    "id": "reddit-tt1eu4",
     "source": "reddit",
     "scam_type": "fake_job",
     "events": [
-      {"step": "initial_contact", "actor": "scammer", "detail": "WhatsApp message offering paid product reviews"},
-      {"step": "platform_switch", "actor": "scammer", "detail": "Added to a Telegram 'team' channel"},
-      {"step": "fake_proof_shown", "actor": "scammer", "detail": "Paid out $20 for the first few reviews"},
-      {"step": "small_payment", "actor": "victim", "detail": "Prepaid $150 for a 'merchant task'"},
-      {"step": "urgency_pressure", "actor": "scammer", "detail": "Team bonus lost if the task wasn't finished"},
-      {"step": "large_payment", "actor": "victim", "detail": "Sent several larger deposits in crypto"},
-      {"step": "money_lost", "actor": "victim", "detail": "Channel deleted"}
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Text offered a job interview conducted over a messaging app"
+      },
+      {
+        "step": "authority_claim",
+        "actor": "scammer",
+        "detail": "Company claimed to hire for software roles and mail equipment"
+      },
+      {
+        "step": "urgency_pressure",
+        "actor": "scammer",
+        "detail": "Requested a 250 dollar payment for equipment before offer"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Called the company and found mismatched details"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "Deleted messages and blocked the recruiter"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A job applicant was pushed to pay 250 dollars for equipment before receiving an offer. The applicant refused, found the company details did not match, and blocked the recruiter."
+  },
+  {
+    "id": "reddit-v1uohy",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "small_payment",
+        "actor": "victim",
+        "detail": "Paid for a dating subscription and cancelled within the hour"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Company refused cancellation and demanded a driver's license"
+      },
+      {
+        "step": "third_party_intervened",
+        "actor": "third_party",
+        "detail": "Card issuer finalised chargeback in the victim's favour"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A person signed up for a dating subscription and cancelled within an hour, but the company refused to refund. The card issuer reversed the charge after the person provided evidence."
+  },
+  {
+    "id": "reddit-v23j16",
+    "source": "reddit",
+    "scam_type": "impersonation",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Caller posed as a police officer about an underage girl"
+      },
+      {
+        "step": "authority_claim",
+        "actor": "scammer",
+        "detail": "Same caller later posed as the girl's father on a call"
+      },
+      {
+        "step": "urgency_pressure",
+        "actor": "scammer",
+        "detail": "Demanded 1500 dollars for damages to avoid charges"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Family realised the calls were fake and reported the payment app"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A family was extorted by a caller who posed as a police officer and then as an angry father, demanding payment for damages. The family did not pay and reported the payment app account."
+  },
+  {
+    "id": "reddit-v1yq9d",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "trust_building",
+        "actor": "scammer",
+        "detail": "Texted for weeks before asking to use the victim's number"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Asked whether the verification code request was a scam"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A person was texted by a contact who asked to use their phone number to receive a payment app verification code. The person was unsure whether it was a scam."
+  },
+  {
+    "id": "reddit-wcxy12",
+    "source": "reddit",
+    "scam_type": "romance",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Dating app match asked to meet at a hotel"
+      },
+      {
+        "step": "urgency_pressure",
+        "actor": "scammer",
+        "detail": "Asked for a passport photo before the meeting"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Offered a background check instead and sensed a bad feeling"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "Ended interest in the match"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A man was asked to send a passport photo by a dating app match who wanted to meet at a hotel. He offered a background check instead, and then ended contact."
+  },
+  {
+    "id": "reddit-wcp2ux",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Spam number called and texted insults and a false health claim"
+      },
+      {
+        "step": "trust_building",
+        "actor": "scammer",
+        "detail": "Texted a date falsely claiming an STD and insulting her"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Wondered whether his phone had been accessed by hackers"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A man received harassing calls and texts from an unknown number, which also contacted his date with false claims. He was worried the harasser had access to his phone."
+  },
+  {
+    "id": "reddit-wd0e8g",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Instagram account messaged claiming evidence of a fake ID purchase"
+      },
+      {
+        "step": "urgency_pressure",
+        "actor": "scammer",
+        "detail": "Posted an alleged date of birth and sent personal details"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Changed logins and logged out all devices after the messages"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A woman was blackmailed through Instagram by an account claiming to have evidence of a fake ID purchase. The couple changed passwords and logged out devices after personal details were shared."
+  },
+  {
+    "id": "reddit-xs845f",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Stranger asked the poster to hold a few hundred dollars cash"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Declined the request, suspecting a scam"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A stranger asked a person to hold a few hundred dollars in cash while he went elsewhere. The person declined, suspecting a scam."
+  },
+  {
+    "id": "reddit-xs4ens",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Noticed a 30 dollar gas station charge on a card still in hand"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "Closed the card after the unexplained charge"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A friend's card number was used for a small gas station purchase days after they swiped it at a store. The friend closed the card and the cause is unclear."
+  },
+  {
+    "id": "reddit-xsf8qg",
+    "source": "reddit",
+    "scam_type": "fake_job",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Film project on Instagram and IMDb offered huge salaries"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "third_party",
+        "detail": "Poster found inconsistent backgrounds and no real online presence"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A film project advertised large salaries to actors and crew for work abroad. A researcher found inconsistent backstories and little real online presence, and is investigating further."
+  },
+  {
+    "id": "reddit-z92t68",
+    "source": "reddit",
+    "scam_type": "marketplace",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Marketplace buyer insisted on paying by Zelle for a couch"
+      },
+      {
+        "step": "fake_proof_shown",
+        "actor": "scammer",
+        "detail": "Buyer sent payment screenshot and a fake Zelle limited notice"
+      },
+      {
+        "step": "urgency_pressure",
+        "actor": "scammer",
+        "detail": "Buyer demanded a 300 dollar payment to release funds"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Seller found the notice suspicious and did not send refund"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A seller was targeted by a buyer who sent a fake payment screenshot and a notice saying the account was limited. The seller did not pay the requested fee and the buyer demanded a refund."
+  },
+  {
+    "id": "reddit-z8xau9",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Found device in a box with a phone number on it"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "Hung up after the caller pitched a heart monitoring sign-up"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A person found an unlabelled device box with a phone number and called it to return the device. The caller pitched a heart monitor sign-up and collected details, and the person hung up."
+  },
+  {
+    "id": "reddit-z96ott",
+    "source": "reddit",
+    "scam_type": "impersonation",
+    "events": [
+      {
+        "step": "authority_claim",
+        "actor": "scammer",
+        "detail": "Caller posed as Amazon security and showed an account access photo"
+      },
+      {
+        "step": "remote_access_granted",
+        "actor": "victim",
+        "detail": "Mother installed remote viewing software on desktop and phone"
+      },
+      {
+        "step": "third_party_intervened",
+        "actor": "third_party",
+        "detail": "Relative told parents to power off devices and change passwords"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "An elderly couple was contacted by someone posing as Amazon security after a technician visit, and granted remote access to their devices. A relative advised them to power off devices and change their banking passwords."
+  },
+  {
+    "id": "reddit-10q584d",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "large_payment",
+        "actor": "victim",
+        "detail": "Paid 1200 dollars in full before the wedding"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Photographer double-booked, delayed photos and stopped replying"
+      },
+      {
+        "step": "money_lost",
+        "actor": "victim",
+        "detail": "Found photographer had moved, changed name and left business"
+      }
     ],
     "outcome": "lost_money",
-    "amount_lost_usd": 8000,
-    "snippet": "A product review side job paid out small amounts at first, then needed prepaid 'merchant tasks'. Pressure from the 'team' pushed the victim into much larger crypto deposits."
+    "amount_lost_usd": 880,
+    "snippet": "A couple paid their wedding photographer in full, but she double-booked the day, then went silent and never delivered the photos. They discovered she had moved away and changed her name."
+  },
+  {
+    "id": "reddit-10q5jr7",
+    "source": "reddit",
+    "scam_type": "impersonation",
+    "events": [
+      {
+        "step": "trust_building",
+        "actor": "scammer",
+        "detail": "Fake account copied grandmother's photos and followed her friends"
+      },
+      {
+        "step": "third_party_intervened",
+        "actor": "third_party",
+        "detail": "Family reported the account and warned grandmother's friends"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "Someone created a fake Instagram account impersonating an elderly woman and followed her friends. Her family reported the account and warned her contacts."
+  },
+  {
+    "id": "reddit-10qdfxv",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "victim_suspicious",
+        "actor": "third_party",
+        "detail": "Poster flagged dubious accreditation and marketing-focused coaching academy"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A person is considering paying 5000 dollars for a life coaching course. A third party noticed dubious accreditation claims and a sales-heavy focus on recruiting coaches."
+  },
+  {
+    "id": "reddit-127neox",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Caller ordered a pizza to an elderly man's house without payment"
+      },
+      {
+        "step": "urgency_pressure",
+        "actor": "scammer",
+        "detail": "Pushed for the driver to hand over the pizza and take payment later"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "third_party",
+        "detail": "Driver refused the handover and warned the homeowner"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A delivery driver was asked to hand a pizza to an elderly man whose order was placed by a caller who would not pay. The driver refused and warned the homeowner."
+  },
+  {
+    "id": "reddit-127pymc",
+    "source": "reddit",
+    "scam_type": "impersonation",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Family received a call about a subpoena and a lawsuit"
+      },
+      {
+        "step": "authority_claim",
+        "actor": "scammer",
+        "detail": "Paralegal claimed a lawsuit and threatened arrest if served"
+      },
+      {
+        "step": "credentials_shared",
+        "actor": "victim",
+        "detail": "Victim confirmed their social security number on the call"
+      },
+      {
+        "step": "third_party_intervened",
+        "actor": "third_party",
+        "detail": "Police said the call sounded like an elaborate scam"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Froze credit and alerted bank after realising it was a scam"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A person was contacted by a fake law firm claiming they faced a lawsuit and arrest. They confirmed their social security number before police and the person froze their credit."
+  },
+  {
+    "id": "reddit-127yub5",
+    "source": "reddit",
+    "scam_type": "marketplace",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Seller replied to listing claiming the car was in Denmark"
+      },
+      {
+        "step": "trust_building",
+        "actor": "scammer",
+        "detail": "Shared a personal story and a plausible regulation change"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Asked for a video call and title photo to verify the car"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "Seller went silent after the buyer proposed escrow terms"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A buyer was offered a discounted classic car from abroad and pushed toward shipping payments through a third party. The buyer proposed escrow and video verification, and the seller stopped replying."
+  },
+  {
+    "id": "reddit-15ep912",
+    "source": "reddit",
+    "scam_type": "romance",
+    "events": [
+      {
+        "step": "trust_building",
+        "actor": "scammer",
+        "detail": "Built a romance over phone and text with a guy abroad"
+      },
+      {
+        "step": "large_payment",
+        "actor": "victim",
+        "detail": "Forwarded a wired transfer to a recipient as instructed"
+      },
+      {
+        "step": "third_party_intervened",
+        "actor": "third_party",
+        "detail": "Bank froze accounts and contacted its fraud department"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Caught lies and refused to convert money to bitcoin"
+      },
+      {
+        "step": "money_lost",
+        "actor": "victim",
+        "detail": "Recipient took the remaining funds after accounts were frozen"
+      }
+    ],
+    "outcome": "lost_money",
+    "amount_lost_usd": null,
+    "snippet": "A person was romantically targeted and sent on wired funds that turned out to be part of a scheme. The bank froze the accounts and the remaining funds were taken by the recipient."
+  },
+  {
+    "id": "reddit-15euogi",
+    "source": "reddit",
+    "scam_type": "pig_butchering",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Woman sent unsolicited message on WhatsApp to a man"
+      },
+      {
+        "step": "trust_building",
+        "actor": "scammer",
+        "detail": "Fostered a romantic relationship over about five months"
+      },
+      {
+        "step": "platform_switch",
+        "actor": "scammer",
+        "detail": "Directed him to move money from an exchange to a fake crypto site"
+      },
+      {
+        "step": "fake_proof_shown",
+        "actor": "scammer",
+        "detail": "Fake crypto site showed a growing balance"
+      },
+      {
+        "step": "large_payment",
+        "actor": "victim",
+        "detail": "Moved about 250000 dollars to the scammer over months"
+      },
+      {
+        "step": "urgency_pressure",
+        "actor": "scammer",
+        "detail": "Claimed a hospitalisation and demanded 400000 dollars"
+      },
+      {
+        "step": "third_party_intervened",
+        "actor": "third_party",
+        "detail": "Bank flagged and blocked a large wire attempt"
+      }
+    ],
+    "outcome": "lost_money",
+    "amount_lost_usd": 250000,
+    "snippet": "A man was romantically groomed over several months and moved about 250000 dollars through a fake crypto site. His family discovered the scam after his death, and a further 400000 dollar demand was blocked by his bank."
+  },
+  {
+    "id": "reddit-15em1pq",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "large_payment",
+        "actor": "victim",
+        "detail": "Older customer repeatedly buys maximum amount of Steam cards"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "third_party",
+        "detail": "Shop staff suspect scam but can only refuse service"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A video game store employee noticed older customers repeatedly buying the maximum number of Steam gift cards, with one spending over 10000 AUD. Staff suspect a scam but can only refuse service."
+  },
+  {
+    "id": "reddit-187rpnj",
+    "source": "reddit",
+    "scam_type": "marketplace",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Buyer replied almost immediately to a marketplace listing"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Received a verification code that warned not to share it"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A seller on a marketplace app was contacted by a buyer who asked for their phone number and then triggered a verification code. The seller did not lose money."
+  },
+  {
+    "id": "reddit-187wn2r",
+    "source": "reddit",
+    "scam_type": "pig_butchering",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Matched on a dating app with a woman claiming to be a CFO"
+      },
+      {
+        "step": "platform_switch",
+        "actor": "scammer",
+        "detail": "Switched to WhatsApp and then phone calls"
+      },
+      {
+        "step": "trust_building",
+        "actor": "scammer",
+        "detail": "Pushed for closeness quickly and revealed very little about herself"
+      },
+      {
+        "step": "urgency_pressure",
+        "actor": "scammer",
+        "detail": "Pressed for 100000 dollars to be invested in Ethereum"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Researched the app and found similar frauds, then refused"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "Stopped engaging before sending the bulk of the funds"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A man was targeted by a dating-app woman who moved him to crypto investing with a fake DeFi app. He researched the scheme, refused to invest the large sum, and stopped contact."
+  },
+  {
+    "id": "reddit-187wlno",
+    "source": "reddit",
+    "scam_type": "fake_job",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Fake applicants with fabricated resumes applied to tech roles"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "third_party",
+        "detail": "Recruiter noticed many fake resumes and LinkedIn profiles"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A talent acquisition specialist noticed a surge of fake applicants with fabricated resumes and LinkedIn profiles. They are compiling red flags to avoid hiring a scammer."
+  },
+  {
+    "id": "reddit-1afo7ld",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "fake_proof_shown",
+        "actor": "scammer",
+        "detail": "Forged driver's licenses used to list vacant land for sale"
+      },
+      {
+        "step": "large_payment",
+        "actor": "victim",
+        "detail": "Buyer wired cash for a lot the seller did not own"
+      },
+      {
+        "step": "third_party_intervened",
+        "actor": "third_party",
+        "detail": "County deed alert revealed the land had been sold fraudulently"
+      },
+      {
+        "step": "money_lost",
+        "actor": "victim",
+        "detail": "Parents spent almost 40000 dollars on legal fees to recover land"
+      }
+    ],
+    "outcome": "lost_money",
+    "amount_lost_usd": 40000,
+    "snippet": "A property fraudster used forged licences to sell vacant land that did not belong to them. The true owners discovered the sale through a county alert and spent almost 40000 dollars recovering it."
+  },
+  {
+    "id": "reddit-1afqm6q",
+    "source": "reddit",
+    "scam_type": "fake_job",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Recruiter emailed after an online job application"
+      },
+      {
+        "step": "platform_switch",
+        "actor": "scammer",
+        "detail": "Moved interview to an encrypted text messaging app"
+      },
+      {
+        "step": "trust_building",
+        "actor": "scammer",
+        "detail": "Declared applicant a great fit after brief texted questions"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "Asked for a call and found employer details did not match"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A job seeker was interviewed by text and asked to provide bank and social security details for direct deposit. They called the company, found none of the details matched, and did not lose money."
+  },
+  {
+    "id": "reddit-1x7w859",
+    "source": "reddit",
+    "scam_type": "romance",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "online contact posing as a new partner for a widowed parent"
+      },
+      {
+        "step": "trust_building",
+        "actor": "scammer",
+        "detail": "fake profile with AI photos builds a relationship"
+      },
+      {
+        "step": "small_payment",
+        "actor": "victim",
+        "detail": "pays app fees to keep talking to the online partner"
+      },
+      {
+        "step": "third_party_intervened",
+        "actor": "third_party",
+        "detail": "adult children warn the parent, who still believes her"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A recently widowed parent is paying to talk with an online partner whom family members believe is a scammer. The parent still believes she is real, and the total spent is unknown."
+  },
+  {
+    "id": "reddit-1x7vz8m",
+    "source": "reddit",
+    "scam_type": "pig_butchering",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "hacked Discord account shared a link to a fake crypto site"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "friend registered, then stopped interacting with the site"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A person's friend registered on a fake crypto site after a hacked account shared the link. The friend did not interact further, and the poster is worried about device safety."
+  },
+  {
+    "id": "reddit-1x7v56p",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "unordered hat and flyer arrived by mail with QR codes"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "checked the websites and scam checkers gave conflicting results"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A person received an unordered mailed hat and flyer promoting a voting-themed website. They are unsure whether the website and merchandise are a scam."
+  },
+  {
+    "id": "reddit-1x7uwh9",
+    "source": "reddit",
+    "scam_type": "marketplace",
+    "events": [
+      {
+        "step": "small_payment",
+        "actor": "victim",
+        "detail": "placed an online merchandise order that never arrived"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "requested updates repeatedly and received no satisfactory answers"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A customer ordered merchandise that was reportedly shipped over 46 days ago but has not arrived. Repeated requests for updates have gone unanswered."
+  },
+  {
+    "id": "reddit-1x7txpt",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "about fifteen spam calls a day from changing numbers"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A person receives many spam calls daily from changing numbers, despite blocking them and using carrier protection. They want a way to stop the calls without silencing unknown callers."
+  },
+  {
+    "id": "reddit-1x7tssr",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "fraudulent ticket purchase made on account with another card"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "noticed the purchase, changed passwords and reported it"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A person's ticketing account was used for a fraudulent purchase made with someone else's card. The person changed passwords before the tickets transferred and reported the activity."
+  },
+  {
+    "id": "reddit-1x7sz6h",
+    "source": "reddit",
+    "scam_type": "fake_job",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "job offer sent through a translator profile on a professional site"
+      },
+      {
+        "step": "platform_switch",
+        "actor": "scammer",
+        "detail": "communication moved to a chat app only"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "found the offer suspicious but continued until the payment stage"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "stopped playing along before any money was taken"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A translator was approached with a suspicious job offer and continued until payment was due. They stopped before sending anything and are posting a warning."
+  },
+  {
+    "id": "reddit-1x7r9u5",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "third_party",
+        "detail": "elderly callers ask about a $300 deposit into their account"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "suspects the unknown deposit may come from a scammer"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A bookkeeper received calls from elderly people about an unknown $300 deposit that matches their business name. The bookkeeper suspects a scam and is asking why the calls are happening."
+  },
+  {
+    "id": "reddit-1x7r4ia",
+    "source": "reddit",
+    "scam_type": "marketplace",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "seller asks buyer to refuse a delivered package for a refund"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "asks whether the refusal request is a known scam"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A marketplace seller asked a buyer to refuse a package in exchange for a refund. The buyer is asking whether this is a known scam and how to handle the package safely."
+  },
+  {
+    "id": "reddit-1x7qwf9",
+    "source": "reddit",
+    "scam_type": "fake_job",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "online task offers ten cents to post invented personal experiences"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "uncomfortable posting experiences that never happened"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A person was offered small pay for a task requiring them to post invented personal experiences on a forum. They feel uneasy about the task and are asking for advice."
+  },
+  {
+    "id": "reddit-1x7q07i",
+    "source": "reddit",
+    "scam_type": "impersonation",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "email claims an unfinished loan application and asks for a call"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "unsure whether it is phishing, with credit already frozen"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A person received an email from a lender saying they had applied for a payday loan, which they did not do. They are unsure whether it is phishing and whether to call."
+  },
+  {
+    "id": "reddit-1x7pte3",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "creator's welcome message promised lifetime unlimited access"
+      },
+      {
+        "step": "small_payment",
+        "actor": "victim",
+        "detail": "paid about 8,000 rupees for a digital masterclass"
+      },
+      {
+        "step": "withdrawal_blocked",
+        "actor": "scammer",
+        "detail": "creator refused refund and added non-refundable clause later"
+      },
+      {
+        "step": "money_lost",
+        "actor": "victim",
+        "detail": "realises the promised access and refund are gone"
+      }
+    ],
+    "outcome": "lost_money",
+    "amount_lost_usd": 96,
+    "snippet": "A student paid for a digital masterclass after a creator promised lifetime access. The creator changed the terms, refused a refund, and removed the student, who is now pursuing a consumer complaint."
+  },
+  {
+    "id": "reddit-1x7pfsm",
+    "source": "reddit",
+    "scam_type": "fake_job",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "recruiter email referenced a LinkedIn profile and a matching role"
+      },
+      {
+        "step": "platform_switch",
+        "actor": "scammer",
+        "detail": "moved to a video call link that opened in a browser"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "closed the window after being asked to run a PowerShell command"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A job seeker was contacted by a fake recruiter and directed to a fake video call. They stopped after being prompted to run a PowerShell command and did not lose money."
+  },
+  {
+    "id": "reddit-1x7nejb",
+    "source": "reddit",
+    "scam_type": "fake_job",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "home-office part-time job advertised on social media"
+      },
+      {
+        "step": "credentials_shared",
+        "actor": "victim",
+        "detail": "gave name and tax ID, then completed bank registrations"
+      },
+      {
+        "step": "withdrawal_blocked",
+        "actor": "scammer",
+        "detail": "wages withheld until more tasks were completed"
+      },
+      {
+        "step": "money_lost",
+        "actor": "victim",
+        "detail": "discovers about 17,000 euros transferred abroad in their name"
+      }
+    ],
+    "outcome": "lost_money",
+    "amount_lost_usd": 18500,
+    "snippet": "A victim was lured into a fake home-office job advertised online and had their identity used for bank registrations. About 17,000 euros was transferred abroad in their name, and they warn others."
+  },
+  {
+    "id": "reddit-1x7mc38",
+    "source": "reddit",
+    "scam_type": "marketplace",
+    "events": [
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "game key appeared in account with no logins or charges"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "key would not activate, and seller refuses refunds"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A person found a game key bought from their account with no recorded logins or charges. The key would not activate on Steam, and the seller refuses refunds."
+  },
+  {
+    "id": "reddit-1x7m510",
+    "source": "reddit",
+    "scam_type": "impersonation",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "unsolicited call claiming bitcoin belonging to the victim"
+      },
+      {
+        "step": "authority_claim",
+        "actor": "scammer",
+        "detail": "caller claims to represent a crypto company or agency"
+      },
+      {
+        "step": "urgency_pressure",
+        "actor": "scammer",
+        "detail": "second caller pressed to proceed quickly with screen sharing"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "hung up without sharing screen or details"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A person received a call claiming a large bitcoin holding was theirs and asking them to join a screen-sharing session. They hung up without giving any details or losing money."
+  },
+  {
+    "id": "reddit-1x7leev",
+    "source": "reddit",
+    "scam_type": "fake_job",
+    "events": [
+      {
+        "step": "withdrawal_blocked",
+        "actor": "scammer",
+        "detail": "repeated payment delays, then platform access removed"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "contacted the employer repeatedly and got no replies"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A remote worker completed 78 shifts and is owed $3,159 after repeated payment delays. The employer removed their access, ended the arrangement and stopped responding."
+  },
+  {
+    "id": "reddit-1x7ldo9",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "repeated calls and texts about selling a property never owned"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "suspects identity theft and has not responded to contacts"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A person receives calls and texts asking whether they want to sell a property they have never owned. They suspect a scam or identity fraud and have not responded in years."
+  },
+  {
+    "id": "reddit-1x7jzxz",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "TikTok account messaged offering to send money as a blessing"
+      },
+      {
+        "step": "platform_switch",
+        "actor": "scammer",
+        "detail": "conversation moved to text messages and email"
+      },
+      {
+        "step": "fake_proof_shown",
+        "actor": "scammer",
+        "detail": "sent screenshots of failed and large payments and a balance"
+      },
+      {
+        "step": "withdrawal_blocked",
+        "actor": "scammer",
+        "detail": "demanded a $50 fee before the $5,000 could be sent"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "suspected an advance-fee scam and did not pay the fee"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A person was contacted on TikTok by a stranger promising to send $5,000 and was then asked for a $50 fee first. They suspected an advance-fee scam and did not pay the scammer."
+  },
+  {
+    "id": "reddit-1x7jngj",
+    "source": "reddit",
+    "scam_type": "fake_job",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "Instagram post offered an online assignment-writing job with no fee"
+      },
+      {
+        "step": "platform_switch",
+        "actor": "scammer",
+        "detail": "contact moved to a Telegram chat"
+      },
+      {
+        "step": "small_payment",
+        "actor": "victim",
+        "detail": "paid 500 rupees as a registration fee"
+      },
+      {
+        "step": "large_payment",
+        "actor": "victim",
+        "detail": "paid a further 1999 rupees in file charges"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "asked for her money back, then the contact stopped replying"
+      }
+    ],
+    "outcome": "lost_money",
+    "amount_lost_usd": 29,
+    "snippet": "A student responded to an online assignment-writing job and paid registration and file fees. The contact stopped replying after she asked for her money back."
+  },
+  {
+    "id": "reddit-1x7jdlm",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "scam link sent via WhatsApp from a known contact"
+      },
+      {
+        "step": "credentials_shared",
+        "actor": "victim",
+        "detail": "entered phone number and WhatsApp verification code on website"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A person entered their phone number and a WhatsApp verification code on a scam link, which got their account temporarily banned. The family asks whether the phone number needs replacing to protect banking apps."
+  },
+  {
+    "id": "reddit-1x7ig5c",
+    "source": "reddit",
+    "scam_type": "marketplace",
+    "events": [
+      {
+        "step": "small_payment",
+        "actor": "victim",
+        "detail": "paid 40 euros for a clothing order from an online shop"
+      },
+      {
+        "step": "withdrawal_blocked",
+        "actor": "scammer",
+        "detail": "refused cancellation and required paid return shipping"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "researched negative reviews and filed a PayPal claim"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A customer paid 40 euros for clothing from an online shop that offered a refund for a review. The shop refused cancellation, and the customer has filed a payment dispute."
+  },
+  {
+    "id": "reddit-1x7i6xh",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "AI-generated emails offering podcast or book club appearances"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "suspects a payment request would follow any reply"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "An academic has received several AI-style emails offering podcast interviews, book club discussions and marketing help. They suspect any reply would lead to a request for payment."
+  },
+  {
+    "id": "reddit-1x7hfq8",
+    "source": "reddit",
+    "scam_type": "impersonation",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "courier email about an unordered package with real tracking"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "checked bank for missing money and considers calling the sender"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A person received a courier email about a package they did not order, with their name and address on it. They found no missing money and are deciding whether to call the company."
+  },
+  {
+    "id": "reddit-1x7g6oj",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "solicitation letters addressed to a former resident at the house"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "asks why the house is on a list and how the father is linked"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A couple received mortgage and home warranty solicitation letters addressed to a relative who no longer lives there. They are asking why they were targeted."
+  },
+  {
+    "id": "reddit-1x7ftqc",
+    "source": "reddit",
+    "scam_type": "impersonation",
+    "events": [
+      {
+        "step": "authority_claim",
+        "actor": "scammer",
+        "detail": "caller posed as the grandmother's bank"
+      },
+      {
+        "step": "remote_access_granted",
+        "actor": "victim",
+        "detail": "installed apps that allowed remote control of her phone"
+      },
+      {
+        "step": "credentials_shared",
+        "actor": "victim",
+        "detail": "logged into accounts and shared identification photos"
+      },
+      {
+        "step": "third_party_intervened",
+        "actor": "third_party",
+        "detail": "family reset devices, froze accounts and filed a police report"
+      },
+      {
+        "step": "money_lost",
+        "actor": "victim",
+        "detail": "substantial sums withdrawn from her accounts"
+      }
+    ],
+    "outcome": "lost_money",
+    "amount_lost_usd": null,
+    "snippet": "An elderly person was called by someone posing as her bank and gave scammers remote access to her phone and accounts. Her family is securing the accounts and reporting the fraud, and a substantial amount was withdrawn."
+  },
+  {
+    "id": "reddit-1x7ex39",
+    "source": "reddit",
+    "scam_type": "pig_butchering",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "met through a verified profile on a dating app while traveling"
+      },
+      {
+        "step": "trust_building",
+        "actor": "scammer",
+        "detail": "regular everyday messages built a personal connection"
+      },
+      {
+        "step": "authority_claim",
+        "actor": "scammer",
+        "detail": "introduced a relative who claimed to work at a finance firm"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "found photos were used without the owner's consent"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "declined to send money and stopped engaging"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A traveler met a woman on a dating app who later introduced an investment opportunity requiring a cryptocurrency transfer. The traveler found the photos were misused, sent no money, and stopped engaging."
+  },
+  {
+    "id": "reddit-1x7dloq",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "unexpected PayPal payments from unknown senders"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "contacted support, received little useful help"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A person received two unexpected PayPal payments, and one was put on hold after the sender opened a dispute. The person's account was then permanently deactivated."
+  },
+  {
+    "id": "reddit-1x7cgzp",
+    "source": "reddit",
+    "scam_type": "marketplace",
+    "events": [
+      {
+        "step": "large_payment",
+        "actor": "victim",
+        "detail": "transferred 480 pounds to the driver's personal account on delivery"
+      },
+      {
+        "step": "withdrawal_blocked",
+        "actor": "scammer",
+        "detail": "driver held the bed and demanded 50 pounds for petrol"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "contacted the company, which told them not to pay the driver"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A buyer paid a marketplace seller for a bed by transfer to the driver's personal account at delivery. The driver then demanded an extra fee before the bed was handed over, and the buyer is asking about their rights."
+  },
+  {
+    "id": "reddit-1x7b0gl",
+    "source": "reddit",
+    "scam_type": "fake_job",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "private message offered $30 to set up profiles on a work platform"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "researched the platform and found the arrangement suspicious"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "declined and reported the account"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A person was asked to set up a work-platform profile in their name for another user in exchange for $30. They recognised the risk to their identity and taxes, declined, and reported the account."
+  },
+  {
+    "id": "reddit-1x7atda",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "phishing email offering free tokens for connecting a crypto wallet"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "noticed email reached an address used only for one retailer"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A person received a crypto phishing email at an email alias used only for one retailer, which may indicate a data breach. They are asking whether others have received similar phishing emails."
+  },
+  {
+    "id": "reddit-1x78v8f",
+    "source": "reddit",
+    "scam_type": "romance",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "contacted through a Reddit post seeking a hookup"
+      },
+      {
+        "step": "small_payment",
+        "actor": "victim",
+        "detail": "sent about $400 via PayPal for hosting and a deposit"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "grew worried after poor English and a crypto conversion site"
+      },
+      {
+        "step": "money_lost",
+        "actor": "victim",
+        "detail": "realised funds were converted to bitcoin and refunds refused"
+      }
+    ],
+    "outcome": "lost_money",
+    "amount_lost_usd": 400,
+    "snippet": "A person was contacted for a hookup and paid about $400 in fees to a site that converted the money to bitcoin. After realising the scam, they were refused a refund and are asking for help."
+  },
+  {
+    "id": "reddit-1x786u9",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "email invitation to an English Olympiad from unfamiliar websites"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "poster and some classmates doubt the website is genuine"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A high school received an email invitation to an English Olympiad hosted on several similar websites, and the test was on Google Forms. The poster and some classmates suspect the event is fake and are asking for others' experiences."
+  },
+  {
+    "id": "reddit-1x77myy",
+    "source": "reddit",
+    "scam_type": "fake_job",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "message offered pay for creating platform accounts for a team"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "found the request for identity documents suspicious"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "declined to send any personal information or photos"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A person was offered payment to create freelancing platform accounts for someone else and was asked for identity documents. They refused to send any personal information and are asking about the risks."
+  },
+  {
+    "id": "reddit-1x772cu",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "social media link advertised a gaming duo group"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "noticed prompt to download an unauthorized Android app"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A person clicked a social media link promising a gaming group and was prompted to download an unauthorized Android app. They suspect malware or account theft and are asking whether others have seen it."
+  },
+  {
+    "id": "reddit-1x75zlb",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "message from an artist claiming the account had scammed them"
+      },
+      {
+        "step": "platform_switch",
+        "actor": "scammer",
+        "detail": "moved to Discord with a fake support contact"
+      },
+      {
+        "step": "credentials_shared",
+        "actor": "victim",
+        "detail": "gave access to the social media account"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A social media user was told their account had been mass-reported and was directed to a Discord support contact. They gave the scammer access to their account, which was then lost, and are asking about other consequences."
+  },
+  {
+    "id": "reddit-1x75bm4",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "emails confirmed a lookup site account and payment using the victim's email"
+      },
+      {
+        "step": "platform_switch",
+        "actor": "scammer",
+        "detail": "text message with a lookup link sent to the victim's phone"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "locked cards and cancelled the subscription to check for charges"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A person received emails about an account and payment on a lookup site they never used, plus a text with a link. They locked their cards and cancelled the subscription, and no charge appeared."
+  },
+  {
+    "id": "reddit-1x749bg",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "third_party",
+        "detail": "another teen met online exchanged numbers and inappropriate images"
+      },
+      {
+        "step": "third_party_intervened",
+        "actor": "third_party",
+        "detail": "voicemail from a caller claiming to be the other teen's parent"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "worried about legal trouble and asking whether to respond"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A minor exchanged images with another teen met online and then received a voicemail from a caller claiming to be that teen's parent. The minor is frightened about legal risk and is asking whether to respond."
+  },
+  {
+    "id": "reddit-1x745ln",
+    "source": "reddit",
+    "scam_type": "impersonation",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "QR code in a video promised a Tesla bitcoin giveaway"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "closed the page after seeing a bitcoin payment request"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A person scanned a QR code promising a Tesla bitcoin giveaway and was taken to a page asking for cryptocurrency. They closed it without sending money and are worried about malware."
+  },
+  {
+    "id": "reddit-1x73wxr",
+    "source": "reddit",
+    "scam_type": "marketplace",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "buyer comment directed seller to a sister for pickup"
+      },
+      {
+        "step": "platform_switch",
+        "actor": "scammer",
+        "detail": "asked the seller to move conversation to text messages"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "replies contained inconsistencies and a pickup at an unclear time"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A seller listed a pasta machine and was contacted by a buyer's supposed sister, who asked for pickup details and offered a story about health problems. The seller suspects a scam and is asking for a second opinion."
+  },
+  {
+    "id": "reddit-1x73eum",
+    "source": "reddit",
+    "scam_type": "marketplace",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "artist sent an invoice from an unknown company instead of PayPal"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "noticed misspelling and a traced AI image used as the example"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A customer commissioned an artwork but received an invoice from an unknown company, and the sample appeared to be a traced AI image. The customer wants to know whether the invoice can be cancelled and how to spot this in future."
+  },
+  {
+    "id": "reddit-1x70aj1",
+    "source": "reddit",
+    "scam_type": "fake_job",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "email posing as a job board about a part-time mystery shopper gig"
+      },
+      {
+        "step": "fake_proof_shown",
+        "actor": "scammer",
+        "detail": "mailed a $2,750 cashier's check with instructions to buy gift cards"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "researched the mailing and sender details and found the scheme"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "did not deposit the check or buy any gift cards"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A person received a $2,750 cashier's check for a supposed secret shopper assignment that required buying gift cards. They recognised the fake check scheme and did not deposit it or send any codes."
+  },
+  {
+    "id": "reddit-1x6zvlf",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "unexpected check arrived with a phone number to call"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "suspects a phishing attempt to get account details"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A person received a check they cannot connect to any transaction, along with a number to call. They are worried it is a phishing attempt to access their bank account and are asking for advice."
+  },
+  {
+    "id": "reddit-1x6ze3c",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "found unfamiliar charges on a prepaid card and balance dropped"
+      },
+      {
+        "step": "money_lost",
+        "actor": "victim",
+        "detail": "about $112 lost from the prepaid card after unauthorised charges"
+      }
+    ],
+    "outcome": "lost_money",
+    "amount_lost_usd": 112,
+    "snippet": "A person found about five unauthorised charges on a prepaid card, many from payment platform vendors used by someone else in the household. The balance dropped by about $112, and the person is asking how the card was linked."
+  },
+  {
+    "id": "reddit-1x6ybnp",
+    "source": "reddit",
+    "scam_type": "fake_job",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "text offered a talent pool job paying $6,100 monthly"
+      },
+      {
+        "step": "withdrawal_blocked",
+        "actor": "scammer",
+        "detail": "required a deposit through a payment app to unlock final premium tasks"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "suspects a scam but completed earlier app-boosting tasks"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A person was offered a high-paying job by text and completed app-boosting tasks on a website. The final step required a payment app deposit, which they suspect is a scam."
+  },
+  {
+    "id": "reddit-1x6y59o",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "third_party",
+        "detail": "woman at a gas station asked for $20 for gas"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "declined to give money and left"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A person was approached at a gas station by a stranger who asked for $20 for gas after making unusual eye contact. The person declined and is asking what the stranger might have been doing."
+  },
+  {
+    "id": "reddit-1x6xqdk",
+    "source": "reddit",
+    "scam_type": "impersonation",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "unsolicited call offering at-home visits to schedule"
+      },
+      {
+        "step": "authority_claim",
+        "actor": "scammer",
+        "detail": "caller claimed to be from the person's healthcare provider"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "declined the visits and suspected a spoofed call"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A person received a call from someone claiming to be from their healthcare provider and pressing for at-home visits they did not need. They declined, hung up, and are asking whether the call was spoofed."
+  },
+  {
+    "id": "reddit-1x6x30b",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "unsolicited email claiming to have viewed profile and asking to connect"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "received repeated follow-ups and suspects a common template"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A person received an unsolicited networking email followed by two reminders. They suspect the message is a template used on many people."
+  },
+  {
+    "id": "reddit-1x6usj4",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "third_party",
+        "detail": "stranger at the door asked about a missing woman and showed photos"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "suspected a ruse to get a call or case the home"
+      },
+      {
+        "step": "third_party_intervened",
+        "actor": "third_party",
+        "detail": "police agreed to send an officer to check the area"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A woman answered her door to a stranger who asked about a missing woman and left a contact card. She reported it to the police and is worried it was a ruse to get her to call or to case the home."
+  },
+  {
+    "id": "reddit-1x6tw9o",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "repeated calls and voicemails claiming to have an email from the mother"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "child suspects the email was spoofed or a scam"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A retired parent has received repeated calls from a stranger claiming to have an email from her and offering to give her a credit card number. Her child is unsure whether the email was spoofed or whether this is a scam."
+  },
+  {
+    "id": "reddit-1x6ths8",
+    "source": "reddit",
+    "scam_type": "impersonation",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "caller asked for the victim by name at work, claiming a sheriff's investigation"
+      },
+      {
+        "step": "authority_claim",
+        "actor": "scammer",
+        "detail": "claimed to be a county sheriff's office investigator"
+      },
+      {
+        "step": "urgency_pressure",
+        "actor": "scammer",
+        "detail": "threatened arrest and a warrant and demanded legal name"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "asked coworkers and requested a badge number, caller became angry"
+      },
+      {
+        "step": "third_party_intervened",
+        "actor": "third_party",
+        "detail": "local sheriff's office said the caller was running a scam"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A tattoo artist received a call from someone claiming to be a sheriff's investigator who threatened arrest and asked for personal details. The local sheriff's office confirmed it was a scam, and the person lost no money."
+  },
+  {
+    "id": "reddit-1x6skk3",
+    "source": "reddit",
+    "scam_type": "impersonation",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "call from someone claiming to be a bank fraud research team"
+      },
+      {
+        "step": "authority_claim",
+        "actor": "scammer",
+        "detail": "claimed a $7,435 card purchase and pressed for a police report"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "called the number back and reached a voicemail"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A person received a call from someone claiming to be a bank's fraud team about a large attempted purchase, and was pressed to speak with a police investigator. The person called back, reached only a voicemail, and did not share any details."
+  },
+  {
+    "id": "reddit-1x6ry1o",
+    "source": "reddit",
+    "scam_type": "impersonation",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "email impersonating a computer brand's support sent a link"
+      },
+      {
+        "step": "credentials_shared",
+        "actor": "victim",
+        "detail": "clicked link and signed up using a Google account"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "contacted the brand, which said the email was not theirs"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A person clicked a link in an email impersonating a computer brand and signed up with their Google account. The brand said the email was not theirs, and the person is worried about the risk."
+  },
+  {
+    "id": "reddit-1x6rrov",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "about fifteen spam calls a day about Medicare and debt offers"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A person's work phone number receives around fifteen spam calls a day, mainly about Medicare and debt consolidation. The person is asking whether the calls will ever stop."
+  },
+  {
+    "id": "reddit-1x6rgmn",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "email claims a trust benefit is ready and requests a virtual meeting"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "asks whether it is a scam given the long delay in notice"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A person received an email claiming a trust benefit was being released after a family member's death and asking for a meeting. They are asking whether it is a scam, given the notice came a year later."
+  },
+  {
+    "id": "reddit-1x6rbo1",
+    "source": "reddit",
+    "scam_type": "marketplace",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "buyer asked to pay an art commission through a money transfer app"
+      },
+      {
+        "step": "withdrawal_blocked",
+        "actor": "scammer",
+        "detail": "told to send $300 more before the account could be used"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "unsure whether the second request is real and has not refunded"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "An artist was asked by a buyer to pay for a commission through a money transfer app, then was told to refund $300 before the account could be used. The artist has not sent the money and suspects a scam."
+  },
+  {
+    "id": "reddit-1x6obgy",
+    "source": "reddit",
+    "scam_type": "impersonation",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "call claiming an unpaid medical debt of about $1,500"
+      },
+      {
+        "step": "authority_claim",
+        "actor": "scammer",
+        "detail": "claimed to be a medical group and quoted the spouse's SSN"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "callback line kept ringing without anyone answering"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A person's spouse received a call from a collector claiming an unpaid medical debt of about $1,500 and quoting her SSN. The household has received no prior letters and is worried about the call."
+  },
+  {
+    "id": "reddit-1x6nj76",
+    "source": "reddit",
+    "scam_type": "marketplace",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "seller listed a console below average price"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "noticed refusal of cash and shipping before payment"
+      },
+      {
+        "step": "victim_exits",
+        "actor": "victim",
+        "detail": "blocked and ignored the seller"
+      }
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A buyer contacted a seller offering a console at a low price who refused cash and wanted payment through transfer apps. The buyer found the behaviour suspicious, blocked the seller, and did not pay."
+  },
+  {
+    "id": "reddit-1x6m9sw",
+    "source": "reddit",
+    "scam_type": "other",
+    "events": [
+      {
+        "step": "initial_contact",
+        "actor": "scammer",
+        "detail": "conference promoted by an influencer offered fully funded seats"
+      },
+      {
+        "step": "victim_suspicious",
+        "actor": "victim",
+        "detail": "noticed no named organizer and requests for national ID"
+      }
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A person found a conference offering funded seats for a small fee, with no named organizer and requests for national ID. They are asking others whether the event is a scam."
   }
 ]
