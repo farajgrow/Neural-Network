@@ -1,0 +1,23 @@
+[
+  {"id": "t-001", "source": "reddit", "scam_type": "pig_butchering",
+   "events": [
+     {"step": "initial_contact", "actor": "scammer", "detail": "Wrong-number text"},
+     {"step": "fake_proof_shown", "actor": "scammer", "detail": "Profit screenshots"},
+     {"step": "small_payment", "actor": "victim", "detail": "Deposited $500"},
+     {"step": "money_lost", "actor": "victim", "detail": "Site vanished"}
+   ],
+   "outcome": "lost_money", "amount_lost_usd": 500, "snippet": "Lost a deposit to a fake trading site."},
+  {"id": "t-002", "source": "reddit", "scam_type": "pig_butchering",
+   "events": [
+     {"step": "initial_contact", "actor": "scammer", "detail": "Dating app match"},
+     {"step": "fake_proof_shown", "actor": "scammer", "detail": "Profit screenshots"},
+     {"step": "victim_exits", "actor": "victim", "detail": "Blocked them"}
+   ],
+   "outcome": "escaped", "amount_lost_usd": null, "snippet": "Spotted the fake profits and blocked them."},
+  {"id": "t-003", "source": "cfpb", "scam_type": "fake_job",
+   "events": [
+     {"step": "initial_contact", "actor": "scammer", "detail": "Recruiter text"},
+     {"step": "platform_switch", "actor": "scammer", "detail": "Moved to Telegram"}
+   ],
+   "outcome": "unknown", "amount_lost_usd": null, "snippet": "A recruiter moved the chat to Telegram."}
+]
