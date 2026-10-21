@@ -6,6 +6,8 @@ from analysis.build import DEFAULT_STORIES
 from analysis.clusters import (
     adjusted_rand_index,
     build_clusters,
+    build_clusters_by_type,
+    common_steps,
     edit_distance,
     normalised_edit_distance,
     purity,
@@ -114,3 +116,82 @@ def test_smoke_mock_stories():
     result = build_clusters(stories, VOCAB)
     assert len(result["assignments"]) == len({s["id"] for s in stories})
     assert [c["id"] for c in result["clusters"]] == [f"c{i}" for i in range(len(result["clusters"]))]
+
+
+def test_common_steps_are_ignored_and_reported():
+    seqs = [("initial_contact", "victim_suspicious")] * 8 + [("initial_contact", "small_payment")] * 2
+    assert common_steps(seqs) == frozenset({"initial_contact", "victim_suspicious"})
+    assert common_steps([]) == frozenset()
+
+
+def test_no_giant_cluster_when_a_balanced_split_exists():
+    # Every story shares the ubiquitous steps; the variants differ only in the middle.
+    # Without ignoring common steps this collapses into one big cluster.
+    a = ["initial_contact", "trust_building", "fake_proof_shown", "small_payment", "victim_suspicious"]
+    b = ["initial_contact", "authority_claim", "urgency_pressure", "victim_suspicious"]
+    c = ["initial_contact", "victim_suspicious"]
+    stories = (group("a", a, 12, "fake_job") + group("b", b, 10, "fake_job", "escaped")
+               + group("c", c, 20, "fake_job", "escaped"))
+    result = build_clusters(stories, VOCAB)
+    assert set(result["params"]["ignored_steps"]) == {"initial_contact", "victim_suspicious"}
+    regular = [cl for cl in result["clusters"] if not cl["outlier"]]
+    assert len(regular) == 3
+    assert max(cl["size"] for cl in regular) <= 0.7 * len(stories)
+    by_id = {cl["id"]: cl for cl in result["clusters"]}
+    assert by_id[result["assignments"]["a0"]]["loss_rate"] == 1.0
+    assert by_id[result["assignments"]["c0"]]["loss_rate"] == 0.0
+
+
+def test_labels_are_readable_and_distinct():
+    a = ["initial_contact", "trust_building", "fake_proof_shown", "small_payment"]
+    b = ["initial_contact", "authority_claim", "urgency_pressure"]
+    c = ["initial_contact"]
+    stories = group("a", a, 6, "fake_job") + group("b", b, 6, "fake_job") + group("c", c, 6, "fake_job")
+    result = build_clusters(stories, VOCAB)
+    labels = [cl["label"] for cl in result["clusters"]]
+    assert len(set(labels)) == len(labels)
+    for label in labels:
+        assert label.startswith("fake_job · ")
+        assert "_" not in label.split(" · ", 1)[1]          # step names, not raw ids
+        assert not any(f"(c{i})" in label for i in range(10))
+    by_id = {cl["id"]: cl for cl in result["clusters"]}
+    assert by_id[result["assignments"]["a0"]]["label"] == "fake_job · builds trust → fake proof → small payment"
+    assert by_id[result["assignments"]["c0"]]["label"] == "fake_job · first contact only"
+
+
+def test_cluster_edges_and_known_counts():
+    a = ["initial_contact", "small_payment", "money_lost"]
+    stories = group("a", a, 3, "fake_job") + [story("u", a, "unknown", "fake_job")]
+    result = build_clusters(stories, VOCAB)
+    cl = result["clusters"][0]
+    assert cl["n_known"] == 3
+    assert {(e["from"], e["to"]): e["count"] for e in cl["edges"]} == {
+        ("initial_contact", "small_payment"): 4, ("small_payment", "money_lost"): 4}
+
+
+def test_clusters_by_type():
+    a = ["initial_contact", "trust_building", "fake_proof_shown", "small_payment"]
+    b = ["initial_contact", "authority_claim", "urgency_pressure"]
+    stories = (group("p", a, 6, "pig_butchering") + group("q", b, 6, "pig_butchering", "escaped")
+               + group("j", b, 12, "fake_job", "escaped") + group("r", a, 3, "romance"))
+    by_type = build_clusters_by_type(stories, VOCAB)
+    assert list(by_type) == ["pig_butchering", "fake_job"]  # size ties follow vocab order; romance < 10
+    pig = by_type["pig_butchering"]
+    assert set(pig["assignments"]) == {f"p{i}" for i in range(6)} | {f"q{i}" for i in range(6)}
+    assert pig["assignments"]["p0"] != pig["assignments"]["q0"]
+    assert all(set(cl["scam_type_counts"]) == {"pig_butchering"} for cl in pig["clusters"])
+    assert set(pig) >= {"method", "params", "assignments", "clusters", "agreement"}
+    reversed_result = build_clusters_by_type(list(reversed(stories)), VOCAB)
+    assert json.dumps(by_type, sort_keys=True) == json.dumps(reversed_result, sort_keys=True)
+
+
+def test_real_data_is_not_one_giant_cluster():
+    stories = load_stories(DEFAULT_STORIES)
+    if len(stories) < 100:
+        pytest.skip("needs the full dataset")
+    result = build_clusters(stories, VOCAB)
+    regular = [cl for cl in result["clusters"] if not cl["outlier"]]
+    assert len(regular) >= 3
+    assert max(cl["size"] for cl in result["clusters"]) <= 0.7 * len(result["assignments"])
+    labels = [cl["label"] for cl in result["clusters"]]
+    assert len(set(labels)) == len(labels)

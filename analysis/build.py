@@ -9,7 +9,7 @@ import argparse
 import json
 from pathlib import Path
 
-from analysis.clusters import build_clusters, summarize as summarize_clusters
+from analysis.clusters import build_clusters, build_clusters_by_type, summarize as summarize_clusters
 from analysis.graphs import REPO_ROOT, build_graphs_file, load_stories, load_vocab
 
 DEFAULT_STORIES = REPO_ROOT / "data" / "stories.json"
@@ -39,13 +39,16 @@ def main(argv: list[str] | None = None) -> None:
     graphs_file = build_graphs_file(stories, vocab)
     if not args.no_clusters:
         graphs_file["clusters"] = build_clusters(stories, vocab)
+        graphs_file["clusters_by_type"] = build_clusters_by_type(stories, vocab)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with open(args.out, "w", encoding="utf-8") as f:
         json.dump(graphs_file, f, indent=2)
         f.write("\n")
 
     print(summarize(graphs_file))
-    print("\n" + summarize_clusters(graphs_file["clusters"]))
+    print("\n" + summarize_clusters(graphs_file["clusters"], "clusters (all types)"))
+    for scam_type, section in (graphs_file.get("clusters_by_type") or {}).items():
+        print("\n" + summarize_clusters(section, f"clusters [{scam_type}]"))
     print(f"\nWrote {args.out}")
 
 

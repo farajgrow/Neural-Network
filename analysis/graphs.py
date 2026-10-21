@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -14,6 +15,15 @@ OUTCOME_STEPS = frozenset({"money_lost", "victim_exits"})
 EXIT_STEP = "victim_exits"
 TOP_N = 3
 PRECISION = 4
+MIN_SUPPORT_ABS = 3        # pinch/escape candidates need count >= max(3, 5% of the group's stories)
+MIN_SUPPORT_SHARE = 0.05
+MIN_EXIT_COUNT = 2         # an escape point needs at least this many exits
+PRIOR_WEIGHT = 5           # pseudo-stories used to shrink loss rates when ranking pinch points
+
+
+def min_support(n_stories: int) -> int:
+    """Minimum node count for a step to be a pinch or escape point candidate."""
+    return max(MIN_SUPPORT_ABS, math.ceil(MIN_SUPPORT_SHARE * n_stories))
 
 
 def load_vocab(path: Path = VOCAB_PATH) -> dict:
@@ -65,42 +75,67 @@ def loss_rate(outcomes: list[str]) -> float | None:
     return sum(o == "lost_money" for o in known) / len(known)
 
 
-def pinch_points(nodes: dict[str, dict], edges: Counter) -> list[dict]:
-    """Steps whose loss rate jumps most above the edge-weighted mean of their predecessors."""
+def _shrunk(node: dict, prior: float, weight: float) -> float:
+    """Loss rate pulled toward `prior` as if `weight` extra stories had the prior rate."""
+    return (node["n_lost"] + weight * prior) / (node["n_known"] + weight)
+
+
+def pinch_points(nodes: dict[str, dict], edges: Counter, support: int = 1,
+                 prior: float | None = None, prior_weight: float = PRIOR_WEIGHT) -> list[dict]:
+    """Steps whose loss rate jumps most above the edge-weighted mean of their predecessors.
+
+    Candidates are steps seen in at least `support` stories with at least MIN_SUPPORT_ABS
+    known outcomes. `jump` is the raw difference; points are ranked by `score`, the same
+    difference after shrinking every loss rate toward `prior` (the group's loss rate) with
+    `prior_weight` pseudo-stories, so a 3-for-3 step does not beat a 40-of-45 one.
+    """
     incoming: dict[str, list[tuple[str, int]]] = defaultdict(list)
     for (src, dst), count in edges.items():
         incoming[dst].append((src, count))
+    if prior is None:
+        known = sum(n["n_known"] for n in nodes.values())
+        prior = sum(n["n_lost"] for n in nodes.values()) / known if known else 0.0
 
     points = []
     for step, node in nodes.items():
-        if step in OUTCOME_STEPS or node["loss_rate"] is None:
+        if (step in OUTCOME_STEPS or node["loss_rate"] is None or node["count"] < support
+                or node["n_known"] < MIN_SUPPORT_ABS):
             continue
         weighted = [
-            (nodes[src]["loss_rate"], count)
+            (nodes[src]["loss_rate"], _shrunk(nodes[src], prior, prior_weight), count)
             for src, count in incoming.get(step, [])
             if nodes[src]["loss_rate"] is not None
         ]
-        total = sum(count for _, count in weighted)
+        total = sum(count for _, _, count in weighted)
         if not total:
             continue
-        prev = sum(rate * count for rate, count in weighted) / total
+        prev = sum(rate * count for rate, _, count in weighted) / total
+        prev_shrunk = sum(rate * count for _, rate, count in weighted) / total
         jump = node["loss_rate"] - prev
-        if jump > 1e-9:
+        score = _shrunk(node, prior, prior_weight) - prev_shrunk
+        if jump > 1e-9 and score > 1e-9:
             points.append({
                 "step": step,
                 "loss_rate": _round(node["loss_rate"]),
                 "prev_loss_rate": _round(prev),
                 "jump": _round(jump),
+                "n_known": node["n_known"],
+                "score": _round(score),
             })
-    points.sort(key=lambda p: (-p["jump"], p["step"]))
+    points.sort(key=lambda p: (-p["score"], -p["jump"], p["step"]))
     return points[:TOP_N]
 
 
-def escape_points(nodes: dict[str, dict], edges: Counter) -> list[dict]:
-    """Steps most often followed directly by victim_exits."""
+def escape_points(nodes: dict[str, dict], edges: Counter, support: int = 1) -> list[dict]:
+    """Steps most often followed directly by victim_exits.
+
+    Candidates are non-outcome steps seen in >= `support` stories with at least
+    MIN_EXIT_COUNT exits.
+    """
     points = []
     for (src, dst), count in edges.items():
-        if dst != EXIT_STEP or src == EXIT_STEP:
+        if (dst != EXIT_STEP or src in OUTCOME_STEPS or nodes[src]["count"] < support
+                or count < MIN_EXIT_COUNT):
             continue
         points.append({
             "step": src,
@@ -121,6 +156,7 @@ def build_graph(stories: list[dict], scam_type: str, vocab: dict) -> dict:
     step_positions: dict[str, list[float]] = defaultdict(list)
     step_ids: dict[str, list[str]] = defaultdict(list)
     edges: Counter = Counter()
+    edge_outcomes: dict[tuple[str, str], list[str]] = defaultdict(list)
 
     for story in stories:
         outcome = story_outcome(story, valid_outcomes)
@@ -139,12 +175,16 @@ def build_graph(stories: list[dict], scam_type: str, vocab: dict) -> dict:
                 step_ids[step].append(story_id)
 
         edges.update(zip(sequence, sequence[1:]))
+        for edge in set(zip(sequence, sequence[1:])):
+            edge_outcomes[edge].append(outcome)
 
     nodes = {
         step: {
             "step": step,
             "count": len(step_outcomes[step]),
             "loss_rate": loss_rate(step_outcomes[step]),
+            "n_known": sum(o != "unknown" for o in step_outcomes[step]),
+            "n_lost": sum(o == "lost_money" for o in step_outcomes[step]),
             "avg_position": sum(step_positions[step]) / len(step_positions[step]),
         }
         for step in vocab["steps"]
@@ -152,21 +192,26 @@ def build_graph(stories: list[dict], scam_type: str, vocab: dict) -> dict:
     }
 
     counts = Counter(outcomes)
+    support = min_support(len(stories))
     return {
         "scam_type": scam_type,
         "n_stories": len(stories),
         "loss_rate": _round(loss_rate(outcomes)),
         "outcome_counts": {o: counts.get(o, 0) for o in vocab["outcomes"]},
         "nodes": [
-            {**node, "loss_rate": _round(node["loss_rate"]), "avg_position": _round(node["avg_position"])}
+            {**{k: v for k, v in node.items() if k != "n_lost"},
+             "loss_rate": _round(node["loss_rate"]), "avg_position": _round(node["avg_position"])}
             for node in sorted(nodes.values(), key=lambda n: (n["avg_position"], n["step"]))
         ],
         "edges": [
-            {"from": src, "to": dst, "count": count}
+            {"from": src, "to": dst, "count": count,
+             "loss_rate": _round(loss_rate(edge_outcomes[(src, dst)])),
+             "n_known": sum(o != "unknown" for o in edge_outcomes[(src, dst)])}
             for (src, dst), count in sorted(edges.items(), key=lambda e: (-e[1], e[0]))
         ],
-        "pinch_points": pinch_points(nodes, edges),
-        "escape_points": escape_points(nodes, edges),
+        "min_support": support,
+        "pinch_points": pinch_points(nodes, edges, support, loss_rate(outcomes) or 0.0),
+        "escape_points": escape_points(nodes, edges, support),
         "step_to_story_ids": {step: sorted(step_ids[step]) for step in nodes if step in step_ids},
     }
 
@@ -191,4 +236,5 @@ def build_graphs_file(stories: list[dict], vocab: dict | None = None) -> dict:
         "scam_types": scam_types,
         "graphs": graphs,
         "clusters": None,
+        "clusters_by_type": None,
     }
