@@ -1,0 +1,186 @@
+{
+  "model": "ScamGRU (analysis/model/gru.py)",
+  "trained_at": "2026-10-21T08:42:47Z",
+  "inputs": {
+    "steps": [
+      "initial_contact",
+      "platform_switch",
+      "trust_building",
+      "authority_claim",
+      "urgency_pressure",
+      "fake_proof_shown",
+      "small_payment",
+      "large_payment",
+      "credentials_shared",
+      "remote_access_granted",
+      "withdrawal_blocked",
+      "victim_suspicious",
+      "third_party_intervened"
+    ],
+    "step_ids": "1..13 in this order, 0 = padding",
+    "scam_types": [
+      "pig_butchering",
+      "fake_job",
+      "impersonation",
+      "marketplace",
+      "romance",
+      "other"
+    ]
+  },
+  "next_step_targets": [
+    "initial_contact",
+    "platform_switch",
+    "trust_building",
+    "authority_claim",
+    "urgency_pressure",
+    "fake_proof_shown",
+    "small_payment",
+    "large_payment",
+    "credentials_shared",
+    "remote_access_granted",
+    "withdrawal_blocked",
+    "victim_suspicious",
+    "third_party_intervened",
+    "END"
+  ],
+  "outputs": {
+    "next_step_probs": "softmax over next_step_targets; END = the story stops here",
+    "p_loss": "probability the story ends with the victim losing money"
+  },
+  "excluded_from_inputs": [
+    "money_lost",
+    "victim_exits"
+  ],
+  "hyperparameters": {
+    "step_dim": 16,
+    "type_dim": 4,
+    "hidden": 32,
+    "dropout": 0.3,
+    "lr": 0.005,
+    "weight_decay": 0.001,
+    "batch_size": 32,
+    "max_epochs": 200,
+    "patience": 15,
+    "loss_weight": 1.0,
+    "seed": 0
+  },
+  "training": {
+    "n_stories": 487,
+    "n_fit": 414,
+    "n_early_stopping_val": 73,
+    "n_known_outcome": 277,
+    "n_lost": 101,
+    "best_epoch": 41,
+    "best_val_objective": 1.815157413482666,
+    "epochs_run": 56
+  },
+  "n_parameters": 5927,
+  "cv_metrics": {
+    "folds": 5,
+    "gru_next_step": {
+      "top1": {
+        "mean": 0.5358642723383642,
+        "std": 0.03648902174231876
+      },
+      "top3": {
+        "mean": 0.7543378458863866,
+        "std": 0.03312897832430695
+      },
+      "log_loss": {
+        "mean": 1.4698777778922496,
+        "std": 0.091841120792029
+      },
+      "top1_len1": {
+        "mean": 0.3614769619187882,
+        "std": 0.03959719604914677
+      },
+      "top1_len2": {
+        "mean": 0.5665779182058251,
+        "std": 0.03320901069321791
+      },
+      "top1_len3": {
+        "mean": 0.6849941286783392,
+        "std": 0.05475879627577563
+      },
+      "top1_len4+": {
+        "mean": 0.6660941165634533,
+        "std": 0.09660894989986604
+      }
+    },
+    "gru_loss_all_prefixes": {
+      "auc": {
+        "mean": 0.8453460198128171,
+        "std": 0.056782886605037046
+      },
+      "brier": {
+        "mean": 0.15331965645722642,
+        "std": 0.03061951782046622
+      },
+      "log_loss": {
+        "mean": 0.4746474363913241,
+        "std": 0.09991045335050387
+      },
+      "n": {
+        "mean": 183.4,
+        "std": 15.962455951387932
+      }
+    },
+    "gru_early_warning": {
+      "first_1": {
+        "auc": {
+          "mean": 0.6786401275224805,
+          "std": 0.08324646171934444
+        },
+        "brier": {
+          "mean": 0.20232834914414086,
+          "std": 0.019911620003668702
+        },
+        "log_loss": {
+          "mean": 0.5923265488584363,
+          "std": 0.04438651057333816
+        },
+        "n": {
+          "mean": 55.4,
+          "std": 5.594640292279745
+        }
+      },
+      "first_2": {
+        "auc": {
+          "mean": 0.8208232892938776,
+          "std": 0.10819073187255838
+        },
+        "brier": {
+          "mean": 0.15503770557581792,
+          "std": 0.04387256564773132
+        },
+        "log_loss": {
+          "mean": 0.4811674480033572,
+          "std": 0.12793990365395
+        },
+        "n": {
+          "mean": 55.4,
+          "std": 5.594640292279745
+        }
+      },
+      "first_3": {
+        "auc": {
+          "mean": 0.9084996226172697,
+          "std": 0.03574913883183648
+        },
+        "brier": {
+          "mean": 0.11333198203481501,
+          "std": 0.0306643617132129
+        },
+        "log_loss": {
+          "mean": 0.3706531003607929,
+          "std": 0.09446835669832417
+        },
+        "n": {
+          "mean": 55.4,
+          "std": 5.594640292279745
+        }
+      }
+    }
+  },
+  "caveats": "487 self-reported r/Scams stories, LLM-extracted labels, 277 known outcomes. The loss head sees payment steps, so part of its signal is built in. Roughly matches simple baselines; see analysis/findings.md."
+}
