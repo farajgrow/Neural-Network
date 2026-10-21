@@ -33,6 +33,7 @@ TOOL_NAME = "report_match"
 JEV_MODEL = "jev-latest"
 JEV_TIMEOUT = 15.0
 NOUL_THRESHOLD = 0.5  # a step counts as seen, and the text as a scam, above this probability
+NEXT_STEP_MIN_PROBABILITY = 0.05  # below this, Jev's next-step pick gives way to the story transitions
 
 SCHEMA = json.loads((CONTRACT_DIR / "matcher.schema.json").read_text())
 
@@ -134,6 +135,13 @@ DEFAULT_NEXT = {
     "money_lost": "victim_suspicious",
 }
 
+# Victim reactions, not script moves. They dominate story transitions because the stories are written by
+# people who got suspicious, so they are never predicted as the scammer's next step.
+REACTION_STEPS = {"victim_suspicious", "third_party_intervened", "victim_exits"}
+SCRIPT_STEPS = [s for s in STEPS if s not in REACTION_STEPS]
+# Steps the person does. Being asked to do them does not count as the step having happened.
+VICTIM_ACTION_STEPS = {"small_payment", "large_payment", "credentials_shared", "remote_access_granted", "money_lost"}
+
 _COMPILED_STEPS = {s: [re.compile(p, re.I) for p in STEP_CUES.get(s, [])] for s in STEPS}
 _COMPILED_TYPES = {t: [(re.compile(p, re.I), w) for p, w in SCAM_TYPE_CUES.get(t, [])] for t in SCAM_TYPES}
 
@@ -164,8 +172,8 @@ def next_step(scam_type: str, seen: list[str], transitions: dict | None = None) 
         return "initial_contact"
     for key in ((scam_type, last), (None, last)):
         counts = transitions.get(key)
-        if counts:
-            ranked = [s for s, _ in counts.most_common()]
+        ranked = [s for s, _ in (counts or Counter()).most_common() if s not in REACTION_STEPS]
+        if ranked:
             unseen = [s for s in ranked if s not in seen]
             return (unseen or ranked)[0]
     return DEFAULT_NEXT.get(last, "small_payment")
@@ -313,7 +321,7 @@ LOW_RISK_ADVICE = (
 
 
 def jev_questions() -> dict:
-    """One Choice for the scam type, one Noul for "is this a scam at all", one Noul per step."""
+    """Choices for the scam type and the next step, a Noul for "is this a scam at all" and a Noul per step."""
     from typesafe_sdk import Choice, Noul
 
     questions = {
@@ -324,12 +332,29 @@ def jev_questions() -> dict:
         "is_scam": Noul(instructions="Does `pasted_text` show signs of a scam attempt against the person who received it?"),
     }
     for step in STEPS:
-        questions[f"step:{step}"] = Noul(
-            instructions=(
-                f"Has this scam step already happened in `pasted_text`: {STEP_GUIDE[step]}? "
-                "Answer yes only if the text shows it happening. A step that is only proposed or requested has not happened."
+        if step in VICTIM_ACTION_STEPS:
+            instructions = (
+                f"Has the person who received `pasted_text` already done this: {STEP_GUIDE[step]}? "
+                "Being asked or pressured to do it does not count."
             )
-        )
+        elif step in REACTION_STEPS:
+            instructions = (
+                f"Does `pasted_text` show this really happening: {STEP_GUIDE[step]}? "
+                "The scammer pretending to be a bank, police or someone else stepping in does not count."
+            )
+        else:
+            instructions = (
+                f"Does `pasted_text` show this scam step: {STEP_GUIDE[step]}? "
+                "Count it if the scammer does it or asks the person to go along with it."
+            )
+        questions[f"step:{step}"] = Noul(instructions=instructions)
+    questions["next_step"] = Choice(
+        instructions=(
+            "If the person keeps engaging with the sender of `pasted_text`, what is the scammer most likely to get them "
+            "to do or experience next? Pick a step that has not happened yet."
+        ),
+        criteria={s: STEP_GUIDE[s] for s in SCRIPT_STEPS},
+    )
     return questions
 
 
@@ -343,7 +368,11 @@ def _make_jev_client():
 
 
 def jev_result(response, transitions: dict | None = None, positions: dict | None = None) -> dict:
-    """Turn a System One response into a schema-valid match. Ordering and next step come from the stories."""
+    """Turn a System One response into a schema-valid match.
+
+    Seen steps are ordered by where they usually fall in the stories. The next step is the script step Jev
+    rates most likely among those not seen yet, otherwise the most common story transition.
+    """
     if positions is None:
         positions = load_step_positions()
     type_answer = response.choices["scam_type"]
@@ -358,11 +387,20 @@ def jev_result(response, transitions: dict | None = None, positions: dict | None
     else:
         scam_type, confidence, advice = "other", p_scam, LOW_RISK_ADVICE
 
+    # Questions in one request cannot see each other, so Jev's top pick may be a step it also saw. Take the most
+    # likely step not seen yet, and fall back to the story transitions if Jev gives none of them any weight.
+    probabilities = response.choices["next_step"].probabilities
+    unseen = sorted(((p, s) for s, p in probabilities.items() if s in SCRIPT_STEPS and s not in seen), reverse=True)
+    if unseen and unseen[0][0] >= NEXT_STEP_MIN_PROBABILITY:
+        jev_next = unseen[0][1]
+    else:
+        jev_next = next_step(scam_type, seen, transitions)
+
     return validate({
         "scam_type": scam_type,
         "confidence": round(min(max(confidence, 0.0), 1.0), 2),
         "steps_so_far": seen,
-        "likely_next_step": next_step(scam_type, seen, transitions),
+        "likely_next_step": jev_next,
         "advice": advice,
     })
 

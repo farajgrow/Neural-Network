@@ -289,7 +289,7 @@ def test_load_transitions_from_real_stories():
 # Jev path (TypeSafe System One), all with fake clients
 
 
-def jev_response(scam_type="fake_job", p_type=0.8, p_scam=0.9, seen=(), p_seen=0.9):
+def jev_response(scam_type="fake_job", p_type=0.8, p_scam=0.9, seen=(), p_seen=0.9, next_step="small_payment"):
     from typesafe_sdk import ChoiceAnswer, NoulAnswer
 
     others = (1 - p_type) / (len(prompts.SCAM_TYPES) - 1)
@@ -298,7 +298,8 @@ def jev_response(scam_type="fake_job", p_type=0.8, p_scam=0.9, seen=(), p_seen=0
     for step in prompts.STEPS:
         nouls[f"step:{step}"] = NoulAnswer(type="noul", noul=p_seen if step in seen else 0.05)
     choice = ChoiceAnswer(type="choice", choice=scam_type, confidence=p_type, probabilities=probabilities)
-    return SimpleNamespace(choices={"scam_type": choice}, nouls=nouls)
+    nxt = ChoiceAnswer(type="choice", choice=next_step, confidence=0.7, probabilities={next_step: 0.7})
+    return SimpleNamespace(choices={"scam_type": choice, "next_step": nxt}, nouls=nouls)
 
 
 class FakeJev:
@@ -333,7 +334,11 @@ def test_jev_questions_cover_vocab():
     from typesafe_sdk import Choice, Noul
 
     questions = matcher.jev_questions()
-    assert set(questions) == {"scam_type", "is_scam"} | {f"step:{s}" for s in prompts.STEPS}
+    assert set(questions) == {"scam_type", "is_scam", "next_step"} | {f"step:{s}" for s in prompts.STEPS}
+    assert list(questions["next_step"].criteria) == matcher.SCRIPT_STEPS
+    assert "asked" in questions["step:small_payment"].instructions
+    assert "asks" in questions["step:platform_switch"].instructions
+    assert "pretending" in questions["step:third_party_intervened"].instructions
     assert isinstance(questions["scam_type"], Choice)
     assert list(questions["scam_type"].criteria) == prompts.SCAM_TYPES
     for step in prompts.STEPS:
@@ -358,7 +363,7 @@ def test_jev_is_tried_before_sonnet():
 
 
 def test_jev_result_orders_steps_by_story_position():
-    response = jev_response(seen=("small_payment", "initial_contact", "trust_building"))
+    response = jev_response(seen=("small_payment", "initial_contact", "trust_building"), next_step="small_payment")
     positions = {"initial_contact": 0.0, "trust_building": 0.3, "small_payment": 0.6}
     result = matcher.jev_result(response, transitions={}, positions=positions)
     assert result["steps_so_far"] == ["initial_contact", "trust_building", "small_payment"]
@@ -366,10 +371,33 @@ def test_jev_result_orders_steps_by_story_position():
 
 
 def test_jev_result_uses_story_transitions_for_next_step():
-    response = jev_response(scam_type="pig_butchering", seen=("initial_contact",))
+    response = jev_response(scam_type="pig_butchering", seen=("initial_contact",), next_step="victim_suspicious")
     transitions = {("pig_butchering", "initial_contact"): Counter({"platform_switch": 5, "trust_building": 2})}
     result = matcher.jev_result(response, transitions=transitions, positions={})
     assert result["likely_next_step"] == "platform_switch"
+
+
+def test_jev_next_step_choice_is_used_when_unseen():
+    response = jev_response(seen=("initial_contact", "urgency_pressure"), next_step="small_payment")
+    assert matcher.jev_result(response, transitions={}, positions={})["likely_next_step"] == "small_payment"
+
+
+def test_jev_next_step_skips_steps_already_seen():
+    from typesafe_sdk import ChoiceAnswer
+
+    response = jev_response(seen=("initial_contact", "platform_switch"))
+    response.choices["next_step"] = ChoiceAnswer(
+        type="choice", choice="platform_switch", confidence=0.46,
+        probabilities={"platform_switch": 0.46, "small_payment": 0.42, "large_payment": 0.07, "money_lost": 0.05},
+    )
+    assert matcher.jev_result(response, transitions={}, positions={})["likely_next_step"] == "small_payment"
+
+
+def test_next_step_never_predicts_victim_reactions():
+    table = {(None, "urgency_pressure"): Counter({"victim_suspicious": 55, "victim_exits": 9, "large_payment": 9, "small_payment": 4})}
+    assert matcher.next_step("other", ["urgency_pressure"], table) == "large_payment"
+    only_reactions = {(None, "urgency_pressure"): Counter({"victim_suspicious": 3})}
+    assert matcher.next_step("other", ["urgency_pressure"], only_reactions) == matcher.DEFAULT_NEXT["urgency_pressure"]
 
 
 def test_jev_confidence_is_type_probability_times_scam_probability():
