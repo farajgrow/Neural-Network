@@ -265,6 +265,15 @@
 .loss-box__text { font-size: 12px; line-height: 1.4; display: flex; flex-direction: column; gap: 2px; }
 .loss-box__label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
 .result__count { margin-top: -4px; }
+.model-box { border: 2px solid var(--ink); background: var(--node); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 12px; }
+.model-box__head { display: flex; justify-content: space-between; align-items: center; }
+.model-box__info { width: 18px; height: 18px; border: 1.5px solid var(--ink); background: var(--ground); font: inherit; font-size: 10px; line-height: 1; cursor: help; padding: 0; }
+.model-box__row { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+.model-box__row > :last-child { text-align: right; }
+.model-box__next { margin: -2px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; }
+.model-box__next li { display: flex; justify-content: space-between; color: var(--muted); }
+.model-box__next li.model-box__top { color: var(--ink); font-weight: 700; }
+.model-box__risk { font-size: 18px; font-weight: 700; }
 .result__advice { font-size: 12px; line-height: 1.6; }
 
 /* ---- Summary ----------------------------------------------------------- */

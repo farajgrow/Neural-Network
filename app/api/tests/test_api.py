@@ -100,7 +100,7 @@ SCHEMA = json.loads((HERE.parents[2] / "contract" / "matcher.schema.json").read_
 SOURCES = {"jev", "live", "cache", "fallback", "mock"}
 EXTRA = {
     "loss_rate_if_continues", "current_step", "context_graph", "next_step_count",
-    "current_step_out_count", "next_step_story_count", "source", "source_detail",
+    "current_step_out_count", "next_step_story_count", "source", "source_detail", "model",
 }
 DEMO_DIR = HERE.parents[1] / "demo"
 
@@ -283,3 +283,42 @@ def test_real_rule_matcher_offline(client, monkeypatch):
 @pytest.mark.parametrize("text", ["", "   \n "])
 def test_match_empty_text_422(client, text):
     assert client.post("/api/match", json={"text": text}).status_code == 422
+
+
+# ---- Our model (GRU v1) ----------------------------------------------------------
+
+def test_match_includes_model_prediction(client, monkeypatch):
+    pytest.importorskip("torch")
+    fake_matcher(monkeypatch, lambda text: (dict(PB), "jev"))
+    body = client.post("/api/match", json={"text": "x"}).json()
+    m = body["model"]
+    assert m["name"] == "gru-v1"
+    assert 0.0 <= m["p_loss"] <= 1.0
+    assert len(m["next_steps"]) == 3
+    assert m["top_next"] == m["next_steps"][0]["step"]
+    assert m["eval"]["loss_auc"] > 0.5
+
+
+def test_model_null_without_torch(client, monkeypatch):
+    import builtins
+
+    real_import = builtins.__import__
+
+    def no_model(name, *args, **kwargs):
+        if name.startswith("analysis.model"):
+            raise ImportError("no torch")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", no_model)
+    fake_matcher(monkeypatch, lambda text: (dict(PB), "jev"))
+    body = client.post("/api/match", json={"text": "x"}).json()
+    _check_match(body)
+    assert body["model"] is None
+
+
+def test_model_null_without_script_steps(client, monkeypatch):
+    pytest.importorskip("torch")
+    r = {**PB, "steps_so_far": ["money_lost"]}
+    fake_matcher(monkeypatch, lambda text: (dict(r), "jev"))
+    body = client.post("/api/match", json={"text": "x"}).json()
+    assert body["model"] is None

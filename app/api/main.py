@@ -329,6 +329,52 @@ def _graph_context(scam_type: str, current: str | None, nxt: str | None) -> dict
     return out
 
 
+# ---- Our model (analysis/model, GRU v1) ----------------------------------------
+#
+# A small GRU trained on data/stories.json predicts the next step and the chance of
+# losing money from the steps so far. It needs torch (analysis/requirements.txt);
+# without it, or when no script step was seen, `model` is null and nothing else changes.
+
+MODEL_CARD_PATH = REPO_ROOT / "analysis" / "model" / "model_card.json"
+
+
+def _model_eval() -> dict | None:
+    """Cross-validated accuracy from the model card, so the UI can show how good the model is."""
+    try:
+        cv = json.loads(MODEL_CARD_PATH.read_text())["cv_metrics"]
+        return {
+            "next_top1": round(cv["gru_next_step"]["top1"]["mean"], 3),
+            "loss_auc": round(cv["gru_loss_all_prefixes"]["auc"]["mean"], 3),
+            "folds": cv.get("folds"),
+        }
+    except (OSError, KeyError, TypeError, ValueError):
+        return None
+
+
+def _model_prediction(steps: list[str], scam_type: str) -> dict | None:
+    """Run the GRU on the matched steps; None if torch, the weights or a script step is missing."""
+    try:
+        from analysis.model.predict import predict
+    except Exception as exc:  # torch not installed, or the model package failed to import
+        log.info("model: unavailable (%s)", type(exc).__name__)
+        return None
+    try:
+        out = predict(list(steps), scam_type)
+    except ValueError:
+        return None
+    except Exception as exc:
+        log.warning("model: prediction failed: %s", type(exc).__name__)
+        return None
+    ranked = sorted(out["next_step_probs"].items(), key=lambda kv: kv[1], reverse=True)
+    return {
+        "name": "gru-v1",
+        "top_next": out["top_next"],
+        "next_steps": [{"step": s, "p": round(p, 4)} for s, p in ranked[:3]],
+        "p_loss": round(out["p_loss"], 4),
+        "eval": _model_eval(),
+    }
+
+
 @app.post("/api/match")
 def match_endpoint(req: MatchRequest) -> dict:
     result, source, detail = _run_matcher(req.text)
@@ -338,4 +384,5 @@ def match_endpoint(req: MatchRequest) -> dict:
     result.update(_graph_context(result.get("scam_type", ""), current, result.get("likely_next_step")))
     result["source"] = source
     result["source_detail"] = detail
+    result["model"] = _model_prediction(steps, result.get("scam_type", ""))
     return result

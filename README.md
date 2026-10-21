@@ -35,6 +35,7 @@ flowchart LR
 | Analysis | [`analysis/`](analysis/README.md) | Builds a transition graph per scam type: node counts, loss rates, pinch points (the biggest loss-rate jump versus the steps leading in, with a minimum support so small samples can't win), escape points (steps most often followed by the victim getting out), and sequence clustering (edit distance + agglomerative clustering) to find script variants. |
 | Matcher | [`pipeline/matcher.py`](pipeline/README.md) | Jev answers one yes/no question per step plus the scam type and the scammer's next move, and code turns that into a contract-valid result. Falls back to Sonnet, then regex rules. |
 | API | [`app/api/`](app/README.md) | Serves graphs, stories and clusters. `POST /api/match` runs the matcher with a timeout and adds `loss_rate_if_continues` from the real graph. |
+| Model | [`analysis/model/`](analysis/README.md) | A small GRU we trained on the stories to predict the next step and the chance of losing money. Shown on the matcher card as "our model". In 5-fold cross-validation it ties simple frequency baselines (next step 54% vs 55%, loss AUC 0.85 vs 0.85); see [findings](analysis/findings.md). |
 | UI | `app/web/` | The script graph (size = stories, % = known cases that lost money), click a step to read the stories behind it, script-variant picker, and the matcher. |
 
 ## Run it
@@ -43,7 +44,7 @@ Needs Python 3.12 and Node 20+. From the repo root:
 
 ```bash
 python3 -m venv .venv
-.venv/bin/pip install -r app/requirements.txt -r pipeline/requirements.txt
+.venv/bin/pip install -r app/requirements.txt -r pipeline/requirements.txt -r analysis/requirements.txt
 .venv/bin/python -m analysis.build
 .venv/bin/uvicorn app.api.main:app --port 8000
 ```

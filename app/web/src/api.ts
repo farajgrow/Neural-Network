@@ -128,6 +128,20 @@ export interface MatchResult {
   /** Edges going straight from current_step to likely_next_step (often 0). */
   next_step_count?: number | null
   current_step_out_count?: number | null
+  /** Our own GRU's forecast from the steps so far (null if the model isn't available). */
+  model?: ModelPrediction | null
+}
+
+/** Prediction from our GRU (analysis/model), trained on the stories file. */
+export interface ModelPrediction {
+  name: string
+  /** A script step, or "END" (the story stops here). */
+  top_next: string
+  next_steps: { step: string; p: number }[]
+  /** Chance the story ends with money lost, given the steps so far. */
+  p_loss: number
+  /** Cross-validated scores: next-step top-1 accuracy and loss-risk ROC AUC. */
+  eval?: { next_top1: number; loss_auc: number; folds?: number | null } | null
 }
 
 /** Error from the API, with the HTTP status (0 when the request never got a response). */
