@@ -2,14 +2,22 @@
 
 Design choices (see analysis/README.md, "Neural network"):
 
-- Inputs are the *script* only. The outcome steps `money_lost` and `victim_exits` are
-  removed from every sequence, so the model never sees how a story ended.
-- Next-step targets are the 13 script steps plus a special `END` target ("the story
-  stops here"). Predicting `money_lost` / `victim_exits` as next steps would turn the
-  next-step head into a second outcome predictor; `END` keeps it about the script.
+- Inputs are every step except the outcome steps `money_lost` and `victim_exits`, which
+  are removed from every sequence so the model never sees how a story ended. The victim
+  reactions `victim_suspicious` and `third_party_intervened` stay in the inputs on
+  purpose: they say a lot about what happens next and about loss risk.
+- Next-step targets (v2) are the scammer's MOVES only: the vocabulary minus the
+  reactions {victim_suspicious, third_party_intervened, victim_exits} and minus
+  `money_lost` (11 steps). For a prefix, the target is the next move that comes later in
+  the story, skipping any reactions in between. If no move follows, the prefix has no
+  next-step target (`next_step is None`). There is no `END` target.
+  (v1 predicted the very next step or END, and was dominated by `victim_suspicious`,
+  which is why people post at all; that is useless as a warning of the scammer's plan.)
 - The loss label (1 = lost money, 0 = escaped) belongs to the story and is copied to
-  every prefix of it. Stories with an unknown outcome get `None` and only train the
-  next-step head.
+  every prefix of it, including prefixes with no later move. Stories with an unknown
+  outcome get `None` and only train the next-step head.
+- So the two heads use different example sets: `next_step_examples` (prefixes with a
+  later move) and `loss_examples` (every prefix of a known-outcome story).
 - Splits are by story: all prefixes of one story land in the same fold.
 """
 
@@ -23,15 +31,17 @@ from pathlib import Path
 from analysis.graphs import OUTCOME_STEPS, REPO_ROOT, load_stories, load_vocab, step_sequence, story_outcome
 
 STORIES_PATH = REPO_ROOT / "data" / "stories.json"
-END = "END"
+# Same rule as pipeline/matcher.py (SCRIPT_STEPS minus money_lost), defined here on purpose.
+REACTION_STEPS = frozenset({"victim_suspicious", "third_party_intervened", "victim_exits"})
+NOT_A_MOVE = REACTION_STEPS | OUTCOME_STEPS
 
 
 @dataclass(frozen=True)
 class Vocab:
     """Index tables shared by every model.
 
-    `steps` are the script steps (inputs). Input ids are 1..len(steps); 0 is padding.
-    `targets` are the next-step classes: the script steps plus END.
+    `steps` are the input steps (outcomes removed). Input ids are 1..len(steps); 0 is padding.
+    `targets` are the next-step classes: the scammer's moves (inputs minus reactions).
     """
 
     steps: tuple[str, ...]
@@ -39,7 +49,7 @@ class Vocab:
 
     @property
     def targets(self) -> tuple[str, ...]:
-        return self.steps + (END,)
+        return tuple(s for s in self.steps if s not in NOT_A_MOVE)
 
     def step_id(self, step: str) -> int:
         return self.steps.index(step) + 1
@@ -57,7 +67,7 @@ class Story:
 
     id: str
     scam_type: str
-    script: tuple[str, ...]   # collapsed steps, outcome steps removed
+    script: tuple[str, ...]   # collapsed steps, outcome steps removed (reactions kept)
     lost: int | None          # 1 lost money, 0 escaped, None unknown
 
 
@@ -68,7 +78,7 @@ class Example:
     story_id: str
     scam_type: str
     prefix: tuple[str, ...]
-    next_step: str            # a script step or END
+    next_step: str | None     # the next scammer move later in the story, None if there is none
     lost: int | None
 
 
@@ -109,14 +119,43 @@ def load_dataset(path: Path = STORIES_PATH) -> tuple[list[Story], Vocab]:
     return [s for s in stories if s.script], vocab
 
 
+def is_move(step: str) -> bool:
+    """True for a scammer move (not a victim reaction or an outcome)."""
+    return step not in NOT_A_MOVE
+
+
+def next_moves(script: tuple[str, ...]) -> list[str | None]:
+    """For each position k, the first move strictly after it (reactions skipped), or None."""
+    out: list[str | None] = [None] * len(script)
+    upcoming = None
+    for k in range(len(script) - 1, -1, -1):
+        out[k] = upcoming
+        if is_move(script[k]):
+            upcoming = script[k]
+    return out
+
+
 def prefix_examples(stories: list[Story]) -> list[Example]:
-    """Every prefix of length >= 1 of each story, labelled with the step after it (or END)."""
+    """Every prefix of length >= 1 of each story, labelled with the next move after it.
+
+    `next_step` is None when no move follows. Use `next_step_examples` / `loss_examples`
+    to get the example set for each head.
+    """
     examples = []
     for story in stories:
-        for k in range(1, len(story.script) + 1):
-            nxt = story.script[k] if k < len(story.script) else END
+        for k, nxt in enumerate(next_moves(story.script), start=1):
             examples.append(Example(story.id, story.scam_type, story.script[:k], nxt, story.lost))
     return examples
+
+
+def next_step_examples(stories: list[Story]) -> list[Example]:
+    """Prefixes that have a later move: the next-step head's examples."""
+    return [e for e in prefix_examples(stories) if e.next_step is not None]
+
+
+def loss_examples(stories: list[Story]) -> list[Example]:
+    """Every prefix of a known-outcome story: the loss head's examples (same set as v1)."""
+    return [e for e in prefix_examples(stories) if e.lost is not None]
 
 
 def kfold_by_story(stories: list[Story], k: int = 5, seed: int = 0) -> list[tuple[list[Story], list[Story]]]:

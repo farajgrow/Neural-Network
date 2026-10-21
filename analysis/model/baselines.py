@@ -1,9 +1,11 @@
 """Simple baselines the GRU has to beat.
 
-Next step (each returns a probability for every target, so log loss is comparable):
-- MostFrequentNext: the training set's next-step distribution, ignoring the input.
-- MarkovNext(order=1): "most common next step given the last step" (what the app does
-  today), optionally per scam type.
+Next step = the scammer's next move (each returns a probability for every move, so log
+loss is comparable). Examples without a later move are ignored when fitting.
+- MostFrequentNext: the training set's next-move distribution, ignoring the input.
+- MarkovNext(order=1): "most common next move given the last step" (what the app does
+  today), optionally per scam type. The context is the last input step, exactly what
+  the GRU sees, so it can be a reaction such as victim_suspicious.
 - MarkovNext(order=2): the same given the last two steps.
 
 Higher-order or per-type counts fall back to the simpler model with additive "backoff"
@@ -36,7 +38,7 @@ class MostFrequentNext:
         self.smoothing = smoothing
 
     def fit(self, examples: list[Example]) -> "MostFrequentNext":
-        counts = Counter(e.next_step for e in examples)
+        counts = Counter(e.next_step for e in examples if e.next_step is not None)
         raw = np.array([counts[t] for t in self.vocab.targets], dtype=float) + self.smoothing
         self.probs = raw / raw.sum()
         return self
@@ -73,6 +75,8 @@ class MarkovNext:
         self.prior = MostFrequentNext(self.vocab).fit(examples).probs
         self.counts: dict[tuple, Counter] = defaultdict(Counter)
         for e in examples:
+            if e.next_step is None:
+                continue
             for context in self._contexts(e):
                 self.counts[context][e.next_step] += 1
         return self
@@ -113,7 +117,7 @@ class LogisticLoss:
         self.epochs = epochs
 
     def features(self, examples: list[Example]) -> np.ndarray:
-        """One row per example: [step seen? x13, scam type one-hot x6]."""
+        """One row per example: [input step seen? x13, scam type one-hot x6]."""
         x = np.zeros((len(examples), len(self.vocab.steps) + len(self.vocab.scam_types)))
         for i, e in enumerate(examples):
             for step in e.prefix:

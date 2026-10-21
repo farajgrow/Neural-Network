@@ -7,9 +7,9 @@ import pytest
 
 from analysis.graphs import OUTCOME_STEPS, load_vocab
 from analysis.model.baselines import BaseRateLoss, LogisticLoss, MarkovNext, MostFrequentNext
-from analysis.model.data import (END, Story, holdout_by_story, kfold_by_story, load_dataset, make_vocab,
-                                 prefix_examples, to_story)
-from analysis.model.metrics import calibration_table, roc_auc, topk_accuracy
+from analysis.model.data import (REACTION_STEPS, Story, holdout_by_story, kfold_by_story, load_dataset,
+                                 loss_examples, make_vocab, next_step_examples, prefix_examples, to_story)
+from analysis.model.metrics import calibration_table, roc_auc, top1_unseen, topk_accuracy
 
 RAW_VOCAB = load_vocab()
 VOCAB = make_vocab(RAW_VOCAB)
@@ -38,11 +38,21 @@ def test_outcome_steps_are_not_inputs_or_targets():
     assert not OUTCOME_STEPS & set(VOCAB.targets)
 
 
-def test_no_outcome_steps_in_real_data_inputs():
+def test_targets_are_moves_only():
+    assert len(VOCAB.targets) == 11
+    assert not (REACTION_STEPS | OUTCOME_STEPS) & set(VOCAB.targets)
+    assert "END" not in VOCAB.targets
+    # reactions are still inputs
+    assert {"victim_suspicious", "third_party_intervened"} <= set(VOCAB.steps)
+
+
+def test_no_outcome_steps_in_real_data_inputs_and_only_moves_as_targets():
     stories, _ = load_dataset()
     for e in prefix_examples(stories):
         assert not OUTCOME_STEPS & set(e.prefix)
-        assert e.next_step not in OUTCOME_STEPS
+    for e in next_step_examples(stories):
+        assert e.next_step in VOCAB.targets
+        assert e.next_step not in REACTION_STEPS | OUTCOME_STEPS | {"END"}
 
 
 def test_prefix_generation():
@@ -50,9 +60,26 @@ def test_prefix_generation():
     assert [(e.prefix, e.next_step) for e in examples] == [
         (("initial_contact",), "trust_building"),
         (("initial_contact", "trust_building"), "small_payment"),
-        (("initial_contact", "trust_building", "small_payment"), END),
+        (("initial_contact", "trust_building", "small_payment"), None),
     ]
     assert all(e.lost == 1 for e in examples)
+
+
+def test_reactions_are_skipped_when_finding_the_next_move():
+    s = story("a", ["initial_contact", "victim_suspicious", "small_payment"])
+    examples = next_step_examples([s])
+    assert [(e.prefix, e.next_step) for e in examples] == [
+        (("initial_contact",), "small_payment"),
+        (("initial_contact", "victim_suspicious"), "small_payment"),
+    ]
+
+
+def test_prefixes_without_a_later_move_have_no_next_step_example_but_keep_loss():
+    s = story("a", ["initial_contact", "small_payment", "victim_suspicious", "third_party_intervened"], lost=0)
+    assert [e.prefix for e in next_step_examples([s])] == [("initial_contact",)]
+    assert len(loss_examples([s])) == 4                      # every prefix still trains/tests the loss head
+    assert next_step_examples([story("b", ["victim_suspicious"])]) == []
+    assert loss_examples([story("c", ["initial_contact"], lost=None)]) == []
 
 
 def test_unknown_outcome_gives_no_loss_label():
@@ -82,6 +109,7 @@ def test_markov_baseline_on_tiny_dataset():
                story("4", [a, c], scam_type="romance"), story("5", [a, c], scam_type="romance")]
     examples = prefix_examples(stories)
     query = prefix_examples([story("q", [a], scam_type="fake_job")])[:1]
+    assert sum(e.next_step is None for e in examples) == 5     # last prefixes are ignored by fit
 
     markov = MarkovNext(VOCAB, order=1, backoff=0.0).fit(examples)
     probs = markov.predict_proba(query)[0]
@@ -93,9 +121,11 @@ def test_markov_baseline_on_tiny_dataset():
     assert probs[VOCAB.target_id(b)] == pytest.approx(2 / 3)   # within fake_job: a -> b in 2 of 3
     assert VOCAB.targets[int(np.argmax(probs))] == b
 
-    # every story ends after its second step
-    after_b = by_type.predict_proba(prefix_examples([story("q", [a, b])])[1:])[0]
-    assert VOCAB.targets[int(np.argmax(after_b))] == END
+    # no move ever follows b (there is no END class), so with backoff it falls back to simpler contexts
+    smoothed = MarkovNext(VOCAB, order=1, by_type=True).fit(examples)
+    after_b = smoothed.predict_proba(prefix_examples([story("q", [a, b])])[1:])[0]
+    assert after_b.shape == (len(VOCAB.targets),)
+    assert after_b.sum() == pytest.approx(1.0)
 
 
 def test_markov_backs_off_for_unseen_context():
@@ -129,6 +159,8 @@ def test_metrics_on_hand_examples():
     probs = np.array([[0.6, 0.3, 0.1], [0.2, 0.3, 0.5]])
     assert topk_accuracy(probs, np.array([1, 2]), 1) == 0.5
     assert topk_accuracy(probs, np.array([1, 2]), 2) == 1.0
+    seen = np.array([[True, False, False], [False, False, True]])
+    assert top1_unseen(probs, np.array([1, 1]), seen) == 1.0       # row 1: 0 seen -> 1; row 2: 2 seen -> 1
     table = calibration_table(np.array([0.05, 0.15, 0.95]), np.array([0, 1, 1]), bins=5)
     assert table[0]["n"] == 2 and table[0]["observed"] == 0.5 and table[4]["n"] == 1
 
@@ -147,6 +179,7 @@ def test_gru_forward_shape_and_masked_loss():
     assert next_logits.shape == (2, 3, len(VOCAB.targets))
     assert loss_logits.shape == (2, 3)
     assert batch["mask"].sum() == 4                      # 3 + 1 real positions
+    assert batch["next_mask"].sum() == 2                 # only story 1's first two positions have a later move
     assert batch["loss_mask"].sum() == 3                 # only story 1 has a known outcome
 
     # Changing the unknown story's loss logits must not change the loss-head term.
@@ -186,10 +219,37 @@ def test_predict_returns_valid_probabilities():
     result = predict(["initial_contact", "platform_switch", "money_lost"], "pig_butchering")
     probs = result["next_step_probs"]
     assert set(probs) == set(VOCAB.targets)
+    assert "END" not in probs and not (REACTION_STEPS | OUTCOME_STEPS) & set(probs)
     assert math.isclose(sum(probs.values()), 1.0, rel_tol=1e-5)
     assert all(0.0 <= p <= 1.0 for p in probs.values())
     assert result["top_next"] == max(probs, key=probs.get)
     assert 0.0 <= result["p_loss"] <= 1.0
     assert predict(["initial_contact"], "not_a_type")["p_loss"] >= 0.0      # falls back to "other"
+    reacted = predict(["initial_contact", "victim_suspicious"], "fake_job")["next_step_probs"]
+    assert set(reacted) == set(VOCAB.targets)
+    assert math.isclose(sum(reacted.values()), 1.0, rel_tol=1e-5)
     with pytest.raises(ValueError):
         predict(["money_lost"], "fake_job")
+
+
+# --- learning curve -----------------------------------------------------------------------
+
+def test_learning_curve_subsamples_by_story_without_leaking_into_test():
+    pytest.importorskip("torch")
+    from analysis.model.learning_curve import FRACTIONS, subsample_by_story
+
+    stories, _ = load_dataset()
+    train, test = kfold_by_story(stories, k=5, seed=0)[0]
+    test_ids = {s.id for s in test}
+    previous: set[str] = set()
+    for fraction in FRACTIONS:
+        subset = subsample_by_story(train, fraction, seed=0)
+        ids = {s.id for s in subset}
+        assert len(ids) == len(subset)                              # whole stories, no duplicates
+        assert ids <= {s.id for s in train} and not ids & test_ids  # never a test story
+        assert previous <= ids                                      # nested: more data adds stories
+        assert {s.scam_type for s in subset} == {s.scam_type for s in train}   # every type kept
+        assert abs(len(subset) - fraction * len(train)) <= 6        # ~fraction of stories (rounding per type)
+        assert ids == {s.id for s in subsample_by_story(train, fraction, seed=0)}   # deterministic
+        previous = ids
+    assert previous == {s.id for s in train}                        # 100% is the full training set

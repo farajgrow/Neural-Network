@@ -60,79 +60,101 @@ Demo line, framed honestly: *"There are two versions of this scam. In one the vi
 - Cluster loss rates with `n_known` under about 10 (most within-type variants). The UI should show `n_known` next to any cluster loss rate.
 - Escape points with 2 or 3 exits (everything except `victim suspicious` and, in the all-types graph, `initial_contact` and `urgency_pressure`).
 
-## Neural network (v1)
+## Neural network (v2: next scam move)
 
-A small GRU (`analysis/model/`, about 5,900 parameters) reads the steps seen so far plus the scam type. It has two outputs: the next step, and the probability that the story ends with the victim losing money. It was compared with simple baselines using 5-fold cross-validation **split by story**, so no story appears in both training and testing. Folds are stratified by scam type and the seed is fixed. Each test story contributes all of its prefixes. Rerun with `python -m analysis.model.train` (about 5 s on a laptop CPU).
+A small GRU (`analysis/model/`, about 5,800 parameters) reads the steps seen so far plus the scam type. It has two outputs: **the scammer's next move**, and the probability that the story ends with the victim losing money. It is compared with simple baselines using 5-fold cross-validation **split by story**, so no story appears in both training and testing. Folds are stratified by scam type and the seed is fixed. Rerun with `python -m analysis.model.train` (about 7 s on a laptop CPU).
 
-**Result in one line: the GRU matches the baselines. It does not beat them.** On 487 stories, a first-order Markov table and a logistic regression already capture what the GRU learns.
+**Why v2:** v1 predicted "the very next step, or END". In these posts the most common next step by far is `victim_suspicious` (331 of 953 non-END transitions), because people post when they get suspicious, so v1 mostly predicted `victim_suspicious` or END, which says nothing about what the scammer will try next. v2 predicts the next scammer move instead. Next-step numbers for v1 and v2 are not comparable (different targets), so only v2 is reported here.
+
+**Result in one line: the GRU ties the baselines. It does not beat them.** Predicting the scammer's next move is hard on this data: the best models get it right about 36% of the time (top-3: about 66%), and a Markov table with the scam type does as well as the GRU.
 
 ### Setup
 
-- **Inputs:** the collapsed script steps with `money_lost` and `victim_exits` removed, so the model never sees the ending. **Next-step targets:** the 13 script steps plus `END` ("the story stops here"). 487 stories give 1,440 prefixes, and `END` is the most common target (34%).
-- **Loss label:** taken from the story and applied to every prefix of it. Only known outcomes count (277 stories: 101 lost, 176 escaped). Unknown-outcome stories still train the next-step head, and the loss head is masked for them.
-- **Equal tuning budget:** the GRU uses 15% of the training stories for early stopping. Each baseline gets that same split to choose its one setting (Markov backoff strength from {1, 3, 10, 30}, logistic L2 from {0.001, 0.01, 0.1}). The GRU hyperparameters were set once and were not tuned against test folds. A Markov baseline with weak smoothing, as in an earlier draft, loses on log loss for reasons unrelated to the network, so that comparison would have been unfair.
+- **Moves** are the vocabulary minus the victim reactions (`victim_suspicious`, `third_party_intervened`, `victim_exits`) and minus `money_lost`: 11 steps. This is the same rule as the app matcher's script steps minus `money_lost`.
+- **Next-step target:** for each prefix, the next move that comes later in the story, **skipping reactions in between**. For `[initial_contact, victim_suspicious, small_payment]`, the prefix `[initial_contact]` has target `small_payment`. A prefix with no later move (for example one that ends in the victim getting suspicious and leaving) produces **no** next-step example. There is no `END` class. 487 stories give 1,440 prefixes, but only **554 next-step examples, from 315 stories**. Most common targets: `urgency_pressure` 95, `authority_claim` 88, `fake_proof_shown` 68, `trust_building` 62.
+- **Inputs** keep every step except the outcomes (`money_lost`, `victim_exits`). **Reactions stay in the inputs on purpose:** `victim_suspicious` and `third_party_intervened` say a lot about what comes next and about loss risk, they are just never something to predict. The model never sees how a story ended.
+- **Loss label:** unchanged from v1. It is taken from the story and applied to every prefix, **including prefixes with no later move**, so the loss head trains and is scored on exactly the same 917 known-outcome prefixes as v1 (277 stories: 101 lost, 176 escaped). The two heads therefore use different example sets; in the GRU each position is masked separately for each head.
+- **Equal tuning budget:** the GRU uses 15% of the training stories for early stopping. Each baseline gets that same split to choose its one setting (Markov backoff strength from {1, 3, 10, 30}, logistic L2 from {0.001, 0.01, 0.1}). The GRU hyperparameters are the v1 ones, not tuned against test folds. Markov contexts are the last input step(s), exactly what the GRU sees, so a context can be a reaction.
+- **Top-1 among unseen moves** removes moves already in the prefix before taking the top prediction, which is what the app shows. Only 4 of 554 targets repeat a move already seen, so it is close to plain top-1.
 
-### Next step (mean ± std over 5 folds, 14 classes)
+### Next scam move (mean ± std over 5 folds, 11 classes, 554 examples)
 
-| Model | Top-1 | Top-3 | Log loss | Top-1, 1 step seen | Top-1, 4+ steps seen |
-|---|---|---|---|---|---|
-| Most frequent next step | 0.338 ± 0.010 | 0.626 ± 0.020 | 2.069 ± 0.057 | 0.086 ± 0.017 | 0.657 ± 0.081 |
-| Markov, last step | 0.498 ± 0.033 | 0.727 ± 0.026 | 1.534 ± 0.099 | 0.275 ± 0.038 | 0.676 ± 0.071 |
-| Markov, last step + scam type | **0.545 ± 0.031** | 0.753 ± 0.026 | 1.467 ± 0.100 | **0.388 ± 0.030** | 0.668 ± 0.074 |
-| Markov, last 2 steps + type | **0.545 ± 0.034** | **0.758 ± 0.033** | **1.466 ± 0.108** | 0.378 ± 0.040 | 0.666 ± 0.079 |
-| **GRU** | 0.536 ± 0.036 | 0.754 ± 0.033 | 1.470 ± 0.092 | 0.361 ± 0.040 | 0.666 ± 0.097 |
+| Model | Top-1 | Top-1, unseen moves | Top-3 | Log loss | Top-1, 1 step seen | Top-1, 4+ steps seen |
+|---|---|---|---|---|---|---|
+| Most frequent move | 0.160 ± 0.036 | 0.172 ± 0.036 | 0.441 ± 0.025 | 2.216 ± 0.051 | 0.111 ± 0.072 | 0.235 ± 0.139 |
+| Markov, last step | 0.283 ± 0.029 | 0.287 ± 0.033 | 0.619 ± 0.060 | 1.955 ± 0.095 | 0.248 ± 0.021 | 0.395 ± 0.197 |
+| Markov, last step + scam type | 0.344 ± 0.029 | 0.350 ± 0.021 | **0.670 ± 0.056** | **1.770 ± 0.092** | **0.356 ± 0.051** | 0.357 ± 0.186 |
+| Markov, last 2 steps + type | 0.358 ± 0.030 | **0.368 ± 0.023** | 0.658 ± 0.070 | 1.797 ± 0.113 | **0.356 ± 0.051** | 0.429 ± 0.330 |
+| **GRU** | **0.359 ± 0.034** | 0.361 ± 0.024 | 0.664 ± 0.057 | 1.779 ± 0.079 | 0.334 ± 0.028 | **0.497 ± 0.126** |
 
-Paired per fold on the same test stories, GRU minus Markov (last step + type): top-1 −0.009 ± 0.011, log loss +0.003 ± 0.019. That is a tie, with the GRU slightly behind on top-1.
+Paired per fold on the same test stories, GRU minus Markov (last step + type): top-1 +0.015 ± 0.034, top-1 among unseen moves +0.011 ± 0.024, log loss +0.008 ± 0.055. That is a tie. The GRU's lead with 4+ steps seen rests on about 6 test examples per fold (31 in total), so it is noise, not a finding.
 
-### Loss risk (all prefixes of known-outcome test stories)
+### Loss risk (all prefixes of known-outcome test stories, same 917 prefixes as v1)
 
 | Model | ROC AUC | Brier | Log loss |
 |---|---|---|---|
 | Training base rate | 0.500 ± 0.000 | 0.242 ± 0.012 | 0.677 ± 0.024 |
 | Logistic regression (steps seen + type) | 0.848 ± 0.044 | 0.156 ± 0.021 | 0.484 ± 0.058 |
-| **GRU** | 0.845 ± 0.057 | 0.153 ± 0.031 | 0.475 ± 0.100 |
+| **GRU** | 0.839 ± 0.055 | 0.153 ± 0.031 | 0.481 ± 0.100 |
 
-Paired per fold, GRU minus logistic: AUC −0.003 ± 0.029, Brier −0.003 ± 0.016. Another tie. For reference, the rule "has the victim paid yet?" alone gets AUC 0.75.
+The baselines are identical to v1, which confirms the loss examples did not change. Paired per fold, GRU minus logistic: AUC −0.009 ± 0.021, Brier −0.003 ± 0.013. Another tie; the GRU's loss head moved slightly (v1: AUC 0.845) only because it now shares its network with a different next-step task. For reference, the rule "has the victim paid yet?" alone gets AUC 0.75.
 
 Calibration (out-of-fold predictions pooled, 917 prefixes; predicted → observed loss rate):
 
 | Bin | Logistic n | Logistic pred → obs | GRU n | GRU pred → obs |
 |---|---|---|---|---|
-| 0.0–0.2 | 249 | 0.13 → 0.08 | 284 | 0.08 → 0.12 |
-| 0.2–0.4 | 314 | 0.30 → 0.31 | 317 | 0.29 → 0.31 |
-| 0.4–0.6 | 141 | 0.46 → 0.46 | 73 | 0.48 → 0.42 |
-| 0.6–0.8 | 100 | 0.73 → 0.92 | 44 | 0.71 → 0.61 |
-| 0.8–1.0 | 113 | 0.91 → 0.85 | 199 | 0.93 → 0.90 |
+| 0.0–0.2 | 249 | 0.13 → 0.08 | 337 | 0.08 → 0.12 |
+| 0.2–0.4 | 314 | 0.30 → 0.31 | 285 | 0.30 → 0.34 |
+| 0.4–0.6 | 141 | 0.46 → 0.46 | 57 | 0.48 → 0.46 |
+| 0.6–0.8 | 100 | 0.73 → 0.92 | 42 | 0.68 → 0.64 |
+| 0.8–1.0 | 113 | 0.91 → 0.85 | 196 | 0.94 → 0.91 |
 
-Both models are roughly calibrated. The GRU pushes more prefixes into the extreme bins.
+Both are roughly calibrated. The GRU pushes more prefixes into the extreme bins.
 
 ### Early warning: loss risk from only the first 1, 2 or 3 steps
 
-This is the product question. One prediction is made per known-outcome test story from its first k steps. Stories shorter than k use all their steps. ROC AUC, with Brier in brackets:
+One prediction per known-outcome test story from its first k steps (all steps if shorter). ROC AUC, with Brier in brackets:
 
 | Model | First 1 step | First 2 steps | First 3 steps |
 |---|---|---|---|
 | Base rate | 0.500 (0.234) | 0.500 (0.234) | 0.500 (0.234) |
 | Logistic regression | **0.736 ± 0.056** (0.189) | **0.832 ± 0.086** (0.153) | **0.911 ± 0.028** (0.121) |
-| GRU | 0.679 ± 0.083 (0.202) | 0.821 ± 0.108 (0.155) | 0.908 ± 0.036 (0.113) |
+| GRU | 0.692 ± 0.097 (0.196) | 0.815 ± 0.103 (0.149) | 0.907 ± 0.025 (0.112) |
 
-Read these numbers with care. 395 of 487 stories start with `initial_contact`, so the first-step number mostly reflects the scam type and the few stories that open with a payment or with suspicion. Most stories are short (median 3 script steps), so "first 3 steps" is often the whole story. That includes `victim_suspicious` and payment steps, which sit right next to the outcome. Within the first 3 steps, 27% of known-outcome stories already contain a payment. Early warning after 1 step is weak for both models, and the logistic regression is at least as good as the GRU there.
+Read these with care. 395 of 487 stories start with `initial_contact`, so the first-step number mostly reflects the scam type. Most stories are short (median 3 steps), so "first 3 steps" is often the whole story, including `victim_suspicious` and payment steps that sit right next to the outcome.
 
-### What the GRU adds, and what it doesn't
+### Honest conclusion
 
-- **It doesn't add accuracy.** With 13 steps, median story length 3, and about 390 training stories per fold, a step plus the scam type already explains nearly everything predictable. A second-order Markov model does no better than a first-order one, which suggests there is little long-range order for a recurrent network to find. On the loss side, the bag-of-steps logistic regression is as good as the GRU, so the order of steps adds little beyond which steps happened.
-- **What it does add:** one model for both questions, smooth probabilities with no hand-tuned backoff, and a design that would scale to longer histories and richer inputs (for example message text embeddings) if the data supported them. Because the GRU is causal, one pass over a story trains on every prefix at once.
-- **For the app today,** the Markov table is just as accurate and easier to explain. The GRU is a credible v1 to grow into, not an upgrade yet.
+- **v2 asks the right question, but the data only supports a weak answer.** Knowing the last step and the scam type, any of the decent models names the scammer's next move about a third of the time and has it in its top 3 about two thirds of the time. The GRU is level with a per-type Markov table on every metric once fold noise is taken into account.
+- **Payments dominate late in a script.** After a typical "contact → switch platform → fake proof → urgency" sequence the GRU's top move is `large_payment` for every scam type we tried, with very different confidence (pig_butchering about 0.93, the others 0.35–0.45). That matches the stories, but it means the model is mostly saying "they will ask for money next", which is useful as a warning but not very specific.
+- **The model can still rank the current step highly** (for example `urgency_pressure` after `urgency_pressure`), because collapsed repeats are rare in training and the head does not learn to rule them out. The app's display filter, which drops steps already seen, is still worth keeping.
+- **For the app today,** the per-type Markov table is as accurate and easier to explain. The GRU is a fair, honest v2 that gives both answers from one model; it is not an accuracy upgrade.
 
 ### Caveats
 
-- **Small data:** 487 stories, only 277 with known outcomes (101 losses). Fold-to-fold std is 0.03–0.10, larger than any gap between the GRU and the baselines.
+- **Small data:** only 554 next-move examples from 315 stories, and 277 known outcomes (101 losses). Fold-to-fold std is 0.02–0.10 overall and much larger for long prefixes, bigger than any gap between the GRU and the baselines.
 - **Labels are LLM-extracted** from **self-reported** Reddit posts that lean toward dramatic cases. The models learn the extractor's habits as well as the scams.
-- **The loss head is partly circular.** Payment steps are inputs, and you can't lose money without paying (§1: 92% of stories with a payment lost money). Much of the AUC comes from "has the victim paid yet?". `victim_suspicious` is the same kind of near-outcome signal. A high AUC here does not mean the model foresees losses before the victim commits.
-- **`END` is partly an artefact of storytelling.** It means the post stopped there, which is not the same as the scam stopping.
+- **The loss head is partly circular.** Payment steps are inputs, and you can't lose money without paying (§1: 92% of stories with a payment lost money). `victim_suspicious` is the same kind of near-outcome signal. A high AUC here does not mean the model foresees losses before the victim commits.
+- **"No later move" is partly an artefact of storytelling.** Many posts stop when the victim gets suspicious, so the scripts we see are cut short, and late moves are under-represented.
+
+### Does more data help?
+
+Learning curve (`python -m analysis.model.learning_curve`, about 10 s, writes `learning_curve.json`): in each of the same 5 folds, every model is retrained on 25%, 50%, 75% and 100% of that fold's training stories (subsampled by story, stratified by scam type, seeded and nested) and always scored on the full test fold. Mean ± std over folds:
+
+| Training stories | Markov (last step + type) top-1 | GRU top-1 | Markov log loss | GRU log loss | Logistic loss AUC | GRU loss AUC | Logistic Brier | GRU Brier |
+|---|---|---|---|---|---|---|---|---|
+| 97 (25%) | 0.316 ± 0.019 | 0.340 ± 0.039 | 2.018 ± 0.210 | 2.025 ± 0.065 | 0.824 ± 0.056 | 0.802 ± 0.036 | 0.176 ± 0.022 | 0.176 ± 0.033 |
+| 194 (50%) | 0.352 ± 0.015 | 0.339 ± 0.044 | 1.848 ± 0.087 | 1.917 ± 0.064 | 0.826 ± 0.051 | 0.824 ± 0.030 | 0.162 ± 0.025 | 0.160 ± 0.021 |
+| 292 (75%) | 0.343 ± 0.023 | 0.370 ± 0.064 | 1.801 ± 0.094 | 1.865 ± 0.124 | 0.849 ± 0.053 | 0.839 ± 0.047 | 0.153 ± 0.027 | 0.157 ± 0.023 |
+| 390 (100%) | 0.344 ± 0.029 | 0.359 ± 0.034 | 1.770 ± 0.092 | 1.779 ± 0.079 | 0.848 ± 0.044 | 0.839 ± 0.055 | 0.156 ± 0.021 | 0.153 ± 0.031 |
+
+- **Next-move top-1 has flattened.** Both models sit around 0.34–0.37 from 50% of the data on; the ups and downs are smaller than the fold std. **Next-move log loss is still falling at 100%** for both (Markov 2.02 → 1.77, GRU 2.03 → 1.78), so more stories would make the probabilities better calibrated even if the top pick rarely changes.
+- **Loss risk is close to a plateau.** Logistic AUC stops improving after 75% (0.849 → 0.848); the GRU's AUC rises from 0.80 to 0.84 and is flat over the last step. Brier still creeps down slightly.
+- **The GRU's gap to the baseline does not change in a consistent way with more data.** Paired per fold, GRU minus Markov top-1 is +0.024, −0.013, +0.027, +0.015 at 25/50/75/100% (std 0.03–0.05), and GRU minus logistic AUC is −0.023, −0.002, −0.010, −0.009. The GRU's log loss does catch up with Markov at 100% (gap +0.06 at 50–75%, +0.01 at 100%), which is the only hint that the network gains more from extra data than the count table, and it is within noise.
+- **Rough estimate, not a measurement:** a straight-line fit of each metric against ln(number of training stories) over these four points gives, at 2x and 5x today's data, next-move top-1 of about 0.36 / 0.38 (Markov) and 0.38 / 0.39 (GRU), next-move log loss of about 1.63 / 1.46 (Markov) and 1.68 / 1.52 (GRU), and loss AUC of about 0.86 / 0.88 (both). That is roughly +0.01–0.02 top-1 or AUC per doubling. Four noisy points, one dataset, and curves that usually flatten faster than a log fit assumes: treat these as an optimistic upper bound. More stories of the same kind would help a little; they would not by themselves make the GRU clearly better than the baselines.
 
 ### What more data would change
 
 - With thousands of stories, especially in the small types (pig_butchering 17, romance 26), the per-type and second-order contexts would stop being sparse. That is where a GRU could start to pull ahead of count tables, since it shares strength across similar contexts.
-- More known outcomes would allow an honest **pre-payment** evaluation: train and test loss risk only on prefixes before any payment. That is the warning that matters, and it is too thin to measure with 277 outcomes.
-- Richer inputs per step (the message text, amounts, platform) would give the sequence model something the Markov table can't use. Without them it has no edge to exploit.
+- More known outcomes would allow an honest **pre-payment** evaluation of loss risk: train and test only on prefixes before any payment. That is the warning that matters, and it is too thin to measure with 277 outcomes.
+- Richer inputs per step (the message text, amounts, platform) would give the sequence model something the Markov table can't use.

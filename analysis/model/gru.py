@@ -1,7 +1,7 @@
 """A small GRU with two heads: the next step, and the chance the story ends in a loss.
 
     step embedding (16) ┐
-                        ├─ concat ─> GRU (1 layer, 32) ─> dropout ─┬─> next-step logits (14)
+                        ├─ concat ─> GRU (1 layer, 32) ─> dropout ─┬─> next-move logits (11)
     scam-type emb. (4)  ┘                                          └─> loss logit (1)
 
 The GRU reads left to right, so its output at position t only depends on steps 1..t.
@@ -20,7 +20,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from analysis.model.data import END, Example, Story, Vocab
+from analysis.model.data import Example, Story, Vocab, next_moves
 
 
 @dataclass
@@ -69,27 +69,32 @@ class ScamGRU(nn.Module):
 
 
 def encode_stories(stories: list[Story], vocab: Vocab) -> dict[str, torch.Tensor]:
-    """Pad stories into tensors. Position t holds step t and the target after it.
+    """Pad stories into tensors. Position t holds step t and the next move after it.
 
-    `mask` marks real positions; `loss_mask` marks real positions of known-outcome stories.
+    `mask` marks real positions; `next_mask` marks real positions that have a later move
+    (the next-step head's examples); `loss_mask` marks real positions of known-outcome
+    stories (the loss head's examples, including positions with no later move).
     """
     n, t = len(stories), max(len(s.script) for s in stories)
     steps = torch.zeros(n, t, dtype=torch.long)
     targets = torch.zeros(n, t, dtype=torch.long)
     mask = torch.zeros(n, t, dtype=torch.bool)
+    next_mask = torch.zeros(n, t, dtype=torch.bool)
     lost = torch.zeros(n, t)
     loss_mask = torch.zeros(n, t, dtype=torch.bool)
     for i, story in enumerate(stories):
         length = len(story.script)
         steps[i, :length] = torch.tensor([vocab.step_id(s) for s in story.script])
-        nexts = list(story.script[1:]) + [END]
-        targets[i, :length] = torch.tensor([vocab.target_id(s) for s in nexts])
+        for k, nxt in enumerate(next_moves(story.script)):
+            if nxt is not None:
+                targets[i, k] = vocab.target_id(nxt)
+                next_mask[i, k] = True
         mask[i, :length] = True
         if story.lost is not None:
             lost[i, :length] = float(story.lost)
             loss_mask[i, :length] = True
     types = torch.tensor([vocab.type_id(s.scam_type) for s in stories])
-    return {"steps": steps, "types": types, "targets": targets, "mask": mask,
+    return {"steps": steps, "types": types, "targets": targets, "mask": mask, "next_mask": next_mask,
             "lost": lost, "loss_mask": loss_mask}
 
 
@@ -104,13 +109,17 @@ def encode_prefixes(prefixes: list[tuple[str, ...]], scam_types: list[str], voca
 
 
 def masked_losses(next_logits, loss_logits, batch) -> tuple[torch.Tensor, torch.Tensor]:
-    """Mean cross-entropy over real positions, and mean BCE over known-outcome positions only.
+    """Mean cross-entropy over positions with a later move, and mean BCE over known-outcome positions.
 
     If the batch has no known outcomes the loss-head term is 0, so unknown-outcome
-    stories never push the loss head in either direction.
+    stories never push the loss head in either direction. Likewise the next-step term
+    is 0 for a batch with no position that has a later move.
     """
-    mask = batch["mask"]
-    next_loss = F.cross_entropy(next_logits[mask], batch["targets"][mask])
+    next_mask = batch["next_mask"]
+    if next_mask.any():
+        next_loss = F.cross_entropy(next_logits[next_mask], batch["targets"][next_mask])
+    else:
+        next_loss = next_logits.sum() * 0.0
     loss_mask = batch["loss_mask"]
     if loss_mask.any():
         risk_loss = F.binary_cross_entropy_with_logits(loss_logits[loss_mask], batch["lost"][loss_mask])

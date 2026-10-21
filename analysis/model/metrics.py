@@ -70,13 +70,31 @@ def calibration_table(p: np.ndarray, y: np.ndarray, bins: int = 5) -> list[dict]
     return table
 
 
-def next_step_metrics(probs: np.ndarray, targets: np.ndarray, prefix_lengths: np.ndarray) -> dict:
-    """Top-1 / top-3 accuracy and log loss, plus top-1 accuracy by prefix length (1, 2, 3, 4+)."""
+def top1_unseen(probs: np.ndarray, targets: np.ndarray, seen: np.ndarray) -> float:
+    """Top-1 accuracy after removing classes already seen in the prefix (what the app shows).
+
+    `seen` is a boolean (n, n_classes) mask. A row whose true class was already seen counts
+    as a miss. Rows where every class was seen also count as a miss.
+    """
+    masked = np.where(seen, -1.0, probs)
+    hits = [(not row_seen.all()) and int(np.argmax(row)) == t
+            for row, row_seen, t in zip(masked, seen, targets)]
+    return float(np.mean(hits))
+
+
+def next_step_metrics(probs: np.ndarray, targets: np.ndarray, prefix_lengths: np.ndarray,
+                      seen: np.ndarray | None = None) -> dict:
+    """Top-1 / top-3 accuracy and log loss, plus top-1 accuracy by prefix length (1, 2, 3, 4+).
+
+    With `seen` (boolean mask of classes already in the prefix), also top-1 among unseen classes.
+    """
     out = {
         "top1": topk_accuracy(probs, targets, 1),
         "top3": topk_accuracy(probs, targets, 3),
         "log_loss": multiclass_log_loss(probs, targets),
     }
+    if seen is not None:
+        out["top1_unseen"] = top1_unseen(probs, targets, seen)
     buckets = np.minimum(prefix_lengths, 4)
     for b in (1, 2, 3, 4):
         mask = buckets == b
