@@ -48,12 +48,13 @@ CFPB_COMPLAINT_URL = "https://www.consumerfinance.gov/data-research/consumer-com
 ARCTIC_QUERIES = {
     "pig_butchering": ["pig butchering", "crypto investment", "wrong number"],
     "fake_job": ["task job", "remote job recruiter", "telegram job"],
-    "impersonation": ["bank fraud department", "IRS", "police warrant", "tech support"],
+    "impersonation": ["fraud department", "IRS", "police warrant", "tech support"],
     "marketplace": ["marketplace", "zelle", "overpayment"],
     "romance": ["romance", "dating"],
 }
 PER_QUERY_TARGET = 35
 MAX_PAGES_PER_QUERY = 4
+RECENT_FALLBACK_DAYS = 365
 
 # High-score slice: sample one window every TOP_STEP_MONTHS months and keep the
 # highest-scoring usable posts from it. Arctic Shift cannot sort by score, so
@@ -213,20 +214,28 @@ def arctic_pages(fetcher: Fetcher, max_pages: int, **params: str | int):
         before = min(int(p["created_utc"]) for p in posts)
 
 
+def collect_query(fetcher: Fetcher, store: PostStore, query: str, **params: int) -> int:
+    label = f"arctic:{query}"
+    added = 0
+    for page in arctic_pages(fetcher, MAX_PAGES_PER_QUERY, query=query, **params):
+        for raw in page:
+            if usable_body(raw.get("selftext")):
+                added += store.add(reddit_post(raw, label))
+            if added >= PER_QUERY_TARGET:
+                return added
+    return added
+
+
 def scrape_arctic_queries(fetcher: Fetcher, store: PostStore) -> None:
     for scam_type, queries in ARCTIC_QUERIES.items():
         for query in queries:
-            label = f"arctic:{query}"
-            added = 0
-            for page in arctic_pages(fetcher, MAX_PAGES_PER_QUERY, query=query):
-                for raw in page:
-                    if usable_body(raw.get("selftext")):
-                        added += store.add(reddit_post(raw, label))
-                    if added >= PER_QUERY_TARGET:
-                        break
-                if added >= PER_QUERY_TARGET:
-                    break
-            print(f"{label:<32} ({scam_type}) +{added:>3}   total {len(store)}")
+            added = collect_query(fetcher, store, query)
+            if added == 0:
+                # Full-history searches can time out; a recent window is much cheaper.
+                print(f"arctic:{query}: retrying over the last {RECENT_FALLBACK_DAYS} days")
+                after = int(time.time()) - RECENT_FALLBACK_DAYS * 86400
+                added = collect_query(fetcher, store, query, after=after)
+            print(f"{'arctic:' + query:<32} ({scam_type}) +{added:>3}   total {len(store)}")
 
 
 def month_windows(first: tuple[int, int], step: int):
