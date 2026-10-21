@@ -6,15 +6,22 @@ Sources, in order:
      a high-score slice sampled across many years, then newest posts to
      top up the total.
   3. CFPB consumer complaint narratives, when the API serves them.
+  4. Other scam subreddits through Arctic Shift (SUBREDDIT_SOURCES), each up
+     to its own quota.
+
+Posts already in the output file are kept, so a rerun only adds posts.
+`--subreddits-only` runs step 4 alone.
 
 Output format is documented in pipeline/README.md.
 
 Run from the repo root:
-    .venv/bin/python -m pipeline.scrape
+    .venv/bin/python -m pipeline.scrape [--subreddits-only]
 """
 
 import json
+import math
 import statistics
+import sys
 import time
 import urllib.error
 import urllib.parse
@@ -39,7 +46,7 @@ TARGET_TOTAL = 700
 SUBREDDIT = "Scams"
 REDDIT_TOP_URL = f"https://www.reddit.com/r/{SUBREDDIT}/top.json?t=all&limit=100"
 ARCTIC_URL = "https://arctic-shift.photon-reddit.com/api/posts/search"
-ARCTIC_FIELDS = "id,title,selftext,score,created_utc"
+ARCTIC_FIELDS = "id,title,selftext,score,created_utc,subreddit"
 CFPB_URL = "https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/"
 CFPB_COMPLAINT_URL = "https://www.consumerfinance.gov/data-research/consumer-complaints/search/detail/{}"
 
@@ -62,6 +69,31 @@ RECENT_FALLBACK_DAYS = 365
 TOP_FIRST_MONTH = (2018, 1)
 TOP_STEP_MONTHS = 2
 TOP_PER_WINDOW = 3
+
+# Other subreddits: name -> (quota of usable posts, keyword searches).
+# Without searches, the quota is spread over one-month windows since
+# SUBREDDIT_FIRST_MONTH, keeping the highest-scoring posts in each window.
+# Posts already scraped from a subreddit count toward its quota, so a rerun
+# only tops it up. Chosen from a survey of each subreddit: general ones
+# (recruitinghell, jobs, legaladvice, personalfinance) are only searched for
+# "scam", and ones where few long posts were scam stories even then (paypal,
+# Banking, WorkOnline, FacebookMarketplace) are left out.
+SUBREDDIT_SOURCES = {
+    "Romancescam": (300, ()),
+    "PigButchering": (200, ()),
+    "CryptoScams": (300, ()),
+    "scammers": (80, ()),
+    "Scams": (480, ("pig butchering", "crypto investment", "trading platform", "USDT",
+                    "romance", "dating", "wrong number", "task job", "recruiter",
+                    "job offer", "fake check", "tech support", "fraud department")),
+    "FacebookMarketplace": (80, ("scammed",)),
+    "recruitinghell": (200, ("scam",)),
+    "jobs": (100, ("scam",)),
+    "legaladvice": (80, ("scam",)),
+    "personalfinance": (60, ("scam",)),
+}
+SUBREDDIT_FIRST_MONTH = (2021, 1)
+MAX_FAILED_WINDOWS = 3  # consecutive windows with no answer before a subreddit is skipped
 
 CFPB_SEARCH_TERMS = ["scam", "fraud"]
 CFPB_TARGET = 150
@@ -160,6 +192,7 @@ def usable_body(body: str | None) -> bool:
 
 def reddit_post(raw: dict, fetched_via: str) -> dict:
     post_id = raw["id"]
+    subreddit = raw.get("subreddit") or SUBREDDIT
     return {
         "id": f"reddit-{post_id}",
         "source": "reddit",
@@ -168,8 +201,9 @@ def reddit_post(raw: dict, fetched_via: str) -> dict:
         "body": raw.get("selftext") or "",
         "created_utc": int(raw["created_utc"]),
         "score": raw.get("score"),
-        "url": f"https://www.reddit.com/r/{SUBREDDIT}/comments/{post_id}/",
+        "url": f"https://www.reddit.com/r/{subreddit}/comments/{post_id}/",
         "fetched_via": fetched_via,
+        "subreddit": subreddit,
     }
 
 
@@ -214,14 +248,21 @@ def arctic_pages(fetcher: Fetcher, max_pages: int, **params: str | int):
         before = min(int(p["created_utc"]) for p in posts)
 
 
-def collect_query(fetcher: Fetcher, store: PostStore, query: str, **params: int) -> int:
-    label = f"arctic:{query}"
+def collect_query(
+    fetcher: Fetcher,
+    store: PostStore,
+    query: str,
+    label: str | None = None,
+    target: int = PER_QUERY_TARGET,
+    **params: str | int,
+) -> int:
+    label = label or f"arctic:{query}"
     added = 0
     for page in arctic_pages(fetcher, MAX_PAGES_PER_QUERY, query=query, **params):
         for raw in page:
             if usable_body(raw.get("selftext")):
                 added += store.add(reddit_post(raw, label))
-            if added >= PER_QUERY_TARGET:
+            if added >= target:
                 return added
     return added
 
@@ -281,6 +322,51 @@ def scrape_arctic_new(fetcher: Fetcher, store: PostStore, target_total: int) -> 
             return
 
 
+def collect_subreddit(
+    fetcher: Fetcher, store: PostStore, subreddit: str, quota: int, queries: tuple[str, ...]
+) -> int:
+    """Add up to `quota` usable posts from one subreddit."""
+    if queries:
+        added = 0
+        per_query = math.ceil(quota / len(queries))
+        for query in queries:
+            label = f"arctic:r/{subreddit}:{query}"
+            got = collect_query(fetcher, store, query, label, min(per_query, quota - added),
+                                subreddit=subreddit)
+            if got == 0:
+                after = int(time.time()) - RECENT_FALLBACK_DAYS * 86400
+                got = collect_query(fetcher, store, query, label, min(per_query, quota - added),
+                                    subreddit=subreddit, after=after)
+            added += got
+            if added >= quota:
+                break
+        return added
+
+    windows = list(month_windows(SUBREDDIT_FIRST_MONTH, 1))
+    per_window = max(1, math.ceil(quota / max(1, len(windows))))
+    added = failed = 0
+    for after, before in reversed(windows):  # newest first, so a short sub still fills up
+        data = fetcher.get_json(arctic_url(subreddit=subreddit, after=after, before=before))
+        failed = 0 if data else failed + 1
+        if failed >= MAX_FAILED_WINDOWS:
+            print(f"r/{subreddit}: {failed} windows in a row failed, skipping the rest")
+            return added
+        posts = [p for p in (data or {}).get("data") or [] if usable_body(p.get("selftext"))]
+        posts.sort(key=lambda p: p.get("score") or 0, reverse=True)
+        for raw in posts[:per_window]:
+            added += store.add(reddit_post(raw, f"arctic:r/{subreddit}"))
+            if added >= quota:
+                return added
+    return added
+
+
+def scrape_subreddits(fetcher: Fetcher, store: PostStore) -> None:
+    for subreddit, (quota, queries) in SUBREDDIT_SOURCES.items():
+        have = sum(p["fetched_via"].startswith(f"arctic:r/{subreddit}") for p in store.posts.values())
+        added = collect_subreddit(fetcher, store, subreddit, quota - have, queries) if have < quota else 0
+        print(f"r/{subreddit:<20} +{added:>3}, {have + added} of {quota}   total {len(store)}")
+
+
 # --- CFPB -------------------------------------------------------------------
 
 
@@ -327,6 +413,20 @@ def scrape_cfpb(fetcher: Fetcher, store: PostStore) -> None:
 # --- Output -----------------------------------------------------------------
 
 
+def load_posts(store: PostStore) -> None:
+    """Seed the store with posts already scraped, so a rerun only adds posts."""
+    if not OUT_PATH.exists():
+        return
+    with OUT_PATH.open(encoding="utf-8") as f:
+        for line in f:
+            if line.strip():
+                post = json.loads(line)
+                if post["source"] == "reddit":
+                    post.setdefault("subreddit", SUBREDDIT)  # older rows are all r/Scams
+                store.add(post)
+    print(f"kept {len(store)} posts from {OUT_PATH}")
+
+
 def write_posts(store: PostStore) -> None:
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     with OUT_PATH.open("w", encoding="utf-8") as out:
@@ -354,20 +454,23 @@ def print_summary(store: PostStore, fetcher: Fetcher, seconds: float) -> None:
               f"  p75 {pct[74]:.0f}  p90 {pct[89]:.0f}  max {lengths[-1]}")
 
 
-def main() -> None:
+def main(subreddits_only: bool = False) -> None:
     started = time.monotonic()
     fetcher = Fetcher()
     store = PostStore()
+    load_posts(store)
 
-    scrape_reddit_top(fetcher, store)
-    scrape_arctic_queries(fetcher, store)
-    scrape_arctic_top(fetcher, store)
-    scrape_cfpb(fetcher, store)
-    scrape_arctic_new(fetcher, store, TARGET_TOTAL)
+    if not subreddits_only:
+        scrape_reddit_top(fetcher, store)
+        scrape_arctic_queries(fetcher, store)
+        scrape_arctic_top(fetcher, store)
+        scrape_cfpb(fetcher, store)
+        scrape_arctic_new(fetcher, store, TARGET_TOTAL)
+    scrape_subreddits(fetcher, store)
 
     write_posts(store)
     print_summary(store, fetcher, time.monotonic() - started)
 
 
 if __name__ == "__main__":
-    main()
+    main(subreddits_only="--subreddits-only" in sys.argv[1:])

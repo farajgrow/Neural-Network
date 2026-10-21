@@ -77,6 +77,7 @@ def test_reddit_post_fields():
         "score": 10,
         "url": "https://www.reddit.com/r/Scams/comments/abc123/",
         "fetched_via": "arctic:top",
+        "subreddit": "Scams",
     }
     assert isinstance(post["created_utc"], int)
 
@@ -413,3 +414,67 @@ def test_main_end_to_end_without_network(tmp_path, monkeypatch, capsys):
     printed = capsys.readouterr().out
     assert f"wrote 3 posts to {out}" in printed
     assert "per fetched_via:" in printed
+
+
+# --- other subreddits ---------------------------------------------------------
+
+
+def test_collect_subreddit_queries_split_the_quota(monkeypatch):
+    def answer(url):
+        q = query_of(url)
+        return {"data": [raw_reddit(f"{q['query']}-{i}", created=100 - i) for i in range(5)]}
+
+    fetcher, store = FakeFetcher(answer), scrape.PostStore()
+    added = scrape.collect_subreddit(fetcher, store, "jobs", 4, ("scam", "fake"))
+    assert added == 4
+    assert {query_of(u)["subreddit"] for u in fetcher.urls} == {"jobs"}
+    assert [p["fetched_via"] for p in store.posts.values()] == ["arctic:r/jobs:scam"] * 2 + ["arctic:r/jobs:fake"] * 2
+
+
+def test_collect_subreddit_windows_keep_top_scores_newest_first(monkeypatch):
+    windows = [(0, 10), (10, 20)]
+    monkeypatch.setattr(scrape, "month_windows", lambda first, step: iter(windows))
+
+    def answer(url):
+        after = query_of(url)["after"]
+        posts = [raw_reddit(f"w{after}-low", score=1), raw_reddit(f"w{after}-high", score=9)]
+        return {"data": [{**p, "subreddit": "Romancescam"} for p in posts]}
+
+    fetcher, store = FakeFetcher(answer), scrape.PostStore()
+    assert scrape.collect_subreddit(fetcher, store, "Romancescam", 2, ()) == 2
+    assert list(store.posts) == ["reddit-w10-high", "reddit-w0-high"]
+    assert store.posts["reddit-w10-high"]["url"] == "https://www.reddit.com/r/Romancescam/comments/w10-high/"
+
+
+def test_collect_subreddit_skips_after_failed_windows(monkeypatch):
+    monkeypatch.setattr(scrape, "month_windows", lambda first, step: iter([(i, i + 1) for i in range(10)]))
+    fetcher = FakeFetcher(lambda url: None)
+    assert scrape.collect_subreddit(fetcher, scrape.PostStore(), "x", 50, ()) == 0
+    assert len(fetcher.urls) == scrape.MAX_FAILED_WINDOWS
+
+
+def test_scrape_subreddits_counts_posts_already_scraped(monkeypatch):
+    monkeypatch.setattr(scrape, "SUBREDDIT_SOURCES", {"jobs": (2, ("scam",))})
+    store = scrape.PostStore()
+    store.add(scrape.reddit_post({**raw_reddit("old"), "subreddit": "jobs"}, "arctic:r/jobs:scam"))
+    fetcher = FakeFetcher(lambda url: {"data": [raw_reddit("new1"), raw_reddit("new2")]})
+    scrape.scrape_subreddits(fetcher, store)
+    assert list(store.posts) == ["reddit-old", "reddit-new1"]
+
+
+def test_load_posts_keeps_existing_and_backfills_subreddit(tmp_path, monkeypatch):
+    out = tmp_path / "posts.jsonl"
+    old = scrape.reddit_post(raw_reddit("a"), "arctic:top")
+    del old["subreddit"]
+    out.write_text(json.dumps(old) + "\n\n")
+    monkeypatch.setattr(scrape, "OUT_PATH", out)
+    store = scrape.PostStore()
+    scrape.load_posts(store)
+    assert store.posts["reddit-a"]["subreddit"] == "Scams"
+
+
+def test_load_posts_without_file(tmp_path, monkeypatch):
+    monkeypatch.setattr(scrape, "OUT_PATH", tmp_path / "missing.jsonl")
+    store = scrape.PostStore()
+    scrape.load_posts(store)
+    assert len(store) == 0

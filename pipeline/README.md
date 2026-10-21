@@ -1,6 +1,6 @@
 # Pipeline
 
-scrape → clean → extract → `data/stories.json`
+scrape → clean → select → extract → `data/stories.json`
 
 Run each step with `.venv/bin/python -m pipeline.<module>` from the repo root, or all of them at once (see below).
 
@@ -14,6 +14,16 @@ Run each step with `.venv/bin/python -m pipeline.<module>` from the repo root, o
 ```
 
 `pipeline.run` calls each module's `main` in order. It stops at the first step that raises or exits non-zero, prints `pipeline stopped: step '<name>' failed: ...` and exits non-zero. `--limit` and `--from-cache-only` are passed to `pipeline.extract`. Without an API key, extract stops the run unless `--from-cache-only` is given.
+
+Adding stories from more subreddits (no API key: replies are written outside the pipeline and imported):
+
+```bash
+.venv/bin/python -m pipeline.scrape --subreddits-only   # top up SUBREDDIT_SOURCES, keep existing posts
+.venv/bin/python -m pipeline.clean
+.venv/bin/python -m pipeline.select_posts --total 1000  # writes data/clean/selected.jsonl
+.venv/bin/python -m pipeline.extract --import replies.jsonl   # one JSON object per line: "id" + record_story fields
+.venv/bin/python -m pipeline.extract --from-cache-only
+```
 
 Tests (no network, no API key):
 
@@ -32,7 +42,14 @@ Tests (no network, no API key):
    - keyword searches per scam type (for example "pig butchering", "task job", "IRS", "zelle", "romance"), up to 35 usable posts per query;
    - a high-score slice: one month every two months from January 2018 to now, keeping the 3 highest-scoring usable posts from each;
    - the newest posts, to top up the total.
-3. **CFPB consumer complaint narratives** that mention "scam" or "fraud", up to 150. If the API returns complaints without narrative text, CFPB is skipped.
+3. **CFPB consumer complaint narratives** that mention "scam" or "fraud", up to 150. If the API returns complaints without narrative text, CFPB is skipped. As of September 2026 CFPB has removed narratives from the API and the bulk download, so this step adds nothing.
+4. **Other scam subreddits** through Arctic Shift (`SUBREDDIT_SOURCES` in `pipeline/scrape.py`), each up to its own quota:
+   - whole subreddits, sampled over one-month windows since January 2021 (highest score first in each window): r/Romancescam, r/PigButchering, r/CryptoScams, r/scammers;
+   - keyword searches: r/Scams (pig butchering, crypto investment, romance, dating, job and impersonation terms), and "scam" or "scammed" in r/FacebookMarketplace, r/recruitinghell, r/jobs, r/legaladvice and r/personalfinance.
+
+   Subreddits were chosen from a survey of 20 long posts each. paypal, Banking, WorkOnline, IdentityTheft and zelle were left out because few of their long posts were scam stories. A subreddit is skipped after 3 time windows in a row get no answer.
+
+The scrape appends: posts already in `data/raw/posts.jsonl` are kept, and posts already scraped from a subreddit count toward its quota, so a rerun only tops up. Because of this, the `arctic:new` top-up to 700 posts adds nothing once the file holds 700 or more posts. Every raw post now records its `subreddit`; older rows without one are r/Scams.
 
 Requests share a limit of one request per second and retry with backoff (5, 10, 20, 40 s) on HTTP 429, 5xx, network errors and Arctic Shift's 422 "Timeout" overload reply. Posts are deduplicated by id across sources.
 
@@ -80,6 +97,19 @@ What the 487 stories contain (from `data/stories.json`):
 8. Drops exact duplicate bodies (crossposts and reposts), compared after lowercasing and collapsing whitespace.
 
 It prints the number dropped at each filter. Limitation: names are only redacted in fixed patterns ("my name is X", "Mr. X", a name in a sign-off). A name elsewhere in the text ("I met Sarah on Hinge") is kept, since catching it would need NER. Snippets and event details are redacted again when stories are built.
+
+### Selection
+
+`pipeline.select_posts` picks which new clean posts to extract and writes `data/clean/selected.jsonl` (clean post fields plus `subreddit`). It skips a post when:
+
+1. it already has an extraction cache entry, or its id is in `data/exclude.json`;
+2. it doesn't read as a first-person story of events: no first-person words, fewer than 5 past-tense verbs, mostly questions, or a PSA/guide title. Posts from the general subreddits (recruitinghell, jobs, legaladvice, personalfinance, FacebookMarketplace) must also name a scam;
+3. it is a near-duplicate of a post already extracted or selected (5-word shingles, Jaccard ≥ 0.5 or containment ≥ 0.8);
+4. its subreddit has reached its quota, or the total is reached.
+
+Posts are taken in a seeded order, so reruns pick the same posts. Only posts found by `SUBREDDIT_SOURCES` count toward a quota, plus CFPB narratives from the archived bulk file (`fetched_via` starting `cfpb:wayback`), which share one bucket of `CFPB_QUOTA` posts.
+
+`data/exclude.json` lists posts kept out of the stories: the 6 removed by hand (5 near-duplicates and the fictional `reddit-1x9su20`) and the later post of 5 more same-title repost pairs. `pipeline.extract` skips these ids.
 
 ### Extraction
 

@@ -10,6 +10,14 @@ alone, with no network access:
 
     python -m pipeline.extract --from-cache-only
 
+Replies written outside this module (one JSON object per line: "id" plus the
+`record_story` fields below) are added to the cache with:
+
+    python -m pipeline.extract --import replies.jsonl
+
+Post ids in data/exclude.json (near-duplicates and a fictional post removed by
+hand) are never turned into stories.
+
 Cache entry format
 ------------------
 Path: pipeline/.cache/<safe post id>-<prompt hash>.json
@@ -66,6 +74,7 @@ DEFAULT_INPUT = Path("data/clean/posts.jsonl")
 DEFAULT_OUTPUT = Path("data/stories.json")
 CACHE_DIR = Path(__file__).resolve().parent / ".cache"
 SCHEMA_PATH = REPO_ROOT / "contract" / "story.schema.json"
+EXCLUDE_PATH = REPO_ROOT / "data" / "exclude.json"
 
 CONCURRENCY = 8
 MAX_RETRIES = 4
@@ -88,6 +97,38 @@ def load_api_key() -> str | None:
             if m:
                 return m.group(1).strip().strip("'\"") or None
     return None
+
+
+def load_exclude(path: Path = EXCLUDE_PATH) -> set[str]:
+    if not path.exists():
+        return set()
+    return set(json.loads(path.read_text())["ids"])
+
+
+def import_replies(path: Path, posts: list[dict], cache_dir: Path = CACHE_DIR) -> tuple[int, list[tuple[str, str]]]:
+    """Write replies from a JSONL file into the cache. Return (written, rejected (id, reason))."""
+    by_id = {p["id"]: p for p in posts}
+    written, rejected = 0, []
+    for line in path.read_text().splitlines():
+        if not line.strip():
+            continue
+        try:
+            raw = json.loads(line)
+        except json.JSONDecodeError as exc:
+            rejected.append(("?", f"bad JSON: {exc}"))
+            continue
+        post_id = raw.pop("id", None)
+        if post_id not in by_id:
+            rejected.append((str(post_id), "no clean post with this id"))
+            continue
+        err = validation_error(build_story(by_id[post_id], raw))
+        if err:
+            rejected.append((post_id, f"invalid: {err}"))
+            continue
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        cache_path(post_id, cache_dir).write_text(json.dumps(raw, ensure_ascii=False))
+        written += 1
+    return written, rejected
 
 
 class CacheMiss(Exception):
@@ -221,6 +262,8 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--concurrency", type=int, default=CONCURRENCY)
     ap.add_argument("--from-cache-only", action="store_true",
                     help="build stories purely from pipeline/.cache, no API key or network")
+    ap.add_argument("--import", dest="import_path", type=Path, metavar="JSONL",
+                    help="add replies from a JSONL file to the cache and exit")
     ap.add_argument("--print-cache-key", metavar="POST_ID",
                     help="print the expected cache file path for a post id and exit")
     args = ap.parse_args(argv)
@@ -230,6 +273,15 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     posts = read_jsonl(args.input)
+    if args.import_path:
+        written, rejected = import_replies(args.import_path, posts)
+        print(f"cached {written} replies from {args.import_path}, rejected {len(rejected)}")
+        for post_id, reason in rejected:
+            print(f"  rejected {post_id}: {reason}")
+        return
+
+    exclude = load_exclude()
+    posts = [p for p in posts if p["id"] not in exclude]
     if args.limit is not None:
         posts = posts[: args.limit]
 
