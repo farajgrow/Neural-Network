@@ -18,9 +18,11 @@ from concurrent.futures import TimeoutError as FutureTimeout
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, field_validator
+
+from app.api.ratelimit import MatchLimiter, visitor_key
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -186,6 +188,9 @@ def _demo_cache_first() -> bool:
     return os.environ.get("SCAM_DEMO_CACHE_FIRST", "").lower() in ("1", "true", "yes")
 
 
+MAX_TEXT = int(os.environ.get("SCAM_MAX_TEXT", "4000"))
+
+
 class MatchRequest(BaseModel):
     text: str = Field(..., min_length=1)
 
@@ -194,6 +199,8 @@ class MatchRequest(BaseModel):
     def _not_blank(cls, v: str) -> str:
         if not v.strip():
             raise ValueError("text is blank")
+        if len(v) > MAX_TEXT:
+            raise ValueError(f"message is too long ({len(v)} characters, max {MAX_TEXT})")
         return v
 
 
@@ -262,7 +269,31 @@ def _import_matcher():
     return mws, getattr(matcher, "rule_match", None)
 
 
-def _run_matcher(text: str) -> tuple[dict, str, str]:
+# Live calls cost money, so each visitor gets a few per minute and per day (see ratelimit.py).
+# Past a limit the keyword rules answer instead. SCAM_MATCH_CACHE=0 stops the matcher saving
+# pasted messages to disk, which the public deployment sets.
+limiter = MatchLimiter.from_env()
+
+
+def _matcher_cache_enabled() -> bool:
+    # Off by default on Vercel (the VERCEL variable is set there), so pasted messages aren't saved.
+    default = "0" if os.environ.get("VERCEL") else "1"
+    return os.environ.get("SCAM_MATCH_CACHE", default) != "0"
+
+
+def _offline_answer(text: str, demo: dict | None, rule_match, detail: str) -> tuple[dict, str, str]:
+    """The free answer: a stored demo answer if there is one, else the keyword rules."""
+    if demo:
+        return demo, "cache", "demo_cache"
+    if rule_match is not None:
+        try:
+            return rule_match(text), "fallback", f"rules_after_{detail}"
+        except Exception as exc:
+            log.warning("rule matcher failed: %s", type(exc).__name__)
+    return _mock_match(text), "mock", f"mock_after_{detail}"
+
+
+def _run_matcher(text: str, visitor: str = "local") -> tuple[dict, str, str]:
     """Returns (result, source, source_detail)."""
     demo = demo_cached(text)
     if demo and _demo_cache_first():
@@ -272,9 +303,18 @@ def _run_matcher(text: str) -> tuple[dict, str, str]:
     if match_with_source is None:
         return (demo, "cache", "demo_cache") if demo else (_mock_match(text), "mock", "matcher_unavailable")
 
+    refused = limiter.check(visitor)
+    if refused:
+        log.info("match rate-limited (%s)", refused)
+        result, source, detail = _offline_answer(text, demo, rule_match, f"rate_limit_{refused}")
+        if detail == "demo_cache":
+            detail = f"demo_cache_after_rate_limit_{refused}"
+        return result, source, detail
+
     detail = "error"
+    call = (lambda t: match_with_source(t)) if _matcher_cache_enabled() else (lambda t: match_with_source(t, use_cache=False))
     try:
-        result, raw = _executor.submit(match_with_source, text).result(timeout=match_timeout())
+        result, raw = _executor.submit(call, text).result(timeout=match_timeout())
     except FutureTimeout:
         log.warning("matcher timed out after %.0fs, falling back", match_timeout())
         detail = "timeout"
@@ -287,14 +327,7 @@ def _run_matcher(text: str) -> tuple[dict, str, str]:
             return demo, "cache", "demo_cache"
         return dict(result), source, f"matcher_{raw}"
 
-    if demo:
-        return demo, "cache", "demo_cache"
-    if rule_match is not None:
-        try:
-            return rule_match(text), "fallback", f"rules_after_{detail}"
-        except Exception as exc:
-            log.warning("rule matcher failed: %s", type(exc).__name__)
-    return _mock_match(text), "mock", f"mock_after_{detail}"
+    return _offline_answer(text, demo, rule_match, detail)
 
 
 def _graph_context(scam_type: str, current: str | None, nxt: str | None) -> dict:
@@ -393,13 +426,15 @@ def _model_prediction(steps: list[str], scam_type: str) -> dict | None:
 
 
 @app.post("/api/match")
-def match_endpoint(req: MatchRequest) -> dict:
-    result, source, detail = _run_matcher(req.text)
+def match_endpoint(req: MatchRequest, request: Request) -> dict:
+    visitor = visitor_key(request.headers, request.client.host if request.client else None)
+    result, source, detail = _run_matcher(req.text, visitor)
     steps = result.get("steps_so_far") or []
     current = steps[-1] if steps else None
     result["current_step"] = current
     result.update(_graph_context(result.get("scam_type", ""), current, result.get("likely_next_step")))
     result["source"] = source
     result["source_detail"] = detail
+    result["rate_limited"] = "rate_limit" in detail
     result["model"] = _model_prediction(steps, result.get("scam_type", ""))
     return result

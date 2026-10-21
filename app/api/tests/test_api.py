@@ -101,6 +101,7 @@ SOURCES = {"jev", "live", "cache", "fallback", "mock"}
 EXTRA = {
     "loss_rate_if_continues", "current_step", "context_graph", "next_step_count",
     "current_step_out_count", "next_step_story_count", "source", "source_detail", "model",
+    "rate_limited",
 }
 DEMO_DIR = HERE.parents[1] / "demo"
 
@@ -125,6 +126,14 @@ def _check_match(body):
 
 def fake_matcher(monkeypatch, fn, rules=None):
     monkeypatch.setattr(main, "_import_matcher", lambda: (fn, rules))
+
+
+@pytest.fixture(autouse=True)
+def unlimited(monkeypatch):
+    """Most tests make many calls from one client; give them a limiter that never refuses."""
+    from app.api.ratelimit import MatchLimiter
+
+    monkeypatch.setattr(main, "limiter", MatchLimiter(10**6, 10**6, 10**6))
 
 
 @pytest.fixture(autouse=True)
@@ -325,3 +334,66 @@ def test_model_null_without_script_steps(client, monkeypatch):
     fake_matcher(monkeypatch, lambda text: (dict(r), "jev"))
     body = client.post("/api/match", json={"text": "x"}).json()
     assert body["model"] is None
+
+
+# ---- Rate limiting ---------------------------------------------------------------
+
+def test_rate_limit_falls_back_to_keyword_rules(client, monkeypatch):
+    from app.api.ratelimit import MatchLimiter
+
+    monkeypatch.setattr(main, "limiter", MatchLimiter(per_minute=2, per_day=100, global_per_day=100))
+    fake_matcher(monkeypatch, lambda text: (dict(PB), "jev"), lambda text: dict(PB, scam_type="fake_job"))
+    sources = [client.post("/api/match", json={"text": "crypto"}).json() for _ in range(3)]
+    assert [b["source"] for b in sources] == ["jev", "jev", "fallback"]
+    assert sources[2]["rate_limited"] is True
+    assert sources[2]["source_detail"] == "rules_after_rate_limit_per_minute_limit"
+    assert sources[2]["scam_type"] == "fake_job"  # the keyword rules answered
+    assert sources[0]["rate_limited"] is False
+    _check_match(sources[2])
+
+
+def test_rate_limit_is_per_visitor(client, monkeypatch):
+    from app.api.ratelimit import MatchLimiter
+
+    monkeypatch.setattr(main, "limiter", MatchLimiter(per_minute=1, per_day=100, global_per_day=100))
+    fake_matcher(monkeypatch, lambda text: (dict(PB), "jev"), lambda text: dict(PB))
+    a = client.post("/api/match", json={"text": "x"}, headers={"x-forwarded-for": "1.1.1.1"}).json()
+    b = client.post("/api/match", json={"text": "x"}, headers={"x-forwarded-for": "2.2.2.2, 10.0.0.1"}).json()
+    a2 = client.post("/api/match", json={"text": "x"}, headers={"x-forwarded-for": "1.1.1.1"}).json()
+    assert (a["source"], b["source"], a2["source"]) == ("jev", "jev", "fallback")
+
+
+def test_limiter_windows_and_global_cap():
+    from app.api.ratelimit import MatchLimiter
+
+    now = [0.0]
+    lim = MatchLimiter(per_minute=2, per_day=3, global_per_day=4, clock=lambda: now[0])
+    assert lim.check("a") is None and lim.check("a") is None
+    assert lim.check("a") == "per_minute_limit"
+    now[0] = 61
+    assert lim.check("a") is None
+    now[0] = 200
+    assert lim.check("a") == "daily_limit"  # 3 calls today
+    assert lim.check("b") is None  # 4th call overall
+    assert lim.check("c") == "global_daily_limit"
+    now[0] = 24 * 3600 + 300
+    assert lim.check("a") is None  # a new day
+
+
+def test_message_too_long_is_rejected(client):
+    r = client.post("/api/match", json={"text": "x" * (main.MAX_TEXT + 1)})
+    assert r.status_code == 422
+    assert "too long" in r.text
+
+
+def test_cache_can_be_disabled(client, monkeypatch):
+    seen = {}
+
+    def fake(text, **kwargs):
+        seen.update(kwargs)
+        return dict(PB), "jev"
+
+    fake_matcher(monkeypatch, fake)
+    monkeypatch.setenv("SCAM_MATCH_CACHE", "0")
+    client.post("/api/match", json={"text": "x"})
+    assert seen == {"use_cache": False}

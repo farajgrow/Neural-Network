@@ -271,6 +271,8 @@
 .loss-box__text { font-size: 12px; line-height: 1.4; display: flex; flex-direction: column; gap: 2px; }
 .loss-box__label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
 .result__count { margin-top: -4px; }
+.matcher__privacy { margin: -4px 0 0; font-size: 10.5px; line-height: 1.5; }
+.matcher__notice { margin: 0; padding: 8px 10px; border: 1.5px dashed var(--ink); font-size: 11.5px; line-height: 1.5; }
 .model-box { border: 2px solid var(--ink); background: var(--node); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 12px; }
 .model-box__head { display: flex; justify-content: space-between; align-items: center; }
 .model-box__info { width: 18px; height: 18px; border: 1.5px solid var(--ink); background: var(--ground); font: inherit; font-size: 10px; line-height: 1; cursor: help; padding: 0; }

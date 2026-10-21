@@ -1,0 +1,10 @@
+.venv
+.env
+.claude
+**/node_modules
+app/web/dist
+pipeline/.cache
+data/raw
+data/clean
+data/cache
+**/__pycache__

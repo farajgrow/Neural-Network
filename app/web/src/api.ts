@@ -130,6 +130,8 @@ export interface MatchResult {
   current_step_out_count?: number | null
   /** Our own GRU's forecast from the steps so far (null if the model isn't available). */
   model?: ModelPrediction | null
+  /** True when this visitor hit the live-check limit and the keyword rules answered. */
+  rate_limited?: boolean
 }
 
 /** Prediction from our GRU (analysis/model), trained on the stories file. */
