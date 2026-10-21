@@ -152,20 +152,25 @@ def clusters(scam_type: str | None = None) -> dict | None:
 #
 # POST /api/match runs pipeline.matcher in a worker thread with a timeout, so a
 # slow or hung model call never blocks the UI. `source` in the response says
-# where the answer came from:
-#   live      Sonnet answered just now
+# where the answer came from (the matcher tries Jev, then Sonnet, then rules):
+#   jev       Jev (TypeSafe System One) answered just now; needs TYPESAFE_API_KEY
+#   live      Sonnet answered just now (Jev unavailable); needs ANTHROPIC_API_KEY
 #   cache     a stored answer: the matcher's disk cache, its stored demo
 #             responses, or app/api/demo_cache.json for the app/demo messages
 #   fallback  the matcher's offline rule-based matcher (no key, API failure,
 #             or the model call timed out)
 #   mock      pipeline.matcher could not be imported or crashed; canned answer
+#
+# Jev normally answers in under a second. Its client allows 15 s plus one retry
+# before the matcher tries Sonnet, so SCAM_MATCH_TIMEOUT (default 20 s) can cut
+# off a slow Jev + Sonnet chain; the demo cache, then the rules, answer instead.
 
 log = logging.getLogger("app.api.match")
 
 DEMO_DIR = REPO_ROOT / "app" / "demo"
 DEMO_CACHE_PATH = Path(__file__).resolve().parent / "demo_cache.json"
 
-_MATCHER_SOURCES = {"api": "live", "cache": "cache", "demo": "cache", "rules": "fallback"}
+_MATCHER_SOURCES = {"jev": "jev", "api": "live", "cache": "cache", "demo": "cache", "rules": "fallback"}
 
 _executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="matcher")
 

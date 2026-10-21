@@ -79,7 +79,7 @@ function ResultCard({ result: r }: { result: MatchResult }) {
           {r.steps_so_far.map((s, i) => (
             <li key={`${s}-${i}`} className={s === next ? 'is-next' : undefined}>
               {lower(s)}
-              {r.current_step === s && i === r.steps_so_far.lastIndexOf(s) && <span className="muted"> ← now</span>}
+              {r.current_step === s && i === r.steps_so_far.lastIndexOf(s) && <span className="muted"> ← furthest so far</span>}
               {s === next && ' ← likely next'}
             </li>
           ))}
@@ -106,13 +106,22 @@ function ResultCard({ result: r }: { result: MatchResult }) {
   )
 }
 
+/** Short labels for where the match came from (see app/README.md). */
+const SOURCE_LABELS: Record<string, string> = {
+  jev: 'jev · live',
+  live: 'sonnet · live',
+  cache: 'cached',
+  fallback: 'offline rules',
+  mock: 'mock',
+}
+
 function SourceTag({ source, detail }: { source: string; detail?: string | null }) {
   const tag = (
     <Badge
       variant="outline"
       className="h-auto cursor-default rounded-none border border-rule px-[5px] py-0 text-[10px] leading-[1.6] font-normal text-muted-foreground shadow-none"
     >
-      {source}
+      {SOURCE_LABELS[source] ?? source}
     </Badge>
   )
   if (!detail) return tag

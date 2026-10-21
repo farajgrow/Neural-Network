@@ -24,7 +24,7 @@ flowchart LR
   G --> J[(analysis/graphs.json)]
   J --> A[FastAPI<br/>app/api]
   D --> A
-  M[pipeline.matcher<br/>Claude Sonnet + offline fallback] --> A
+  M[pipeline.matcher<br/>Jev, then Sonnet, then offline rules] --> A
   A --> W[React + React Flow UI<br/>app/web]
 ```
 
@@ -33,6 +33,7 @@ flowchart LR
 | Pipeline | [`pipeline/`](pipeline/README.md) | Scrapes r/Scams, cleans and anonymises posts, and extracts each one into a Story: a chronological list of steps from a fixed 15-step vocabulary, plus scam type, outcome and amount lost. |
 | Contract | [`contract/`](contract/README.md) | The shared schema: step vocabulary, scam types, Story shape, matcher output. |
 | Analysis | [`analysis/`](analysis/README.md) | Builds a transition graph per scam type: node counts, loss rates, pinch points (the biggest loss-rate jump versus the steps leading in, with a minimum support so small samples can't win), escape points (steps most often followed by the victim getting out), and sequence clustering (edit distance + agglomerative clustering) to find script variants. |
+| Matcher | [`pipeline/matcher.py`](pipeline/README.md) | Jev answers one yes/no question per step plus the scam type and the scammer's next move, and code turns that into a contract-valid result. Falls back to Sonnet, then regex rules. |
 | API | [`app/api/`](app/README.md) | Serves graphs, stories and clusters. `POST /api/match` runs the matcher with a timeout and adds `loss_rate_if_continues` from the real graph. |
 | UI | `app/web/` | The script graph (size = stories, % = known cases that lost money), click a step to read the stories behind it, script-variant picker, and the matcher. |
 
@@ -53,7 +54,14 @@ In a second terminal:
 cd app/web && npm install && npm run dev
 ```
 
-Open http://localhost:5173. For the live matcher, put `ANTHROPIC_API_KEY=...` in a `.env` file at the repo root (it's gitignored). Without a key the matcher falls back to an offline rule-based matcher, and the two demo messages in [`app/demo/`](app/demo/messages.md) have stored answers, so the demo works with no network.
+Open http://localhost:5173. The matcher tries **Jev** (TypeSafe System One) first, then Claude Sonnet, then offline rules. For live matching put the keys in a `.env` file at the repo root (it's gitignored):
+
+```bash
+TYPESAFE_API_KEY=...     # Jev, the main matcher
+ANTHROPIC_API_KEY=...    # optional, Sonnet fallback
+```
+
+With no keys the offline rules answer, and the two demo messages in [`app/demo/`](app/demo/messages.md) have stored answers, so the demo still works with no network. The result card shows where each answer came from (`jev · live`, `sonnet · live`, `cached`, `offline rules`).
 
 Tests:
 
@@ -75,7 +83,7 @@ Tests:
 
 - **Self-reported and skewed.** These are stories people chose to post on Reddit, which leans toward dramatic cases and people who lost money.
 - **Many outcomes are unknown.** 210 of 487 stories (43%) don't say how they ended. Every loss rate leaves those out, so each one is shown with its "known" count.
-- **LLM-extracted, not hand-labelled.** Steps, scam types and outcomes come from model extraction against the fixed vocabulary. No API key was available during the build, so the current extraction cache was filled with hand-assisted extraction in the same `record_story` format rather than live Haiku calls ([details](pipeline/README.md#extraction)). The 20-story accuracy spot-check is in progress.
+- **LLM-extracted, not hand-labelled.** Steps, scam types and outcomes come from model extraction against the fixed vocabulary. No API key was available during the build, so the current extraction cache was filled with hand-assisted extraction in the same `record_story` format rather than live Haiku calls ([details](pipeline/README.md#extraction)). A hand spot check of 20 sampled stories found **96.2%** of field checks correct (77 of 80; [details](pipeline/README.md#accuracy)).
 - **Some links are built in.** You can't lose money without paying something, and "victim suspicious" sits next to the outcome, so parts of findings 1 and 2 are partly circular. The useful signal is how rarely anyone got out after paying.
 - **Small types are thin.** Pig butchering (17 stories) and romance (26) are too small to quote on their own; the headline numbers use all types.
 

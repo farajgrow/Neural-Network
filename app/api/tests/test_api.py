@@ -97,7 +97,7 @@ def test_reload_on_mtime_change(client):
 
 VOCAB = json.loads((HERE.parents[2] / "contract" / "vocab.json").read_text())
 SCHEMA = json.loads((HERE.parents[2] / "contract" / "matcher.schema.json").read_text())
-SOURCES = {"live", "cache", "fallback", "mock"}
+SOURCES = {"jev", "live", "cache", "fallback", "mock"}
 EXTRA = {
     "loss_rate_if_continues", "current_step", "context_graph", "next_step_count",
     "current_step_out_count", "next_step_story_count", "source", "source_detail",
@@ -134,7 +134,7 @@ def no_network(monkeypatch):
     monkeypatch.delenv("SCAM_DEMO_CACHE_FIRST", raising=False)
 
 
-@pytest.mark.parametrize("raw,source", [("api", "live"), ("cache", "cache"), ("demo", "cache"), ("rules", "fallback")])
+@pytest.mark.parametrize("raw,source", [("jev", "jev"), ("api", "live"), ("cache", "cache"), ("demo", "cache"), ("rules", "fallback")])
 def test_match_source_mapping(client, monkeypatch, raw, source):
     fake_matcher(monkeypatch, lambda text: (dict(PB), raw))
     body = client.post("/api/match", json={"text": "some crypto text"}).json()

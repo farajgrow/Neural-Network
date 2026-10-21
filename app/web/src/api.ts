@@ -118,7 +118,7 @@ export interface MatchResult {
   /** Where the conversation is now, if the matcher reports it. */
   current_step?: string | null
   /** How the answer was produced. */
-  source?: 'live' | 'cache' | 'fallback' | 'mock' | null
+  source?: 'jev' | 'live' | 'cache' | 'fallback' | 'mock' | null
   /** Human-readable detail about the source, for a tooltip. */
   source_detail?: string | null
   /** The graph the numbers came from: a scam type or "all". */
