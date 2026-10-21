@@ -8,7 +8,9 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import sys
+from collections import Counter, defaultdict
 from pathlib import Path
 
 import jsonschema
@@ -19,6 +21,7 @@ CONTRACT_DIR = ROOT / "contract"
 CACHE_DIR = PIPELINE_DIR / ".cache" / "matcher"
 DEMO_MESSAGES_PATH = PIPELINE_DIR / "demo_messages.json"
 DEMO_RESPONSES_PATH = PIPELINE_DIR / "demo_responses.json"
+STORIES_PATH = ROOT / "data" / "stories.json"
 
 MODEL = "claude-sonnet-5-5"
 TOOL_NAME = "report_match"
@@ -97,6 +100,127 @@ TOOL = {
 def validate(result: dict) -> dict:
     jsonschema.validate(result, SCHEMA)
     return result
+
+# Rule-based matcher (offline default)
+
+STEP_CUES = {
+    "initial_contact": [r"\bwrong (number|person)\b", r"\bis this \w+", r"\bsorry,? (who|is this)", r"\byour (resume|cv|profile) (was|has been)", r"\b(this is|i'?m) \w+ from\b", r"\bhi\b|\bhello\b", r"\brecommended to us\b", r"\bmatched\b"],
+    "platform_switch": [r"\b(whatsapp|telegram|signal|wechat|line app|kik)\b", r"\b(move|switch|talk|chat|continue) (to|on|over)\b", r"\badd (me|our|my|him|her)\b.*\bon\b"],
+    "trust_building": [r"\bnice to meet you\b", r"\bmentor\b", r"\bmy (uncle|aunt|father|mother|family)\b", r"\bfriend\b", r"\btrust me\b", r"\bdear\b|\bbabe\b|\bhoney\b", r"\bi'?ll (teach|guide|help) you\b"],
+    "authority_claim": [r"\b(recruit\w*|hr|human resources|coordinator|manager|officer|agent)\b", r"\b(amazon|apple|microsoft|paypal|irs|fbi|police|bank|customs|fedex|usps|dhl)\b", r"\bon behalf of\b", r"\bofficial\b"],
+    "urgency_pressure": [r"\b(tonight|today only|right now|immediately|asap|urgent\w*|hurry)\b", r"\bmove fast\b", r"\b(window|offer) (closes|ends|expires)\b", r"\bwithin \d+ (minutes|hours)\b", r"\b(suspended|frozen|locked)\b", r"\blimited (time|spots)\b"],
+    "fake_proof_shown": [r"\bscreenshot\b", r"\bprofit\w*\b", r"\bproof\b", r"\b(look|see) (at )?(here|this|my)\b", r"\bearned \$", r"\breturns?\b.*\d+ ?%"],
+    "small_payment": [r"\b(start small|small (amount|deposit))\b", r"\btop[- ]?up\b", r"\bdeposit\b", r"\b(registration|activation|training|processing) fee\b", r"\bsend \$?\d"],
+    "large_payment": [r"\$\s?\d{1,3},\d{3}\b.*\b(deposit|send|transfer|invest)", r"\b(life savings|loan|remortgage|401k|retirement)\b", r"\binvest more\b"],
+    "credentials_shared": [r"\b(password|passcode|verification code|otp|pin|ssn|social security|login)\b", r"\b(card|account|routing) number\b", r"\bphoto of (your )?id\b"],
+    "remote_access_granted": [r"\b(anydesk|teamviewer|remote (access|desktop)|screen ?share|ultraviewer)\b"],
+    "withdrawal_blocked": [r"\b(can'?t|cannot|unable to) withdraw\b", r"\bwithdraw\w*\b.*\b(tax|fee)\b", r"\bunlock (your )?(funds|account|earnings)\b", r"\baccount (is )?frozen\b"],
+    "victim_suspicious": [r"\bis this a scam\b", r"\bsounds? (too good|fishy|suspicious)\b", r"\bnot sure (about|if)\b", r"\bare you real\b"],
+    "third_party_intervened": [r"\bmy (bank|brother|sister|wife|husband|friend) (said|told|warned|blocked)\b", r"\bbank (blocked|stopped|flagged)\b", r"\bpolice\b.*\b(said|told)\b"],
+    "victim_exits": [r"\b(blocked|reported) (him|her|them|the number)\b", r"\bstopped (replying|responding)\b"],
+    "money_lost": [r"\b(lost|scammed out of) \$", r"\bnever (got|saw) (it|my money) back\b"],
+}
+
+SCAM_TYPE_CUES = {
+    "pig_butchering": [(r"\bcrypto\w*\b", 2), (r"\b(usdt|bitcoin|btc|eth|trading|arbitrage|exchange|platform)\b", 1.5), (r"\bwrong (number|person)\b", 2.5), (r"\bmentor\b", 2), (r"\bprofit\w*\b", 1), (r"\b\d+ ?(to \d+ ?)?% (a|per) (week|day|month)\b", 2), (r"\bwine|golf|yoga\b", 0.5)],
+    "fake_job": [(r"\b(job|role|position|part[- ]time|remote work|hiring|recruit\w*|resume|cv)\b", 2), (r"\b(task|tasks|rating|rate|like|liking|review\w*) (products?|apps?|videos?)\b", 2.5), (r"\b(commission|salary|daily pay|per day|daily)\b", 1.5), (r"\bno experience\b", 2), (r"\b(training|bonus|hr)\b", 1)],
+    "impersonation": [(r"\b(irs|fbi|police|social security|customs|tax office|government)\b", 2.5), (r"\b(your bank|fraud department|tech support|microsoft|apple support)\b", 2.5), (r"\b(account (is )?(suspended|locked|compromised)|warrant|arrest)\b", 2), (r"\b(package|parcel|delivery) (held|failed|pending)\b", 2)],
+    "marketplace": [(r"\b(facebook marketplace|craigslist|offerup|ebay|listing|item|for sale)\b", 2.5), (r"\b(buyer|seller|shipping|courier|pickup|overpa\w+)\b", 1.5), (r"\b(zelle|cashier'?s check|business account)\b", 1)],
+    "romance": [(r"\b(love|darling|sweetheart|babe|honey|soulmate|my heart)\b", 2), (r"\b(dating|tinder|hinge|bumble|match)\b", 1.5), (r"\b(military|deployed|oil rig|hospital|flight ticket|visa)\b", 1.5)],
+}
+
+ADVICE = {
+    "pig_butchering": "This matches a pig butchering script: a stranger who becomes a friend or mentor and pushes you onto a crypto platform. Do not deposit anything, stop replying and block the contact.",
+    "fake_job": "This matches a fake job script: real employers never ask you to pay, top up an account or move to Telegram or WhatsApp to get work. Do not send money and stop contacting the recruiter.",
+    "impersonation": "This matches an impersonation script: hang up or stop replying and contact the organisation yourself using the number on its official website. Never share codes, passwords or install remote access software.",
+    "marketplace": "This matches a marketplace scam script: keep payment and messages inside the marketplace, never accept overpayments or off-platform payment links, and do not ship before funds clear.",
+    "romance": "This matches a romance scam script: never send money or gifts to someone you have not met in person, however urgent their story. Talk to a friend or family member before doing anything.",
+    "other": "This message shows warning signs of a scam. Do not send money or personal details, and verify the sender through an official channel before replying.",
+}
+
+DEFAULT_NEXT = {
+    "initial_contact": "trust_building",
+    "platform_switch": "trust_building",
+    "trust_building": "fake_proof_shown",
+    "authority_claim": "urgency_pressure",
+    "urgency_pressure": "small_payment",
+    "fake_proof_shown": "small_payment",
+    "small_payment": "large_payment",
+    "large_payment": "withdrawal_blocked",
+    "credentials_shared": "money_lost",
+    "remote_access_granted": "money_lost",
+    "withdrawal_blocked": "large_payment",
+    "victim_suspicious": "urgency_pressure",
+    "third_party_intervened": "victim_exits",
+    "victim_exits": "victim_exits",
+    "money_lost": "victim_suspicious",
+}
+
+_COMPILED_STEPS = {s: [re.compile(p, re.I) for p in STEP_CUES.get(s, [])] for s in STEPS}
+_COMPILED_TYPES = {t: [(re.compile(p, re.I), w) for p, w in SCAM_TYPE_CUES.get(t, [])] for t in SCAM_TYPES}
+
+
+def load_transitions(path: Path = STORIES_PATH) -> dict:
+    """Most common next steps from stories: {(scam_type or None, step): Counter}."""
+    table: dict = defaultdict(Counter)
+    if not path.exists():
+        return table
+    try:
+        stories = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return table
+    for story in stories:
+        steps = [e.get("step") for e in story.get("events", [])]
+        for a, b in zip(steps, steps[1:]):
+            if a in STEPS and b in STEPS and a != b:
+                table[(story.get("scam_type"), a)][b] += 1
+                table[(None, a)][b] += 1
+    return table
+
+
+def next_step(scam_type: str, seen: list[str], transitions: dict | None = None) -> str:
+    if transitions is None:
+        transitions = load_transitions()
+    last = seen[-1] if seen else None
+    if last is None:
+        return "initial_contact"
+    for key in ((scam_type, last), (None, last)):
+        counts = transitions.get(key)
+        if counts:
+            ranked = [s for s, _ in counts.most_common()]
+            unseen = [s for s in ranked if s not in seen]
+            return (unseen or ranked)[0]
+    return DEFAULT_NEXT.get(last, "small_payment")
+
+
+def rule_match(text: str, transitions: dict | None = None) -> dict:
+    """Offline keyword and regex matcher. Returns a dict valid against the schema."""
+    first_hit = {}
+    for step, patterns in _COMPILED_STEPS.items():
+        positions = [m.start() for p in patterns for m in [p.search(text)] if m]
+        if positions:
+            first_hit[step] = min(positions)
+    steps_so_far = sorted(first_hit, key=lambda s: (first_hit[s], STEPS.index(s)))
+
+    scores = {t: sum(w for p, w in pats if p.search(text)) for t, pats in _COMPILED_TYPES.items()}
+    total = sum(scores.values())
+    best = max(scores, key=scores.get) if total else "other"
+    if total and scores[best] >= 2:
+        share = scores[best] / total
+        strength = min(scores[best] / 8, 1.0)
+        confidence = round(min(0.95, 0.3 + 0.35 * share + 0.3 * strength), 2)
+        scam_type = best
+    else:
+        scam_type, confidence = "other", round(min(0.3, 0.05 * len(steps_so_far) + 0.05), 2)
+
+    return validate({
+        "scam_type": scam_type,
+        "confidence": confidence,
+        "steps_so_far": steps_so_far,
+        "likely_next_step": next_step(scam_type, steps_so_far, transitions),
+        "advice": ADVICE.get(scam_type, ADVICE["other"]),
+    })
+
 
 
 def _text_hash(text: str) -> str:
@@ -179,22 +303,30 @@ def _call_model(text: str, client) -> dict:
 
 
 def match(text: str, client=None, use_cache: bool = True) -> dict:
-    """Match text against scam scripts. Returns a dict valid against contract/matcher.schema.json."""
+    """Match text against scam scripts. Returns a dict valid against contract/matcher.schema.json.
+
+    Order: demo responses, disk cache, Sonnet (only when a client or API key is available),
+    then the offline rule-based matcher.
+    """
     if not text or not text.strip():
         raise ValueError("text is empty")
+    demo = demo_response(text)
+    if demo is not None:
+        return demo
     if use_cache:
         cached = _read_cache(text)
         if cached is not None:
             return cached
-    try:
-        if client is None:
-            client = _make_client()
-        result = _call_model(text, client)
-    except Exception:
-        fallback = demo_response(text)
-        if fallback is None:
+    result = None
+    if client is not None or _load_api_key():
+        try:
+            result = _call_model(text, client or _make_client())
+        except jsonschema.ValidationError:
             raise
-        return fallback
+        except Exception:
+            result = None
+    if result is None:
+        return rule_match(text)
     if use_cache:
         _write_cache(text, result)
     return result
