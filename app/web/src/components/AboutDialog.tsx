@@ -62,20 +62,29 @@ const STEPS: { title: string; who: 'Arya' | 'Faraj' | 'Both'; text: string }[] =
   },
 ]
 
-export function AboutDialog() {
+interface Props {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  /** Show the animated "see how we built it" pointer next to the button. */
+  hint?: boolean
+}
+
+export function AboutDialog({ open, onOpenChange, hint = false }: Props) {
   return (
-    <Dialog.Root>
-      <Dialog.Trigger asChild>
-        <Button
-          variant="text"
-          size="bare"
-          className="about-trigger"
-          title="About this project and how we built it"
-          aria-label="About this project and how we built it"
-        >
-          [ about ]
-        </Button>
-      </Dialog.Trigger>
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <span className="about-anchor">
+        <Dialog.Trigger asChild>
+          <Button variant="secondary" size="sm" className={hint ? 'about-trigger about-trigger--pulse' : 'about-trigger'}>
+            [ how we built it ]
+          </Button>
+        </Dialog.Trigger>
+        {hint && (
+          <span className="about-hint" aria-hidden>
+            <span className="about-hint__arrow">↑</span>
+            <span className="about-hint__text">see how we built it</span>
+          </span>
+        )}
+      </span>
       <Dialog.Portal>
         <Dialog.Overlay className="about-overlay" />
         <Dialog.Content className="window about">

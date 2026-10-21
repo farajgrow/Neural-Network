@@ -308,7 +308,34 @@
 /* ---- About dialog ------------------------------------------------------ */
 
 .menubar__right { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; }
-.about-trigger { min-height: 44px; padding: 0; font-size: 13px; white-space: nowrap; flex: none; }
+.about-anchor { position: relative; display: inline-flex; flex: none; }
+.about-trigger { font-size: 12px; font-weight: 700; white-space: nowrap; box-shadow: 3px 3px 0 var(--ink); }
+.about-trigger--pulse { animation: about-pulse 1.4s ease-in-out infinite; }
+@keyframes about-pulse {
+  0%, 100% { box-shadow: 3px 3px 0 var(--ink), 0 0 0 0 rgb(200 70 27 / 0.55); }
+  50% { box-shadow: 3px 3px 0 var(--ink), 0 0 0 6px rgb(200 70 27 / 0); }
+}
+.about-hint {
+  position: absolute; top: calc(100% + 10px); left: 50%; transform: translateX(-50%); z-index: 40;
+  display: flex; flex-direction: column; align-items: center; gap: 2px; pointer-events: none;
+  animation: about-hint-in 0.35s ease-out both;
+}
+.about-hint__arrow { font-size: 22px; font-weight: 700; line-height: 1; color: var(--orange); animation: about-bob 0.9s ease-in-out infinite; }
+.about-hint__text {
+  white-space: nowrap; font-size: 11px; font-weight: 700; padding: 3px 8px;
+  background: var(--ink); color: var(--ground); box-shadow: 3px 3px 0 var(--orange);
+}
+@keyframes about-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes about-hint-in { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@media (prefers-reduced-motion: reduce) {
+  .about-trigger--pulse, .about-hint__arrow, .about-hint { animation: none; }
+}
+.welcome { width: min(560px, calc(100vw - 32px)); }
+.welcome__kicker { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.welcome__title { margin: 4px 0 0; font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -0.01em; }
+.welcome__list { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.welcome__list li { display: flex; gap: 12px; align-items: baseline; }
+.welcome__num { flex: none; font-size: 11px; font-weight: 700; padding: 1px 5px; background: var(--ink); color: var(--ground); }
 .about-overlay { position: fixed; inset: 0; background: rgb(20 20 20 / 0.45); z-index: 50; }
 .about {
   position: fixed; z-index: 51; top: 50%; left: 50%; transform: translate(-50%, -50%);
