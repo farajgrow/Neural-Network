@@ -91,6 +91,18 @@ TODO: spot-check accuracy (n = 20): scam_type __%, events __%, outcome __%, amou
 
 The stories are self-reported, so they skew toward people who posted about a scam, and many end before the outcome is known (210 of 487 are `unknown`). Read the graphs as patterns associated with loss, not causes.
 
+## Matcher
+
+`pipeline.matcher.match(text)` returns a dict valid against `contract/matcher.schema.json`. Try it with `python -m pipeline.matcher "text"`; the path that answered is printed to stderr. It tries these in order and falls through on any error or invalid answer:
+
+1. The disk cache in `pipeline/.cache/matcher/` (gitignored). Only valid model answers are cached.
+2. **Jev** (TypeSafe System One, `jev-latest`), when `TYPESAFE_API_KEY` is set. One request asks a Choice for the scam type, a Noul for "is this a scam at all" and a Noul per step for "has this already happened". Code then builds the result: steps above 0.5 count as seen and are ordered by where they usually fall in the real stories, the next step is the most common transition in `data/stories.json`, `confidence` is P(scam type) × P(scam), and the advice comes from fixed templates. Below 0.5 on "is this a scam", the result is `other` with low confidence.
+3. **Sonnet** (`claude-sonnet-5-5`, forced tool use), when `ANTHROPIC_API_KEY` is set.
+4. The stored answers in `demo_responses.json`, if the text is one of the two demo messages.
+5. The offline regex rules.
+
+Keys are read from the environment or a repo-root `.env` (gitignored) and are never logged. Tests mock every API call; the live checks run only when a key is set: `python -m pytest -q pipeline/tests/test_matcher.py -k live`.
+
 ## Intermediate files (gitignored, local only)
 
 ### `data/raw/posts.jsonl`: written by `pipeline.scrape`
