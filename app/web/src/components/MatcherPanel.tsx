@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
+/** Same cap as the API (SCAM_MAX_TEXT). */
+const MAX_TEXT = 4000
+
 interface Props {
   onResult?: (result: MatchResult | null) => void
 }
@@ -44,7 +47,13 @@ export function MatcherPanel({ onResult }: Props) {
           onChange={(e) => setText(e.target.value)}
           placeholder="Paste a suspicious message or conversation…"
           rows={5}
+          maxLength={MAX_TEXT}
+          aria-describedby="msg-privacy"
         />
+        <p id="msg-privacy" className="matcher__privacy muted">
+          Checked by an AI service and not saved by this site. Don’t paste passwords, codes or card numbers.
+          {text.length > MAX_TEXT * 0.8 && ` ${text.length}/${MAX_TEXT}`}
+        </p>
         <Button
           type="submit"
           disabled={loading || !text.trim()}
@@ -73,6 +82,11 @@ function ResultCard({ result: r }: { result: MatchResult }) {
         <span>match · {pct(r.confidence)} confident</span>
         {r.source && <SourceTag source={r.source} detail={r.source_detail} />}
       </div>
+      {r.rate_limited && (
+        <p className="matcher__notice" role="status">
+          You’ve used your live checks for now, so this answer comes from our offline keyword matcher. Try again in a minute.
+        </p>
+      )}
       <div className="result__type">{lower(r.scam_type)}</div>
       {(r.steps_so_far.length > 0 || next) && (
         <ol className="result__steps">

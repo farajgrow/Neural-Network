@@ -88,11 +88,17 @@ A small GRU (`gru-v2`) that predicts the **scammer's next move** and the **proba
 
 This is the only part of `analysis/` that needs third-party packages. The rest stays standard library only.
 
+**Training needs torch; inference needs only numpy.** `predict()` runs a pure-numpy copy of the GRU's forward pass (`numpy_gru.py`) on `gru_weights.npz`, so the app can deploy without torch (for example on Vercel). `train.py` writes `gru_weights.npz` right after `gru.pt`, so they stay in sync. To regenerate it from an existing `gru.pt` (needs torch):
+
+```bash
+.venv/bin/python -m analysis.model.export_weights   # gru.pt -> gru_weights.npz
+```
+
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -r analysis/requirements.txt -r app/requirements.txt pytest
 .venv/bin/python -m analysis.model.train     # 5-fold CV + final model, about 7 s on CPU
-.venv/bin/python -m pytest analysis/tests    # torch tests are skipped if torch is missing
+.venv/bin/python -m pytest analysis/tests    # torch tests are skipped if torch is missing; predict() tests still run
 ```
 
 ```python
@@ -108,9 +114,11 @@ predict(["initial_contact", "platform_switch"], "pig_butchering")
 | `gru.py` | The PyTorch model (step and type embeddings → 1-layer GRU(32) → two heads), masked training loss, and early stopping. |
 | `metrics.py` | Top-k accuracy, top-1 among moves not already seen, log loss, ROC AUC, Brier score and calibration bins, in numpy. |
 | `train.py` | Runs the CV, prints the table, and writes `results.json`. Then trains on all stories and writes `gru.pt` and `model_card.json`. |
-| `predict.py` | `predict(steps, scam_type)` using the saved `gru.pt`. |
+| `predict.py` | `predict(steps, scam_type)` using `gru_weights.npz` and numpy only. `load_model()` still loads `gru.pt` with torch. |
+| `numpy_gru.py` | The GRU forward pass (PyTorch gate order r, z, n) and both heads in numpy. A test checks it matches torch to 1e-5. |
+| `export_weights.py` | Writes `gru.pt`'s tensors, vocabulary and config to `gru_weights.npz` (about 25 KB). |
 | `learning_curve.py` | Retrains every model on 25/50/75/100% of each fold's training stories and writes `learning_curve.json` (about 10 s). |
-| `results.json`, `gru.pt`, `model_card.json` | Committed outputs (the model is about 28 KB), so the app can load it without retraining. |
+| `results.json`, `gru.pt`, `gru_weights.npz`, `model_card.json` | Committed outputs (each model file is under 30 KB), so the app can load it without retraining. |
 
 Definitions:
 
