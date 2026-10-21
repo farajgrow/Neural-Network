@@ -2,7 +2,7 @@
   "name": "gru-v2",
   "version": 2,
   "model": "ScamGRU (analysis/model/gru.py)",
-  "trained_at": "2026-10-21T09:02:59Z",
+  "trained_at": "2026-10-21T22:11:08Z",
   "inputs": {
     "steps": [
       "initial_contact",
@@ -65,128 +65,128 @@
     "seed": 0
   },
   "training": {
-    "n_stories": 487,
-    "n_next_step_examples": 554,
-    "n_loss_examples": 917,
-    "n_fit": 414,
-    "n_early_stopping_val": 73,
-    "n_known_outcome": 277,
-    "n_lost": 101,
-    "best_epoch": 33,
-    "best_val_objective": 2.222154378890991,
-    "epochs_run": 48
+    "n_stories": 2054,
+    "n_next_step_examples": 2700,
+    "n_loss_examples": 4493,
+    "n_fit": 1746,
+    "n_early_stopping_val": 308,
+    "n_known_outcome": 1316,
+    "n_lost": 764,
+    "best_epoch": 12,
+    "best_val_objective": 2.1217570304870605,
+    "epochs_run": 27
   },
   "n_parameters": 5828,
   "cv_metrics": {
     "folds": 5,
     "gru_next_step": {
       "top1": {
-        "mean": 0.35905249056144195,
-        "std": 0.034056802610680156
+        "mean": 0.4241993490205004,
+        "std": 0.019760772456497253
       },
       "top3": {
-        "mean": 0.6638615272195835,
-        "std": 0.05739579652929588
+        "mean": 0.7429085717953292,
+        "std": 0.027029318398557572
       },
       "log_loss": {
-        "mean": 1.7787745420116656,
-        "std": 0.07891476716264895
+        "mean": 1.6365825295255914,
+        "std": 0.03798926822654222
       },
       "top1_unseen": {
-        "mean": 0.3612408963585435,
-        "std": 0.024328435797046615
+        "mean": 0.4249462443235135,
+        "std": 0.02115152801875504
       },
       "top1_len1": {
-        "mean": 0.33416149068322976,
-        "std": 0.028047696473088905
+        "mean": 0.4282259349889646,
+        "std": 0.031580914723088306
       },
       "top1_len2": {
-        "mean": 0.3597810617935814,
-        "std": 0.09876734611726926
+        "mean": 0.3850216966128741,
+        "std": 0.047442458175766374
       },
       "top1_len3": {
-        "mean": 0.427534965034965,
-        "std": 0.057770396399721355
+        "mean": 0.41542383292383295,
+        "std": 0.051081985534205586
       },
       "top1_len4+": {
-        "mean": 0.49682539682539684,
-        "std": 0.1261879804085828
+        "mean": 0.5253443961316584,
+        "std": 0.05784197597651914
       }
     },
     "gru_loss_all_prefixes": {
       "auc": {
-        "mean": 0.8387404114806916,
-        "std": 0.054966760689488324
+        "mean": 0.865363492926209,
+        "std": 0.012176883616992222
       },
       "brier": {
-        "mean": 0.153213540556155,
-        "std": 0.03068644861099173
+        "mean": 0.14328172097250164,
+        "std": 0.008162881938564237
       },
       "log_loss": {
-        "mean": 0.4814570084068654,
-        "std": 0.10036010002690211
+        "mean": 0.42305923659943667,
+        "std": 0.024879010694448964
       },
       "n": {
-        "mean": 183.4,
-        "std": 15.962455951387932
+        "mean": 898.6,
+        "std": 26.053790511171307
       }
     },
     "gru_early_warning": {
       "first_1": {
         "auc": {
-          "mean": 0.6924822117763295,
-          "std": 0.09735372656151756
+          "mean": 0.7144386324207511,
+          "std": 0.022136901026185735
         },
         "brier": {
-          "mean": 0.196461218730822,
-          "std": 0.017709707895532573
+          "mean": 0.2111797990750155,
+          "std": 0.008166668017281612
         },
         "log_loss": {
-          "mean": 0.5761654261372939,
-          "std": 0.04131241955128837
+          "mean": 0.6022925218384332,
+          "std": 0.02093498002193244
         },
         "n": {
-          "mean": 55.4,
-          "std": 5.594640292279745
+          "mean": 263.2,
+          "std": 7.463243262818116
         }
       },
       "first_2": {
         "auc": {
-          "mean": 0.8149995266465856,
-          "std": 0.10312821877621592
+          "mean": 0.8336333333370127,
+          "std": 0.0204559771049828
         },
         "brier": {
-          "mean": 0.1485598633990855,
-          "std": 0.04671320741859003
+          "mean": 0.16163405996967278,
+          "std": 0.010846218560405178
         },
         "log_loss": {
-          "mean": 0.46830149329820464,
-          "std": 0.13573929452121972
+          "mean": 0.4721877164285601,
+          "std": 0.02862976992926576
         },
         "n": {
-          "mean": 55.4,
-          "std": 5.594640292279745
+          "mean": 263.2,
+          "std": 7.463243262818116
         }
       },
       "first_3": {
         "auc": {
-          "mean": 0.9068289144759734,
-          "std": 0.024607975566728165
+          "mean": 0.9273272638719972,
+          "std": 0.013390427219885094
         },
         "brier": {
-          "mean": 0.1124858665700321,
-          "std": 0.02957777297826534
+          "mean": 0.107538632255239,
+          "std": 0.010693179942999429
         },
         "log_loss": {
-          "mean": 0.36988561370325923,
-          "std": 0.08440166131951128
+          "mean": 0.3299688218776828,
+          "std": 0.026499384203205217
         },
         "n": {
-          "mean": 55.4,
-          "std": 5.594640292279745
+          "mean": 263.2,
+          "std": 7.463243262818116
         }
       }
     }
   },
-  "caveats": "487 self-reported r/Scams stories, LLM-extracted labels, 277 known outcomes. Only 554 prefixes (from 315 stories) have a later scammer move to predict. The loss head sees payment steps and victim_suspicious, so part of its signal is built in. Ties the Markov and logistic baselines. See analysis/findings.md, 'Neural network (v2: next scam move)'."
+  "caveats": "2054 self-reported Reddit and CFPB stories, LLM-extracted labels, 1316 known outcomes. Only 2700 prefixes (from 1317 stories) have a later scammer move to predict. The loss head sees payment steps and victim_suspicious, so part of its signal is built in. Ties the Markov and logistic baselines. See analysis/findings.md, 'Neural network (v2: next scam move)'."
 }

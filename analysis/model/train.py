@@ -236,8 +236,11 @@ def train_final(stories: list[Story], vocab: Vocab, config: GRUConfig, cv_summar
         "cv_metrics": {"folds": N_FOLDS, "gru_next_step": cv_summary["next_step"]["gru"],
                        "gru_loss_all_prefixes": cv_summary["loss_all_prefixes"]["gru"],
                        "gru_early_warning": {k: v["gru"] for k, v in cv_summary["early_warning"].items()}},
-        "caveats": "487 self-reported r/Scams stories, LLM-extracted labels, 277 known outcomes. "
-                   "Only 554 prefixes (from 315 stories) have a later scammer move to predict. "
+        "caveats": f"{len(stories)} self-reported Reddit and CFPB stories, LLM-extracted labels, "
+                   f"{sum(s.lost is not None for s in stories)} known outcomes. "
+                   f"Only {len(next_step_examples(stories))} prefixes (from "
+                   f"{len({e.story_id for e in next_step_examples(stories)})} stories) "
+                   "have a later scammer move to predict. "
                    "The loss head sees payment steps and victim_suspicious, so part of its signal is built in. "
                    "Ties the Markov and logistic baselines. "
                    "See analysis/findings.md, 'Neural network (v2: next scam move)'.",
