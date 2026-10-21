@@ -109,7 +109,7 @@ function ResultCard({ result: r }: { result: MatchResult }) {
 
 /** Our GRU's forecast, shown beside the matcher's answer and clearly labelled as ours. */
 function ModelBox({ model: m }: { model: ModelPrediction }) {
-  const stepName = (s: string) => (s === 'END' ? 'story ends' : lower(s))
+  const stepName = (s: string) => lower(s)
   const about = m.eval
     ? `A small neural network (GRU) we trained on the 487 stories. In ${m.eval.folds ?? 5}-fold cross-validation it picked the right next step ${pct(m.eval.next_top1)} of the time and ranked loss risk with AUC ${m.eval.loss_auc.toFixed(2)}, about the same as simple frequency counts.`
     : 'A small neural network (GRU) we trained on the 487 stories.'
@@ -124,7 +124,7 @@ function ModelBox({ model: m }: { model: ModelPrediction }) {
           <TooltipContent side="left" className="max-w-[260px]">{about}</TooltipContent>
         </Tooltip>
       </div>
-      <div className="muted">next step</div>
+      <div className="muted">scammer's likely next move</div>
       <ol className="model-box__next">
         {m.next_steps.map((n, i) => (
           <li key={n.step} className={i === 0 ? 'model-box__top' : undefined}>

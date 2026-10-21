@@ -297,6 +297,9 @@ def test_match_includes_model_prediction(client, monkeypatch):
     assert len(m["next_steps"]) == 3
     assert m["top_next"] == m["next_steps"][0]["step"]
     assert m["eval"]["loss_auc"] > 0.5
+    shown = {n["step"] for n in m["next_steps"]}
+    assert not shown & {"victim_suspicious", "third_party_intervened", "victim_exits", "money_lost", "END"}
+    assert abs(sum(n["p"] for n in m["next_steps"])) <= 1.0001
 
 
 def test_model_null_without_torch(client, monkeypatch):

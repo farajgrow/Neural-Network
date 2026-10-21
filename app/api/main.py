@@ -337,6 +337,9 @@ def _graph_context(scam_type: str, current: str | None, nxt: str | None) -> dict
 
 MODEL_CARD_PATH = REPO_ROOT / "analysis" / "model" / "model_card.json"
 
+# Not something a scammer gets the victim to do next: reactions, outcomes, and "story ends".
+_NOT_A_MOVE = {"victim_suspicious", "third_party_intervened", "victim_exits", "money_lost", "END"}
+
 
 def _model_eval() -> dict | None:
     """Cross-validated accuracy from the model card, so the UI can show how good the model is."""
@@ -365,10 +368,15 @@ def _model_prediction(steps: list[str], scam_type: str) -> dict | None:
     except Exception as exc:
         log.warning("model: prediction failed: %s", type(exc).__name__)
         return None
-    ranked = sorted(out["next_step_probs"].items(), key=lambda kv: kv[1], reverse=True)
+    # Show the scammer's likely next move: drop reactions, outcomes and END, then rescale.
+    moves = {s: p for s, p in out["next_step_probs"].items() if s not in _NOT_A_MOVE}
+    total = sum(moves.values())
+    if total <= 0:
+        return None
+    ranked = sorted(((s, p / total) for s, p in moves.items()), key=lambda kv: kv[1], reverse=True)
     return {
         "name": "gru-v1",
-        "top_next": out["top_next"],
+        "top_next": ranked[0][0],
         "next_steps": [{"step": s, "p": round(p, 4)} for s, p in ranked[:3]],
         "p_loss": round(out["p_loss"], 4),
         "eval": _model_eval(),
