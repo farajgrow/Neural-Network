@@ -18,7 +18,7 @@ const lossStyle = (r: number | null | undefined) => ({ color: lossColor(r) }) as
 export function SidePanel(props: Props) {
   const { graph, step } = props
   let body
-  if (!graph) body = <p className="muted">Pick a scam type to see its script.</p>
+  if (!graph) body = <p className="muted">Nothing to show until a graph loads.</p>
   else if (step) body = <StepDetail {...props} graph={graph} step={step} />
   else body = (
     <>

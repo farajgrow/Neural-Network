@@ -337,3 +337,5 @@ textarea:focus { outline: none; border-color: var(--accent); }
 .result-card__advice { border-left: 3px solid var(--warn); padding-left: 10px; }
 .stats--3 div { padding: 8px 10px; }
 .stats--3 dt { white-space: nowrap; }
+.legend__toggle { border: 1px solid var(--border-strong); background: var(--surface-2); color: var(--muted); border-radius: 999px; padding: 1px 10px; font-size: 11px; }
+.legend__toggle:hover { color: var(--text); border-color: var(--accent); }

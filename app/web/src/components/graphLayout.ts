@@ -40,6 +40,8 @@ export type FlowEdgeData = {
   points: { x: number; y: number }[]
   /** Goes against the avg_position order (drawn as a dashed loop). */
   back: boolean
+  /** Rare transition: hidden unless it is part of the focus or a highlight. */
+  minor: boolean
   state: EdgeState
   hlColor?: string
 }
@@ -48,6 +50,8 @@ export type FlowEdge = Edge<FlowEdgeData, 'flow'>
 export interface Layout {
   nodes: StepFlowNode[]
   edges: FlowEdge[]
+  /** Number of rare transitions hidden by default. */
+  minorCount: number
 }
 
 /** What to emphasise on the graph: a cluster's typical path or a matched message. */
@@ -71,8 +75,13 @@ const edgeId = (from: string, to: string) => `${from}->${to}`
  * (network simplex, weighted by edge count), orders nodes within ranks to reduce
  * crossings and routes long edges around nodes. Outcome nodes are moved to a
  * final column of their own.
+ *
+ * On bigger datasets most transitions are rare and turn the graph into a
+ * hairball, so edges below ~4% of stories are "minor": left out of the layout and
+ * only drawn when they touch the selected step or a highlighted path. Every step
+ * keeps its strongest incoming and outgoing edge. Back-edges need twice the count.
  */
-export function layoutGraph(graph: Graph): Layout {
+export function layoutGraph(graph: Graph, showAll = false): Layout {
   const pinch = new Map(graph.pinch_points.map((p) => [p.step, p]))
   const escape = new Map(graph.escape_points.map((p) => [p.step, p]))
   const maxCount = Math.max(1, ...graph.nodes.map((n) => n.count))
@@ -89,12 +98,30 @@ export function layoutGraph(graph: Graph): Layout {
   const rankOf = new Map(order.map((n, i) => [n.step, i]))
   const isForward = (from: Step, to: Step) => (rankOf.get(from) ?? 0) < (rankOf.get(to) ?? 0)
 
+  const edgesIn = graph.edges.filter((e) => e.from !== e.to && rankOf.has(e.from) && rankOf.has(e.to))
+  const minCount = Math.max(1, Math.ceil(graph.n_stories * 0.04))
+  const strongest = new Set<string>()
+  for (const key of ['from', 'to'] as const) {
+    const best = new Map<string, (typeof edgesIn)[number]>()
+    for (const e of edgesIn) {
+      if (!isForward(e.from, e.to)) continue
+      const cur = best.get(e[key])
+      if (!cur || e.count > cur.count) best.set(e[key], e)
+    }
+    for (const e of best.values()) strongest.add(edgeId(e.from, e.to))
+  }
+  const isMinor = (e: (typeof edgesIn)[number]) => {
+    if (showAll) return false
+    if (!isForward(e.from, e.to)) return e.count < Math.max(2, 2 * minCount)
+    return e.count < minCount && !strongest.has(edgeId(e.from, e.to))
+  }
+
   const g = new dagre.graphlib.Graph()
   g.setGraph({ rankdir: 'LR', ranksep: RANK_SEP, nodesep: NODE_SEP, edgesep: 8, marginx: 0, marginy: 0 })
   g.setDefaultEdgeLabel(() => ({}))
   for (const n of order) g.setNode(n.step, { width: NODE_W, height: height(n.count) })
-  for (const e of graph.edges) {
-    if (e.from !== e.to && isForward(e.from, e.to)) g.setEdge(e.from, e.to, { weight: e.count, minlen: 1 })
+  for (const e of edgesIn) {
+    if (isForward(e.from, e.to) && !isMinor(e)) g.setEdge(e.from, e.to, { weight: e.count, minlen: 1 })
   }
   dagre.layout(g)
 
@@ -147,11 +174,13 @@ export function layoutGraph(graph: Graph): Layout {
   const byStep = new Map(nodes.map((n) => [n.id, n.data]))
 
   const maxEdge = Math.max(1, ...graph.edges.map((e) => e.count))
-  const edges: FlowEdge[] = graph.edges
-    .filter((e) => byStep.has(e.from) && byStep.has(e.to) && e.from !== e.to)
+  let minorCount = 0
+  const edges: FlowEdge[] = edgesIn
     .map((e) => {
       const forward = isForward(e.from, e.to)
-      const dEdge = forward ? g.edge(e.from, e.to) : undefined
+      const minor = isMinor(e)
+      if (minor) minorCount++
+      const dEdge = forward && !minor ? g.edge(e.from, e.to) : undefined
       // Outcome nodes were moved after layout, so their routed bends no longer apply.
       const points = dEdge?.points && !OUTCOME_STEPS.has(e.to) ? dEdge.points.slice(1, -1) : []
       const t = e.count / maxEdge
@@ -170,12 +199,13 @@ export function layoutGraph(graph: Graph): Layout {
           targetColor: byStep.get(e.to)!.color,
           points,
           back: !forward,
+          minor,
           state: 'normal',
         },
       }
     })
 
-  return { nodes, edges }
+  return { nodes, edges, minorCount }
 }
 
 /** Apply selection and highlight state without re-running the layout. */
@@ -225,5 +255,5 @@ export function decorate(layout: Layout, selected: Step | null, highlight: Highl
     return { ...e, data: { ...e.data!, state, hlColor } }
   })
 
-  return { nodes, edges }
+  return { nodes, edges, minorCount: layout.minorCount }
 }

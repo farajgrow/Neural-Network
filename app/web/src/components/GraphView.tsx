@@ -10,12 +10,12 @@ import {
   type NodeTypes,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { label, type Clusters, type Graph, type MatchResult, type Step } from '../api'
 import { ClusterPicker } from './ClusterPicker'
 import { ErrorState } from './ErrorState'
 import { FlowEdge } from './FlowEdge'
-import { decorate, layoutGraph, type Highlight } from './graphLayout'
+import { decorate, layoutGraph, type Highlight, type Layout } from './graphLayout'
 import { Legend } from './Legend'
 import { StepNode } from './StepNode'
 
@@ -53,9 +53,10 @@ interface Props {
 
 export function GraphView(props: Props) {
   const { graph, loading, error, selectedStep, onSelectStep, highlight, match } = props
-  const base = useMemo(() => (graph ? layoutGraph(graph) : null), [graph])
-  const { nodes, edges } = useMemo(
-    () => (base ? decorate(base, selectedStep, highlight) : { nodes: [], edges: [] }),
+  const [showAll, setShowAll] = useState(false)
+  const base = useMemo(() => (graph ? layoutGraph(graph, showAll) : null), [graph, showAll])
+  const { nodes, edges } = useMemo<Layout>(
+    () => (base ? decorate(base, selectedStep, highlight) : { nodes: [], edges: [], minorCount: 0 }),
     [base, selectedStep, highlight],
   )
 
@@ -98,7 +99,7 @@ export function GraphView(props: Props) {
       >
         <Background variant={BackgroundVariant.Dots} gap={22} size={1.2} color="#252c38" />
         <Controls showInteractive={false} position="bottom-right" />
-        <AutoFit graphKey={graph.scam_type} />
+        <AutoFit graphKey={`${graph.scam_type}:${showAll}`} />
       </ReactFlow>
 
       <div className="graph-overlay graph-overlay--top">
@@ -124,7 +125,11 @@ export function GraphView(props: Props) {
         {loading && <span className="loading-pill">Loading…</span>}
       </div>
       <div className="graph-overlay graph-overlay--bottom">
-        <Legend />
+        <Legend
+          minorCount={base?.minorCount ?? 0}
+          showAll={showAll}
+          onToggleAll={() => setShowAll((v) => !v)}
+        />
       </div>
     </>
   )
