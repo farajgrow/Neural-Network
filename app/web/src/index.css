@@ -195,7 +195,10 @@
   display: flex; align-items: center; justify-content: center;
 }
 .node__label { height: 40px; padding-top: 6px; width: 100%; text-align: center; line-height: 1.2; }
-.node__name, .node__meta { display: table; margin: 0 auto; padding: 0 3px; background: var(--ground); }
+/* One block behind the whole label, so edges passing behind it get a clean cut-out. */
+.node__tag { display: inline-block; max-width: 112px; padding: 2px 6px 3px; background: var(--ground); }
+.node__name, .node__meta { display: block; }
+.node__name { text-wrap: balance; }
 .node__name { font-size: 11px; font-weight: 700; }
 .node__meta { font-size: 10.5px; color: var(--muted); }
 
