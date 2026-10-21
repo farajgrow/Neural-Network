@@ -304,3 +304,30 @@
   .graph-body { padding: 12px; }
   .graph-canvas { height: 400px; }
 }
+
+/* ---- About dialog ------------------------------------------------------ */
+
+.about-trigger { width: 100%; margin-bottom: -8px; font-size: 13px; font-weight: 700; }
+.about-overlay { position: fixed; inset: 0; background: rgb(20 20 20 / 0.45); z-index: 50; }
+.about {
+  position: fixed; z-index: 51; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: min(720px, calc(100vw - 32px)); max-height: calc(100vh - 48px);
+  display: flex; flex-direction: column; box-shadow: 8px 8px 0 var(--ink);
+}
+.about__close { cursor: pointer; padding: 0; }
+.about__close:hover { background: var(--ink); }
+.about__body { padding: 20px 22px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; font-size: 13px; line-height: 1.6; }
+.about__lede { margin: 0; font-size: 14px; }
+.about__h { margin: 0 0 8px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 2px solid var(--ink); padding-bottom: 4px; }
+.about__who, .about__list { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+.about__steps { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 10px; }
+.about__steps p { margin: 2px 0 0; color: var(--muted); }
+.about__step-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.about__who-tag { flex: none; font-size: 10px; font-weight: 700; padding: 1px 6px; border: 1.5px solid var(--ink); text-transform: uppercase; letter-spacing: 0.06em; }
+.about__who-tag--faraj { background: var(--ink); color: var(--ground); }
+.about__who-tag--arya { background: var(--node); }
+.about__who-tag--both { background: var(--ground); }
+.about__loss { color: var(--orange-text); }
+.about__footer { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; border-top: 1px dashed var(--rule); padding-top: 14px; }
+.about__link { font-weight: 700; color: var(--ink); text-decoration: none; }
+.about__link:hover { color: var(--orange-text); }

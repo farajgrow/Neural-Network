@@ -11,6 +11,7 @@ import {
 } from './api'
 import { GraphView } from './components/GraphView'
 import type { Highlight } from './components/graphLayout'
+import { AboutDialog } from './components/AboutDialog'
 import { MatcherPanel } from './components/MatcherPanel'
 import { ScamTypeSwitcher } from './components/ScamTypeSwitcher'
 import { StoryStrip } from './components/StoryStrip'
@@ -173,6 +174,7 @@ export default function App() {
             />
           </main>
           <aside className="col-side">
+            <AboutDialog />
             <MatcherPanel onResult={onMatch} />
             <SummaryBox
               graph={graph}
