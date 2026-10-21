@@ -26,6 +26,8 @@ const buttonVariants = cva(
           "border-2 bg-transparent shadow-md transition duration-200 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-lg active:translate-x-1 active:translate-y-1 active:shadow-none",
         ghost: "bg-transparent hover:bg-accent",
         link: "bg-transparent hover:underline",
+        // Bracketed text buttons ("[×]", "[ show more ]"): ink text, orange on hover.
+        text: "bg-transparent font-bold text-foreground hover:text-main",
       },
       size: {
         default: "px-4 py-1.5 text-base",
@@ -36,6 +38,7 @@ const buttonVariants = cva(
         "icon-xs": "p-1",
         "icon-sm": "p-1.5",
         "icon-lg": "p-3",
+        bare: "p-0 text-[length:inherit]",
       },
     },
     defaultVariants: {

@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button'
 import { humanize, knownPct, lower, pct, type Cluster, type Graph, type Step } from '../api'
 
 interface Props {
@@ -19,7 +20,7 @@ export function SummaryBox({ graph, cluster, onClearCluster, onSelectStep }: Pro
         <div className="summary__variant">
           <div className="summary__variant-head">
             <span className="muted small">{cluster.outlier ? 'outlier stories' : `variant ${cluster.index + 1}`}</span>
-            <button className="link-btn" onClick={onClearCluster} aria-label="Clear variant">[×]</button>
+            <Button variant="text" size="bare" onClick={onClearCluster} aria-label="Clear variant">[×]</Button>
           </div>
           <div className="b">{humanize(cluster.label).toLowerCase()}</div>
           <div className="small">

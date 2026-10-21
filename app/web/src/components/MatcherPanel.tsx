@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { api, lower, pct, type MatchResult } from '../api'
 import { Window } from './Window'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface Props {
   onResult?: (result: MatchResult | null) => void
@@ -41,14 +45,14 @@ export function MatcherPanel({ onResult }: Props) {
           placeholder="Paste a suspicious message or conversation…"
           rows={5}
         />
-        <button type="submit" className="btn-primary" disabled={loading || !text.trim()}>
+        <Button
+          type="submit"
+          disabled={loading || !text.trim()}
+          className="h-11 text-[13px] font-bold shadow-rule disabled:opacity-55"
+        >
           {loading ? '[ matching… ]' : '[ find the script ]'}
-        </button>
-        {loading && (
-          <div className="result" aria-live="polite">
-            <p className="muted blink">matching… reading the message against known scripts</p>
-          </div>
-        )}
+        </Button>
+        {loading && <ResultSkeleton />}
         {!loading && error && (
           <div className="result" role="alert">
             <p className="c-orange-text">couldn't check it: {error}</p>
@@ -67,11 +71,7 @@ function ResultCard({ result: r }: { result: MatchResult }) {
     <div className="result" aria-live="polite">
       <div className="result__meta">
         <span>match · {pct(r.confidence)} confident</span>
-        {r.source && (
-          <span className="source-tag" title={r.source_detail ?? undefined}>
-            {r.source}
-          </span>
-        )}
+        {r.source && <SourceTag source={r.source} detail={r.source_detail} />}
       </div>
       <div className="result__type">{lower(r.scam_type)}</div>
       {(r.steps_so_far.length > 0 || next) && (
@@ -102,6 +102,40 @@ function ResultCard({ result: r }: { result: MatchResult }) {
         </div>
       )}
       <p className="result__advice">{r.advice}</p>
+    </div>
+  )
+}
+
+function SourceTag({ source, detail }: { source: string; detail?: string | null }) {
+  const tag = (
+    <Badge
+      variant="outline"
+      className="h-auto cursor-default rounded-none border border-rule px-[5px] py-0 text-[10px] leading-[1.6] font-normal text-muted-foreground shadow-none"
+    >
+      {source}
+    </Badge>
+  )
+  if (!detail) return tag
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{tag}</TooltipTrigger>
+      <TooltipContent side="left">{detail}</TooltipContent>
+    </Tooltip>
+  )
+}
+
+/** Placeholder shaped like the result card while the matcher runs. */
+function ResultSkeleton() {
+  return (
+    <div className="result" aria-live="polite" aria-busy>
+      <p className="muted small blink">matching… reading the message against known scripts</p>
+      <Skeleton className="h-6 w-1/2 border-0" />
+      <div className="flex flex-col gap-1.5">
+        <Skeleton className="h-3 w-3/4 border-0" />
+        <Skeleton className="h-3 w-2/3 border-0" />
+        <Skeleton className="h-3 w-1/2 border-0" />
+      </div>
+      <Skeleton className="h-14 w-full border-destructive/40 bg-orange-tint/70" />
     </div>
   )
 }

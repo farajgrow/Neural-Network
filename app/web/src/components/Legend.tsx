@@ -1,3 +1,5 @@
+import { Button } from '@/components/ui/button'
+
 interface Props {
   minorCount: number
   showAll: boolean
@@ -14,9 +16,15 @@ export function Legend({ minorCount, showAll, onToggleAll }: Props) {
       <span><b className="c-blue">↗</b> escape</span>
       <span>size = stories</span>
       {(minorCount > 0 || showAll) && (
-        <button className="legend__toggle" onClick={onToggleAll} title="Rare transitions still show when you click a step">
+        <Button
+          variant="text"
+          size="bare"
+          className="ml-auto text-[11px] font-normal"
+          onClick={onToggleAll}
+          title="Rare transitions still show when you click a step"
+        >
           {showAll ? '[ hide rare links ]' : `[ +${minorCount} rare links ]`}
-        </button>
+        </Button>
       )}
     </div>
   )
