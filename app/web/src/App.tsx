@@ -139,7 +139,10 @@ export default function App() {
           SCAM SCRIPTS
           {totalStories > 0 && <span className="brand__sub">/ {totalStories} victim stories mapped</span>}
         </div>
-        <ScamTypeSwitcher types={types} allLossRate={allLossRate} value={scamType} onChange={setScamType} />
+        <div className="menubar__right">
+          <AboutDialog />
+          <ScamTypeSwitcher types={types} allLossRate={allLossRate} value={scamType} onChange={setScamType} />
+        </div>
       </header>
       {typesError && !graphError && <div className="banner">couldn't load scam types: {typesError.message}</div>}
       <div className="page">
@@ -174,7 +177,6 @@ export default function App() {
             />
           </main>
           <aside className="col-side">
-            <AboutDialog />
             <MatcherPanel onResult={onMatch} />
             <SummaryBox
               graph={graph}

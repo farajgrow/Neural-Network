@@ -307,7 +307,8 @@
 
 /* ---- About dialog ------------------------------------------------------ */
 
-.about-trigger { width: 100%; margin-bottom: -8px; font-size: 13px; font-weight: 700; }
+.menubar__right { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; }
+.about-trigger { min-height: 44px; padding: 0; font-size: 13px; white-space: nowrap; flex: none; }
 .about-overlay { position: fixed; inset: 0; background: rgb(20 20 20 / 0.45); z-index: 50; }
 .about {
   position: fixed; z-index: 51; top: 50%; left: 50%; transform: translate(-50%, -50%);

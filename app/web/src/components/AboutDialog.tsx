@@ -66,8 +66,14 @@ export function AboutDialog() {
   return (
     <Dialog.Root>
       <Dialog.Trigger asChild>
-        <Button variant="secondary" className="about-trigger">
-          [ about this project · how we built it ]
+        <Button
+          variant="text"
+          size="bare"
+          className="about-trigger"
+          title="About this project and how we built it"
+          aria-label="About this project and how we built it"
+        >
+          [ about ]
         </Button>
       </Dialog.Trigger>
       <Dialog.Portal>
