@@ -1,7 +1,7 @@
 import { ApiError } from '../api'
 
 /** Friendly explanation for the API failures we expect during setup. */
-export function describeError(err: Error): { title: string; hint: string; command?: string } {
+function describeError(err: Error): { title: string; hint: string; command?: string } {
   const status = err instanceof ApiError ? err.status : -1
   if (status === 503 && /graphs/i.test(err.message)) {
     return {
