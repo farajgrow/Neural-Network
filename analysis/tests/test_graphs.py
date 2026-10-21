@@ -204,7 +204,7 @@ def test_graphs_file_groups_by_type():
     assert out["scam_types"] == ["fake_job", "romance", "other"]
     assert set(out["graphs"]) == {"fake_job", "romance", "other", "all"}
     assert out["graphs"]["all"]["n_stories"] == 4
-    assert out["clusters"] is None
+    assert out["clusters"] is None and out["clusters_by_type"] is None
 
 
 def test_smoke_mock_stories():

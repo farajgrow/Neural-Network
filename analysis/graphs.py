@@ -236,4 +236,5 @@ def build_graphs_file(stories: list[dict], vocab: dict | None = None) -> dict:
         "scam_types": scam_types,
         "graphs": graphs,
         "clusters": None,
+        "clusters_by_type": None,
     }
