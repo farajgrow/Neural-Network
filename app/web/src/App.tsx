@@ -179,7 +179,7 @@ export default function App() {
       <WelcomeDialog open={welcomeOpen} onExplore={exploreMap} onHowWeBuiltIt={openHowWeBuiltIt} />
       <header className="menubar">
         <div className="brand">
-          <span className="brand__mark" aria-hidden />
+          <img className="brand__logo" src="/favicon.svg" width={22} height={22} alt="" aria-hidden />
           SCAM SCRIPTS
           {totalStories > 0 && <span className="brand__sub">/ {totalStories} stories</span>}
         </div>

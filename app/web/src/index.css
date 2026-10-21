@@ -115,7 +115,7 @@
   padding: 0 24px; min-height: 44px; border-bottom: 2px solid var(--ink); background: var(--ground);
 }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: 0.06em; min-height: 44px; white-space: nowrap; }
-.brand__mark { width: 12px; height: 12px; background: var(--ink); flex: none; }
+.brand__logo { width: 22px; height: 22px; flex: none; display: block; }
 .brand__sub { font-weight: 400; color: var(--muted); letter-spacing: 0; }
 
 .tabs { display: flex; flex-wrap: wrap; }
