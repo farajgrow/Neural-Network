@@ -30,6 +30,9 @@ STORIES_PATH = ROOT / "data" / "stories.json"
 
 MODEL = "claude-sonnet-5-5"
 TOOL_NAME = "report_match"
+JEV_MODEL = "jev-latest"
+JEV_TIMEOUT = 15.0
+NOUL_THRESHOLD = 0.5  # a step counts as seen, and the text as a scam, above this probability
 
 SCHEMA = json.loads((CONTRACT_DIR / "matcher.schema.json").read_text())
 
@@ -168,6 +171,22 @@ def next_step(scam_type: str, seen: list[str], transitions: dict | None = None) 
     return DEFAULT_NEXT.get(last, "small_payment")
 
 
+def load_step_positions(path: Path = STORIES_PATH) -> dict:
+    """Mean relative position (0 = first event, 1 = last) of each step across stories."""
+    positions: dict = defaultdict(list)
+    if path.exists():
+        try:
+            stories = json.loads(path.read_text())
+        except (OSError, json.JSONDecodeError):
+            stories = []
+        for story in stories:
+            steps = [e.get("step") for e in story.get("events", [])]
+            for i, step in enumerate(steps):
+                if step in STEPS:
+                    positions[step].append(i / max(len(steps) - 1, 1))
+    return {s: sum(p) / len(p) for s, p in positions.items()}
+
+
 def rule_match(text: str, transitions: dict | None = None) -> dict:
     """Offline keyword and regex matcher. Returns a dict valid against the schema."""
     first_hit = {}
@@ -235,8 +254,9 @@ def demo_response(text: str) -> dict | None:
     return None
 
 
-def _load_api_key() -> str | None:
-    key = os.environ.get("ANTHROPIC_API_KEY")
+def _env_key(name: str) -> str | None:
+    """Read a key from the environment, then from a repo-root .env. Never logged."""
+    key = os.environ.get(name)
     if key:
         return key
     env_file = ROOT / ".env"
@@ -245,11 +265,19 @@ def _load_api_key() -> str | None:
             line = line.strip()
             if line.startswith("export "):
                 line = line[len("export "):]
-            if line.startswith("ANTHROPIC_API_KEY="):
+            if line.startswith(f"{name}="):
                 value = line.split("=", 1)[1].strip().strip('"').strip("'")
                 if value:
                     return value
     return None
+
+
+def _load_api_key() -> str | None:
+    return _env_key("ANTHROPIC_API_KEY")
+
+
+def _load_typesafe_key() -> str | None:
+    return _env_key("TYPESAFE_API_KEY")
 
 
 def _make_client():
@@ -275,16 +303,89 @@ def _call_model(text: str, client) -> dict:
             return validate(dict(block.input))
     raise RuntimeError("model did not return a tool_use block")
 
+# Jev (TypeSafe System One): typed judgments, assembled into a match by code
 
-def match_with_source(text: str, client=None, use_cache: bool = True) -> tuple[dict, str]:
+JEV_STATE_NOTE = "A person received this message or conversation and pasted it to check whether it is a scam."
+LOW_RISK_ADVICE = (
+    "This does not clearly match a known scam script. Still, do not send money, codes or personal details "
+    "to anyone you have not verified through an official channel."
+)
+
+
+def jev_questions() -> dict:
+    """One Choice for the scam type, one Noul for "is this a scam at all", one Noul per step."""
+    from typesafe_sdk import Choice, Noul
+
+    questions = {
+        "scam_type": Choice(
+            instructions="Which scam script does `pasted_text` match best? Choose other if it matches none of them or looks harmless.",
+            criteria={t: SCAM_TYPE_GUIDE[t] for t in SCAM_TYPES},
+        ),
+        "is_scam": Noul(instructions="Does `pasted_text` show signs of a scam attempt against the person who received it?"),
+    }
+    for step in STEPS:
+        questions[f"step:{step}"] = Noul(
+            instructions=(
+                f"Has this scam step already happened in `pasted_text`: {STEP_GUIDE[step]}? "
+                "Answer yes only if the text shows it happening. A step that is only proposed or requested has not happened."
+            )
+        )
+    return questions
+
+
+def _make_jev_client():
+    key = _load_typesafe_key()
+    if not key:
+        raise RuntimeError("TYPESAFE_API_KEY not set in the environment or .env")
+    from typesafe_sdk import RetryPolicy, TypeSafeClient
+
+    return TypeSafeClient(api_key=key, model=JEV_MODEL, timeout=JEV_TIMEOUT, retry=RetryPolicy(max_retries=1))
+
+
+def jev_result(response, transitions: dict | None = None, positions: dict | None = None) -> dict:
+    """Turn a System One response into a schema-valid match. Ordering and next step come from the stories."""
+    if positions is None:
+        positions = load_step_positions()
+    type_answer = response.choices["scam_type"]
+    p_scam = response.nouls["is_scam"].noul
+    seen = [s for s in STEPS if response.nouls[f"step:{s}"].noul > NOUL_THRESHOLD]
+    seen.sort(key=lambda s: (positions.get(s, STEPS.index(s) / len(STEPS)), STEPS.index(s)))
+
+    if p_scam > NOUL_THRESHOLD:
+        scam_type = type_answer.choice
+        confidence = type_answer.probabilities.get(scam_type, type_answer.confidence) * p_scam
+        advice = ADVICE.get(scam_type, ADVICE["other"])
+    else:
+        scam_type, confidence, advice = "other", p_scam, LOW_RISK_ADVICE
+
+    return validate({
+        "scam_type": scam_type,
+        "confidence": round(min(max(confidence, 0.0), 1.0), 2),
+        "steps_so_far": seen,
+        "likely_next_step": next_step(scam_type, seen, transitions),
+        "advice": advice,
+    })
+
+
+def _call_jev(text: str, client) -> dict:
+    response = client.system_one(
+        state={"context": JEV_STATE_NOTE, "pasted_text": text},
+        questions=jev_questions(),
+        model=JEV_MODEL,
+    )
+    return jev_result(response)
+
+
+def match_with_source(text: str, client=None, use_cache: bool = True, jev_client=None) -> tuple[dict, str]:
     """Like match(), but also says which path produced the result.
 
-    Source is one of "cache", "api", "demo" or "rules". Order:
+    Source is one of "cache", "jev", "api", "demo" or "rules". Order:
     1. disk cache of earlier valid model answers,
-    2. Sonnet, only when a client is passed or ANTHROPIC_API_KEY is set (environment or .env),
-    3. the stored response if the text is one of the demo messages,
-    4. the offline rule-based matcher.
-    A failed API call or an answer that does not match the schema falls through to 3 and 4.
+    2. Jev, only when a jev_client is passed or TYPESAFE_API_KEY is set (environment or .env),
+    3. Sonnet, only when a client is passed or ANTHROPIC_API_KEY is set (environment or .env),
+    4. the stored response if the text is one of the demo messages,
+    5. the offline rule-based matcher.
+    A failed call or an answer that does not match the schema falls through to the next step.
     Only valid model answers are cached.
     """
     if not text or not text.strip():
@@ -293,6 +394,21 @@ def match_with_source(text: str, client=None, use_cache: bool = True) -> tuple[d
         cached = _read_cache(text)
         if cached is not None:
             return cached, "cache"
+    if jev_client is not None or _load_typesafe_key():
+        try:
+            if jev_client is not None:
+                result = _call_jev(text, jev_client)
+            else:
+                with _make_jev_client() as owned:
+                    result = _call_jev(text, owned)
+        except jsonschema.ValidationError as exc:
+            log.warning("matcher: Jev result failed schema validation, using fallback: %s", exc.message)
+        except Exception as exc:  # network, auth, rate limit, missing answer
+            log.warning("matcher: Jev call failed, using fallback: %s", type(exc).__name__)
+        else:
+            if use_cache:
+                _write_cache(text, result)
+            return result, "jev"
     if client is not None or _load_api_key():
         try:
             result = _call_model(text, client or _make_client())
@@ -310,9 +426,9 @@ def match_with_source(text: str, client=None, use_cache: bool = True) -> tuple[d
     return rule_match(text), "rules"
 
 
-def match(text: str, client=None, use_cache: bool = True) -> dict:
+def match(text: str, client=None, use_cache: bool = True, jev_client=None) -> dict:
     """Match text against scam scripts. Returns a dict valid against contract/matcher.schema.json."""
-    return match_with_source(text, client=client, use_cache=use_cache)[0]
+    return match_with_source(text, client=client, use_cache=use_cache, jev_client=jev_client)[0]
 
 
 def main(argv: list[str] | None = None) -> int:

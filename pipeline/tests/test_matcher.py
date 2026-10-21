@@ -61,6 +61,7 @@ def offline(tmp_path, monkeypatch):
     """Every test gets an empty cache and no API key, so nothing can reach the network."""
     monkeypatch.setattr(matcher, "CACHE_DIR", tmp_path / "cache")
     monkeypatch.setattr(matcher, "_load_api_key", lambda: None)
+    monkeypatch.setattr(matcher, "_load_typesafe_key", lambda: None)
     return tmp_path / "cache"
 
 
@@ -285,6 +286,181 @@ def test_load_transitions_from_real_stories():
         assert set(counts) <= set(prompts.STEPS)
 
 
+# Jev path (TypeSafe System One), all with fake clients
+
+
+def jev_response(scam_type="fake_job", p_type=0.8, p_scam=0.9, seen=(), p_seen=0.9):
+    from typesafe_sdk import ChoiceAnswer, NoulAnswer
+
+    others = (1 - p_type) / (len(prompts.SCAM_TYPES) - 1)
+    probabilities = {t: (p_type if t == scam_type else others) for t in prompts.SCAM_TYPES}
+    nouls = {"is_scam": NoulAnswer(type="noul", noul=p_scam)}
+    for step in prompts.STEPS:
+        nouls[f"step:{step}"] = NoulAnswer(type="noul", noul=p_seen if step in seen else 0.05)
+    choice = ChoiceAnswer(type="choice", choice=scam_type, confidence=p_type, probabilities=probabilities)
+    return SimpleNamespace(choices={"scam_type": choice}, nouls=nouls)
+
+
+class FakeJev:
+    """Stands in for typesafe_sdk.TypeSafeClient: system_one returns a fixed response."""
+
+    def __init__(self, response):
+        self.response = response
+        self.calls = []
+
+    def system_one(self, **kwargs):
+        self.calls.append(kwargs)
+        return self.response
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+
+class BrokenJev(FakeJev):
+    def __init__(self, exc=ConnectionError("no network")):
+        super().__init__(None)
+        self.exc = exc
+
+    def system_one(self, **kwargs):
+        self.calls.append(kwargs)
+        raise self.exc
+
+
+def test_jev_questions_cover_vocab():
+    from typesafe_sdk import Choice, Noul
+
+    questions = matcher.jev_questions()
+    assert set(questions) == {"scam_type", "is_scam"} | {f"step:{s}" for s in prompts.STEPS}
+    assert isinstance(questions["scam_type"], Choice)
+    assert list(questions["scam_type"].criteria) == prompts.SCAM_TYPES
+    for step in prompts.STEPS:
+        question = questions[f"step:{step}"]
+        assert isinstance(question, Noul)
+        assert prompts.STEP_GUIDE[step] in question.instructions
+
+
+def test_jev_is_tried_before_sonnet():
+    jev = FakeJev(jev_response(seen=("initial_contact", "platform_switch")))
+    sonnet = FakeClient(GOOD)
+    result, source = matcher.match_with_source("Hi, we found your resume. Add me on Telegram.", client=sonnet, jev_client=jev)
+    assert source == "jev"
+    assert sonnet.calls == []
+    jsonschema.validate(result, matcher.SCHEMA)
+    assert result["scam_type"] == "fake_job"
+    assert set(result["steps_so_far"]) == {"initial_contact", "platform_switch"}
+    call = jev.calls[0]
+    assert call["model"] == matcher.JEV_MODEL
+    assert call["state"]["pasted_text"].startswith("Hi, we found your resume")
+    assert set(call["questions"]) == set(matcher.jev_questions())
+
+
+def test_jev_result_orders_steps_by_story_position():
+    response = jev_response(seen=("small_payment", "initial_contact", "trust_building"))
+    positions = {"initial_contact": 0.0, "trust_building": 0.3, "small_payment": 0.6}
+    result = matcher.jev_result(response, transitions={}, positions=positions)
+    assert result["steps_so_far"] == ["initial_contact", "trust_building", "small_payment"]
+    assert result["likely_next_step"] == matcher.DEFAULT_NEXT["small_payment"]
+
+
+def test_jev_result_uses_story_transitions_for_next_step():
+    response = jev_response(scam_type="pig_butchering", seen=("initial_contact",))
+    transitions = {("pig_butchering", "initial_contact"): Counter({"platform_switch": 5, "trust_building": 2})}
+    result = matcher.jev_result(response, transitions=transitions, positions={})
+    assert result["likely_next_step"] == "platform_switch"
+
+
+def test_jev_confidence_is_type_probability_times_scam_probability():
+    result = matcher.jev_result(jev_response(p_type=0.8, p_scam=0.9), transitions={}, positions={})
+    assert result["confidence"] == 0.72
+    assert result["advice"] == matcher.ADVICE["fake_job"]
+
+
+def test_jev_harmless_text_is_other_with_low_confidence():
+    result = matcher.jev_result(jev_response(scam_type="romance", p_scam=0.1), transitions={}, positions={})
+    assert result["scam_type"] == "other"
+    assert result["confidence"] == 0.1
+    assert result["advice"] == matcher.LOW_RISK_ADVICE
+    jsonschema.validate(result, matcher.SCHEMA)
+
+
+def test_jev_steps_below_threshold_are_not_seen():
+    response = jev_response(seen=("platform_switch",), p_seen=matcher.NOUL_THRESHOLD)
+    assert matcher.jev_result(response, transitions={}, positions={})["steps_so_far"] == []
+
+
+def test_jev_failure_falls_back_to_sonnet():
+    jev = BrokenJev()
+    result, source = matcher.match_with_source("some text", client=FakeClient(GOOD), jev_client=jev)
+    assert source == "api"
+    assert result == GOOD
+    assert len(jev.calls) == 1
+
+
+@pytest.mark.parametrize("demo_id", sorted(DEMO_EXPECTED))
+def test_jev_failure_without_sonnet_falls_back_to_demo(demo_id):
+    _, source = matcher.match_with_source(demo_text(demo_id), jev_client=BrokenJev())
+    assert source == "demo"
+
+
+def test_jev_missing_answer_falls_back_to_rules():
+    response = jev_response()
+    del response.nouls["is_scam"]
+    result, source = matcher.match_with_source("Send $50 registration fee on Telegram", jev_client=FakeJev(response))
+    assert source == "rules"
+    jsonschema.validate(result, matcher.SCHEMA)
+
+
+def test_jev_invalid_answer_falls_back_to_rules():
+    response = jev_response()
+    response.choices["scam_type"] = response.choices["scam_type"].model_copy(update={"choice": "not_a_scam_type"})
+    _, source = matcher.match_with_source("Send $50 registration fee on Telegram", jev_client=FakeJev(response))
+    assert source == "rules"
+
+
+def test_jev_key_set_builds_client_and_caches(monkeypatch, offline):
+    jev = FakeJev(jev_response(seen=("initial_contact",)))
+    built = []
+    monkeypatch.setattr(matcher, "_load_typesafe_key", lambda: "test-key-not-real")
+    monkeypatch.setattr(matcher, "_make_jev_client", lambda: built.append(1) or jev)
+    first, source = matcher.match_with_source("Hello, is this Anna?")
+    assert source == "jev" and built == [1]
+    again, source = matcher.match_with_source("Hello, is this Anna?")
+    assert source == "cache" and again == first
+    assert len(jev.calls) == 1
+
+
+def test_no_typesafe_key_never_builds_jev_client(monkeypatch):
+    def boom():
+        raise AssertionError("Jev client built without a key")
+
+    monkeypatch.setattr(matcher, "_make_jev_client", boom)
+    _, source = matcher.match_with_source("Send $50 registration fee on Telegram")
+    assert source == "rules"
+
+
+def test_make_jev_client_requires_key():
+    with pytest.raises(RuntimeError, match="TYPESAFE_API_KEY"):
+        matcher._make_jev_client()
+
+
+def test_env_key_reads_dotenv(tmp_path, monkeypatch):
+    monkeypatch.delenv("TYPESAFE_API_KEY", raising=False)
+    monkeypatch.setattr(matcher, "ROOT", tmp_path)
+    (tmp_path / ".env").write_text('ANTHROPIC_API_KEY=a\nexport TYPESAFE_API_KEY="t-test"\n')
+    assert matcher._env_key("TYPESAFE_API_KEY") == "t-test"
+    assert matcher._env_key("MISSING_KEY") is None
+
+
+def test_load_step_positions_from_real_stories():
+    positions = matcher.load_step_positions()
+    assert positions and set(positions) <= set(prompts.STEPS)
+    assert all(0 <= p <= 1 for p in positions.values())
+    assert positions["initial_contact"] < positions["money_lost"]
+
+
 # Live check against the real API. Skipped unless a key is set; run it with
 #   ANTHROPIC_API_KEY=... python -m pytest -q pipeline/tests/test_matcher.py -k live
 
@@ -296,6 +472,23 @@ def test_live_sonnet_on_demo_messages(demo_id):
 
     result, source = matcher.match_with_source(demo_text(demo_id), client=anthropic.Anthropic(), use_cache=False)
     assert source == "api"
+    jsonschema.validate(result, matcher.SCHEMA)
+    assert result["scam_type"] == DEMO_EXPECTED[demo_id]
+    assert result["steps_so_far"]
+
+
+# Live Jev check. Skipped unless TYPESAFE_API_KEY is set in the environment; run it with
+#   TYPESAFE_API_KEY=... python -m pytest -q pipeline/tests/test_matcher.py -k live
+
+
+@pytest.mark.skipif(not os.environ.get("TYPESAFE_API_KEY"), reason="TYPESAFE_API_KEY not set")
+@pytest.mark.parametrize("demo_id", sorted(DEMO_EXPECTED))
+def test_live_jev_on_demo_messages(demo_id):
+    from typesafe_sdk import TypeSafeClient
+
+    with TypeSafeClient(model=matcher.JEV_MODEL) as client:
+        result, source = matcher.match_with_source(demo_text(demo_id), use_cache=False, jev_client=client)
+    assert source == "jev"
     jsonschema.validate(result, matcher.SCHEMA)
     assert result["scam_type"] == DEMO_EXPECTED[demo_id]
     assert result["steps_so_far"]
