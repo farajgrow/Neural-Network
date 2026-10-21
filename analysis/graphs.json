@@ -1,0 +1,943 @@
+{
+  "generated_at": "2026-10-21T04:37:49Z",
+  "n_stories": 10,
+  "scam_types": [
+    "pig_butchering",
+    "fake_job"
+  ],
+  "graphs": {
+    "pig_butchering": {
+      "scam_type": "pig_butchering",
+      "n_stories": 5,
+      "loss_rate": 0.75,
+      "outcome_counts": {
+        "lost_money": 3,
+        "escaped": 1,
+        "unknown": 1
+      },
+      "nodes": [
+        {
+          "step": "initial_contact",
+          "count": 5,
+          "loss_rate": 0.75,
+          "avg_position": 0.0
+        },
+        {
+          "step": "trust_building",
+          "count": 5,
+          "loss_rate": 0.75,
+          "avg_position": 0.2238
+        },
+        {
+          "step": "platform_switch",
+          "count": 5,
+          "loss_rate": 0.75,
+          "avg_position": 0.2726
+        },
+        {
+          "step": "fake_proof_shown",
+          "count": 5,
+          "loss_rate": 0.75,
+          "avg_position": 0.4964
+        },
+        {
+          "step": "small_payment",
+          "count": 3,
+          "loss_rate": 1.0,
+          "avg_position": 0.5476
+        },
+        {
+          "step": "large_payment",
+          "count": 2,
+          "loss_rate": 1.0,
+          "avg_position": 0.6696
+        },
+        {
+          "step": "withdrawal_blocked",
+          "count": 3,
+          "loss_rate": 1.0,
+          "avg_position": 0.7738
+        },
+        {
+          "step": "victim_suspicious",
+          "count": 3,
+          "loss_rate": 0.6667,
+          "avg_position": 0.7996
+        },
+        {
+          "step": "third_party_intervened",
+          "count": 1,
+          "loss_rate": 0.0,
+          "avg_position": 0.8333
+        },
+        {
+          "step": "money_lost",
+          "count": 2,
+          "loss_rate": 1.0,
+          "avg_position": 1.0
+        },
+        {
+          "step": "urgency_pressure",
+          "count": 1,
+          "loss_rate": null,
+          "avg_position": 1.0
+        },
+        {
+          "step": "victim_exits",
+          "count": 2,
+          "loss_rate": 0.5,
+          "avg_position": 1.0
+        }
+      ],
+      "edges": [
+        {
+          "from": "fake_proof_shown",
+          "to": "small_payment",
+          "count": 3
+        },
+        {
+          "from": "initial_contact",
+          "to": "trust_building",
+          "count": 3
+        },
+        {
+          "from": "platform_switch",
+          "to": "fake_proof_shown",
+          "count": 3
+        },
+        {
+          "from": "trust_building",
+          "to": "platform_switch",
+          "count": 3
+        },
+        {
+          "from": "initial_contact",
+          "to": "platform_switch",
+          "count": 2
+        },
+        {
+          "from": "large_payment",
+          "to": "withdrawal_blocked",
+          "count": 2
+        },
+        {
+          "from": "platform_switch",
+          "to": "trust_building",
+          "count": 2
+        },
+        {
+          "from": "small_payment",
+          "to": "large_payment",
+          "count": 2
+        },
+        {
+          "from": "trust_building",
+          "to": "fake_proof_shown",
+          "count": 2
+        },
+        {
+          "from": "withdrawal_blocked",
+          "to": "victim_suspicious",
+          "count": 2
+        },
+        {
+          "from": "fake_proof_shown",
+          "to": "urgency_pressure",
+          "count": 1
+        },
+        {
+          "from": "fake_proof_shown",
+          "to": "victim_suspicious",
+          "count": 1
+        },
+        {
+          "from": "small_payment",
+          "to": "withdrawal_blocked",
+          "count": 1
+        },
+        {
+          "from": "third_party_intervened",
+          "to": "victim_exits",
+          "count": 1
+        },
+        {
+          "from": "victim_suspicious",
+          "to": "money_lost",
+          "count": 1
+        },
+        {
+          "from": "victim_suspicious",
+          "to": "third_party_intervened",
+          "count": 1
+        },
+        {
+          "from": "victim_suspicious",
+          "to": "victim_exits",
+          "count": 1
+        },
+        {
+          "from": "withdrawal_blocked",
+          "to": "money_lost",
+          "count": 1
+        }
+      ],
+      "pinch_points": [
+        {
+          "step": "small_payment",
+          "loss_rate": 1.0,
+          "prev_loss_rate": 0.75,
+          "jump": 0.25
+        }
+      ],
+      "escape_points": [
+        {
+          "step": "third_party_intervened",
+          "exit_count": 1,
+          "exit_rate": 1.0
+        },
+        {
+          "step": "victim_suspicious",
+          "exit_count": 1,
+          "exit_rate": 0.3333
+        }
+      ],
+      "step_to_story_ids": {
+        "initial_contact": [
+          "mock-001",
+          "mock-002",
+          "mock-003",
+          "mock-004",
+          "mock-005"
+        ],
+        "platform_switch": [
+          "mock-001",
+          "mock-002",
+          "mock-003",
+          "mock-004",
+          "mock-005"
+        ],
+        "trust_building": [
+          "mock-001",
+          "mock-002",
+          "mock-003",
+          "mock-004",
+          "mock-005"
+        ],
+        "urgency_pressure": [
+          "mock-005"
+        ],
+        "fake_proof_shown": [
+          "mock-001",
+          "mock-002",
+          "mock-003",
+          "mock-004",
+          "mock-005"
+        ],
+        "small_payment": [
+          "mock-001",
+          "mock-002",
+          "mock-004"
+        ],
+        "large_payment": [
+          "mock-001",
+          "mock-002"
+        ],
+        "withdrawal_blocked": [
+          "mock-001",
+          "mock-002",
+          "mock-004"
+        ],
+        "victim_suspicious": [
+          "mock-002",
+          "mock-003",
+          "mock-004"
+        ],
+        "third_party_intervened": [
+          "mock-003"
+        ],
+        "victim_exits": [
+          "mock-003",
+          "mock-004"
+        ],
+        "money_lost": [
+          "mock-001",
+          "mock-002"
+        ]
+      }
+    },
+    "fake_job": {
+      "scam_type": "fake_job",
+      "n_stories": 5,
+      "loss_rate": 0.6,
+      "outcome_counts": {
+        "lost_money": 3,
+        "escaped": 2,
+        "unknown": 0
+      },
+      "nodes": [
+        {
+          "step": "initial_contact",
+          "count": 5,
+          "loss_rate": 0.6,
+          "avg_position": 0.0
+        },
+        {
+          "step": "platform_switch",
+          "count": 4,
+          "loss_rate": 0.75,
+          "avg_position": 0.2188
+        },
+        {
+          "step": "authority_claim",
+          "count": 3,
+          "loss_rate": 0.3333,
+          "avg_position": 0.2222
+        },
+        {
+          "step": "fake_proof_shown",
+          "count": 3,
+          "loss_rate": 0.6667,
+          "avg_position": 0.4028
+        },
+        {
+          "step": "small_payment",
+          "count": 2,
+          "loss_rate": 1.0,
+          "avg_position": 0.5
+        },
+        {
+          "step": "trust_building",
+          "count": 1,
+          "loss_rate": 1.0,
+          "avg_position": 0.5
+        },
+        {
+          "step": "urgency_pressure",
+          "count": 3,
+          "loss_rate": 0.6667,
+          "avg_position": 0.5972
+        },
+        {
+          "step": "victim_suspicious",
+          "count": 2,
+          "loss_rate": 0.0,
+          "avg_position": 0.7083
+        },
+        {
+          "step": "credentials_shared",
+          "count": 1,
+          "loss_rate": 1.0,
+          "avg_position": 0.75
+        },
+        {
+          "step": "large_payment",
+          "count": 2,
+          "loss_rate": 1.0,
+          "avg_position": 0.7917
+        },
+        {
+          "step": "third_party_intervened",
+          "count": 1,
+          "loss_rate": 0.0,
+          "avg_position": 0.8333
+        },
+        {
+          "step": "withdrawal_blocked",
+          "count": 1,
+          "loss_rate": 1.0,
+          "avg_position": 0.875
+        },
+        {
+          "step": "money_lost",
+          "count": 3,
+          "loss_rate": 1.0,
+          "avg_position": 1.0
+        },
+        {
+          "step": "victim_exits",
+          "count": 2,
+          "loss_rate": 0.0,
+          "avg_position": 1.0
+        }
+      ],
+      "edges": [
+        {
+          "from": "initial_contact",
+          "to": "platform_switch",
+          "count": 3
+        },
+        {
+          "from": "fake_proof_shown",
+          "to": "small_payment",
+          "count": 2
+        },
+        {
+          "from": "initial_contact",
+          "to": "authority_claim",
+          "count": 2
+        },
+        {
+          "from": "platform_switch",
+          "to": "fake_proof_shown",
+          "count": 2
+        },
+        {
+          "from": "small_payment",
+          "to": "urgency_pressure",
+          "count": 2
+        },
+        {
+          "from": "urgency_pressure",
+          "to": "large_payment",
+          "count": 2
+        },
+        {
+          "from": "authority_claim",
+          "to": "fake_proof_shown",
+          "count": 1
+        },
+        {
+          "from": "authority_claim",
+          "to": "platform_switch",
+          "count": 1
+        },
+        {
+          "from": "authority_claim",
+          "to": "urgency_pressure",
+          "count": 1
+        },
+        {
+          "from": "credentials_shared",
+          "to": "money_lost",
+          "count": 1
+        },
+        {
+          "from": "fake_proof_shown",
+          "to": "victim_suspicious",
+          "count": 1
+        },
+        {
+          "from": "large_payment",
+          "to": "money_lost",
+          "count": 1
+        },
+        {
+          "from": "large_payment",
+          "to": "withdrawal_blocked",
+          "count": 1
+        },
+        {
+          "from": "platform_switch",
+          "to": "authority_claim",
+          "count": 1
+        },
+        {
+          "from": "platform_switch",
+          "to": "trust_building",
+          "count": 1
+        },
+        {
+          "from": "third_party_intervened",
+          "to": "victim_exits",
+          "count": 1
+        },
+        {
+          "from": "trust_building",
+          "to": "credentials_shared",
+          "count": 1
+        },
+        {
+          "from": "urgency_pressure",
+          "to": "victim_suspicious",
+          "count": 1
+        },
+        {
+          "from": "victim_suspicious",
+          "to": "third_party_intervened",
+          "count": 1
+        },
+        {
+          "from": "victim_suspicious",
+          "to": "victim_exits",
+          "count": 1
+        },
+        {
+          "from": "withdrawal_blocked",
+          "to": "money_lost",
+          "count": 1
+        }
+      ],
+      "pinch_points": [
+        {
+          "step": "large_payment",
+          "loss_rate": 1.0,
+          "prev_loss_rate": 0.6667,
+          "jump": 0.3333
+        },
+        {
+          "step": "small_payment",
+          "loss_rate": 1.0,
+          "prev_loss_rate": 0.6667,
+          "jump": 0.3333
+        },
+        {
+          "step": "trust_building",
+          "loss_rate": 1.0,
+          "prev_loss_rate": 0.75,
+          "jump": 0.25
+        }
+      ],
+      "escape_points": [
+        {
+          "step": "third_party_intervened",
+          "exit_count": 1,
+          "exit_rate": 1.0
+        },
+        {
+          "step": "victim_suspicious",
+          "exit_count": 1,
+          "exit_rate": 0.5
+        }
+      ],
+      "step_to_story_ids": {
+        "initial_contact": [
+          "mock-006",
+          "mock-007",
+          "mock-008",
+          "mock-009",
+          "mock-010"
+        ],
+        "platform_switch": [
+          "mock-006",
+          "mock-007",
+          "mock-008",
+          "mock-010"
+        ],
+        "trust_building": [
+          "mock-008"
+        ],
+        "authority_claim": [
+          "mock-006",
+          "mock-007",
+          "mock-009"
+        ],
+        "urgency_pressure": [
+          "mock-006",
+          "mock-009",
+          "mock-010"
+        ],
+        "fake_proof_shown": [
+          "mock-006",
+          "mock-007",
+          "mock-010"
+        ],
+        "small_payment": [
+          "mock-006",
+          "mock-010"
+        ],
+        "large_payment": [
+          "mock-006",
+          "mock-010"
+        ],
+        "credentials_shared": [
+          "mock-008"
+        ],
+        "withdrawal_blocked": [
+          "mock-006"
+        ],
+        "victim_suspicious": [
+          "mock-007",
+          "mock-009"
+        ],
+        "third_party_intervened": [
+          "mock-007"
+        ],
+        "victim_exits": [
+          "mock-007",
+          "mock-009"
+        ],
+        "money_lost": [
+          "mock-006",
+          "mock-008",
+          "mock-010"
+        ]
+      }
+    },
+    "all": {
+      "scam_type": "all",
+      "n_stories": 10,
+      "loss_rate": 0.6667,
+      "outcome_counts": {
+        "lost_money": 6,
+        "escaped": 3,
+        "unknown": 1
+      },
+      "nodes": [
+        {
+          "step": "initial_contact",
+          "count": 10,
+          "loss_rate": 0.6667,
+          "avg_position": 0.0
+        },
+        {
+          "step": "authority_claim",
+          "count": 3,
+          "loss_rate": 0.3333,
+          "avg_position": 0.2222
+        },
+        {
+          "step": "platform_switch",
+          "count": 9,
+          "loss_rate": 0.75,
+          "avg_position": 0.2487
+        },
+        {
+          "step": "trust_building",
+          "count": 6,
+          "loss_rate": 0.8,
+          "avg_position": 0.2698
+        },
+        {
+          "step": "fake_proof_shown",
+          "count": 8,
+          "loss_rate": 0.7143,
+          "avg_position": 0.4613
+        },
+        {
+          "step": "small_payment",
+          "count": 5,
+          "loss_rate": 1.0,
+          "avg_position": 0.5286
+        },
+        {
+          "step": "urgency_pressure",
+          "count": 4,
+          "loss_rate": 0.6667,
+          "avg_position": 0.6979
+        },
+        {
+          "step": "large_payment",
+          "count": 4,
+          "loss_rate": 1.0,
+          "avg_position": 0.7307
+        },
+        {
+          "step": "credentials_shared",
+          "count": 1,
+          "loss_rate": 1.0,
+          "avg_position": 0.75
+        },
+        {
+          "step": "victim_suspicious",
+          "count": 5,
+          "loss_rate": 0.4,
+          "avg_position": 0.7631
+        },
+        {
+          "step": "withdrawal_blocked",
+          "count": 4,
+          "loss_rate": 1.0,
+          "avg_position": 0.7991
+        },
+        {
+          "step": "third_party_intervened",
+          "count": 2,
+          "loss_rate": 0.0,
+          "avg_position": 0.8333
+        },
+        {
+          "step": "money_lost",
+          "count": 5,
+          "loss_rate": 1.0,
+          "avg_position": 1.0
+        },
+        {
+          "step": "victim_exits",
+          "count": 4,
+          "loss_rate": 0.25,
+          "avg_position": 1.0
+        }
+      ],
+      "edges": [
+        {
+          "from": "fake_proof_shown",
+          "to": "small_payment",
+          "count": 5
+        },
+        {
+          "from": "initial_contact",
+          "to": "platform_switch",
+          "count": 5
+        },
+        {
+          "from": "platform_switch",
+          "to": "fake_proof_shown",
+          "count": 5
+        },
+        {
+          "from": "initial_contact",
+          "to": "trust_building",
+          "count": 3
+        },
+        {
+          "from": "large_payment",
+          "to": "withdrawal_blocked",
+          "count": 3
+        },
+        {
+          "from": "platform_switch",
+          "to": "trust_building",
+          "count": 3
+        },
+        {
+          "from": "trust_building",
+          "to": "platform_switch",
+          "count": 3
+        },
+        {
+          "from": "fake_proof_shown",
+          "to": "victim_suspicious",
+          "count": 2
+        },
+        {
+          "from": "initial_contact",
+          "to": "authority_claim",
+          "count": 2
+        },
+        {
+          "from": "small_payment",
+          "to": "large_payment",
+          "count": 2
+        },
+        {
+          "from": "small_payment",
+          "to": "urgency_pressure",
+          "count": 2
+        },
+        {
+          "from": "third_party_intervened",
+          "to": "victim_exits",
+          "count": 2
+        },
+        {
+          "from": "trust_building",
+          "to": "fake_proof_shown",
+          "count": 2
+        },
+        {
+          "from": "urgency_pressure",
+          "to": "large_payment",
+          "count": 2
+        },
+        {
+          "from": "victim_suspicious",
+          "to": "third_party_intervened",
+          "count": 2
+        },
+        {
+          "from": "victim_suspicious",
+          "to": "victim_exits",
+          "count": 2
+        },
+        {
+          "from": "withdrawal_blocked",
+          "to": "money_lost",
+          "count": 2
+        },
+        {
+          "from": "withdrawal_blocked",
+          "to": "victim_suspicious",
+          "count": 2
+        },
+        {
+          "from": "authority_claim",
+          "to": "fake_proof_shown",
+          "count": 1
+        },
+        {
+          "from": "authority_claim",
+          "to": "platform_switch",
+          "count": 1
+        },
+        {
+          "from": "authority_claim",
+          "to": "urgency_pressure",
+          "count": 1
+        },
+        {
+          "from": "credentials_shared",
+          "to": "money_lost",
+          "count": 1
+        },
+        {
+          "from": "fake_proof_shown",
+          "to": "urgency_pressure",
+          "count": 1
+        },
+        {
+          "from": "large_payment",
+          "to": "money_lost",
+          "count": 1
+        },
+        {
+          "from": "platform_switch",
+          "to": "authority_claim",
+          "count": 1
+        },
+        {
+          "from": "small_payment",
+          "to": "withdrawal_blocked",
+          "count": 1
+        },
+        {
+          "from": "trust_building",
+          "to": "credentials_shared",
+          "count": 1
+        },
+        {
+          "from": "urgency_pressure",
+          "to": "victim_suspicious",
+          "count": 1
+        },
+        {
+          "from": "victim_suspicious",
+          "to": "money_lost",
+          "count": 1
+        }
+      ],
+      "pinch_points": [
+        {
+          "step": "small_payment",
+          "loss_rate": 1.0,
+          "prev_loss_rate": 0.7143,
+          "jump": 0.2857
+        },
+        {
+          "step": "credentials_shared",
+          "loss_rate": 1.0,
+          "prev_loss_rate": 0.8,
+          "jump": 0.2
+        },
+        {
+          "step": "large_payment",
+          "loss_rate": 1.0,
+          "prev_loss_rate": 0.8333,
+          "jump": 0.1667
+        }
+      ],
+      "escape_points": [
+        {
+          "step": "third_party_intervened",
+          "exit_count": 2,
+          "exit_rate": 1.0
+        },
+        {
+          "step": "victim_suspicious",
+          "exit_count": 2,
+          "exit_rate": 0.4
+        }
+      ],
+      "step_to_story_ids": {
+        "initial_contact": [
+          "mock-001",
+          "mock-002",
+          "mock-003",
+          "mock-004",
+          "mock-005",
+          "mock-006",
+          "mock-007",
+          "mock-008",
+          "mock-009",
+          "mock-010"
+        ],
+        "platform_switch": [
+          "mock-001",
+          "mock-002",
+          "mock-003",
+          "mock-004",
+          "mock-005",
+          "mock-006",
+          "mock-007",
+          "mock-008",
+          "mock-010"
+        ],
+        "trust_building": [
+          "mock-001",
+          "mock-002",
+          "mock-003",
+          "mock-004",
+          "mock-005",
+          "mock-008"
+        ],
+        "authority_claim": [
+          "mock-006",
+          "mock-007",
+          "mock-009"
+        ],
+        "urgency_pressure": [
+          "mock-005",
+          "mock-006",
+          "mock-009",
+          "mock-010"
+        ],
+        "fake_proof_shown": [
+          "mock-001",
+          "mock-002",
+          "mock-003",
+          "mock-004",
+          "mock-005",
+          "mock-006",
+          "mock-007",
+          "mock-010"
+        ],
+        "small_payment": [
+          "mock-001",
+          "mock-002",
+          "mock-004",
+          "mock-006",
+          "mock-010"
+        ],
+        "large_payment": [
+          "mock-001",
+          "mock-002",
+          "mock-006",
+          "mock-010"
+        ],
+        "credentials_shared": [
+          "mock-008"
+        ],
+        "withdrawal_blocked": [
+          "mock-001",
+          "mock-002",
+          "mock-004",
+          "mock-006"
+        ],
+        "victim_suspicious": [
+          "mock-002",
+          "mock-003",
+          "mock-004",
+          "mock-007",
+          "mock-009"
+        ],
+        "third_party_intervened": [
+          "mock-003",
+          "mock-007"
+        ],
+        "victim_exits": [
+          "mock-003",
+          "mock-004",
+          "mock-007",
+          "mock-009"
+        ],
+        "money_lost": [
+          "mock-001",
+          "mock-002",
+          "mock-006",
+          "mock-008",
+          "mock-010"
+        ]
+      }
+    }
+  },
+  "clusters": null
+}
