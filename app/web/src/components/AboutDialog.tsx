@@ -1,7 +1,7 @@
 import { Dialog } from 'radix-ui'
 import { Button } from '@/components/ui/button'
 
-const REPO_URL = 'https://github.com/farajgrow/Neural-Network-graph-for-scam-detection'
+const REPO_URL = 'https://github.com/farajgrow/scam-script-mapper'
 
 /** The process, in order, with who owned each part. */
 const STEPS: { title: string; who: 'Arya' | 'Faraj' | 'Both'; text: string }[] = [
