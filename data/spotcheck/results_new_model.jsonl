@@ -1,0 +1,20 @@
+{"id": "cfpb-7962690", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
+{"id": "reddit-1w7k333", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
+{"id": "reddit-wyj8y2", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
+{"id": "cfpb-2989597", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
+{"id": "reddit-1izlgqe", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
+{"id": "cfpb-6396905", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
+{"id": "reddit-1vi7jp0", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
+{"id": "reddit-vws4u6", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
+{"id": "reddit-1v1zh2m", "checks": {"scam_type": true, "events": false, "outcome": true, "amount_lost_usd": true}, "note": "model review: victim_suspicious is used for the scammer's paid-priority offer, and the CV submission is missing"}
+{"id": "reddit-1vagmve", "checks": {"scam_type": true, "events": false, "outcome": true, "amount_lost_usd": true}, "note": "model review: missing the pressure to sell the home and divorce, which the post describes"}
+{"id": "reddit-1wrb6a1", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
+{"id": "reddit-1u58b76", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
+{"id": "reddit-1bp6px3", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
+{"id": "cfpb-5021222", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
+{"id": "reddit-1vg5im9", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
+{"id": "cfpb-15496477", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
+{"id": "reddit-1uedpgd", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
+{"id": "reddit-1uvgril", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
+{"id": "reddit-1wh9nz9", "checks": {"scam_type": true, "events": false, "outcome": true, "amount_lost_usd": true}, "note": "model review: the fee and tax payments made before the extra deposit are not listed as payments"}
+{"id": "reddit-whcq78", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}

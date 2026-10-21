@@ -42,7 +42,7 @@ Tests (no network, no API key):
    - keyword searches per scam type (for example "pig butchering", "task job", "IRS", "zelle", "romance"), up to 35 usable posts per query;
    - a high-score slice: one month every two months from January 2018 to now, keeping the 3 highest-scoring usable posts from each;
    - the newest posts, to top up the total.
-3. **CFPB consumer complaint narratives** that mention "scam" or "fraud", up to 150. If the API returns complaints without narrative text, CFPB is skipped. As of September 2026 CFPB has removed narratives from the API and the bulk download, so this step adds nothing.
+3. **CFPB consumer complaint narratives** that mention "scam" or "fraud", up to 150. If the API returns complaints without narrative text, CFPB is skipped. As of September 2026 CFPB has removed narratives from the API and the bulk download, so this step adds nothing. The CFPB posts in the stories come from step 5 instead.
 4. **Other scam subreddits** through Arctic Shift (`SUBREDDIT_SOURCES` in `pipeline/scrape.py`), each up to its own quota:
    - whole subreddits, sampled over one-month windows since January 2021 (highest score first in each window): r/Romancescam, r/PigButchering, r/CryptoScams, r/scammers;
    - keyword searches: r/Scams (pig butchering, crypto investment, romance, dating, job and impersonation terms), and "scam" or "scammed" in r/FacebookMarketplace, r/recruitinghell, r/jobs, r/legaladvice and r/personalfinance.
@@ -51,37 +51,49 @@ Tests (no network, no API key):
 
 The scrape appends: posts already in `data/raw/posts.jsonl` are kept, and posts already scraped from a subreddit count toward its quota, so a rerun only tops up. Because of this, the `arctic:new` top-up to 700 posts adds nothing once the file holds 700 or more posts. Every raw post now records its `subreddit`; older rows without one are r/Scams.
 
+5. **An archived copy of the CFPB bulk file** (`pipeline.cfpb_bulk`). The Wayback Machine snapshot of 2026-08-15 of `complaints.csv.zip` (1.4 GB zip) still has the "Consumer complaint narrative" column. The script streams the zip row by row and keeps a complaint when its narrative is at least 400 characters and either:
+   - its Issue is "Fraud or scam" and its Product is a money transfer, virtual currency or prepaid card product; or
+   - its Product is a bank account or credit card product and the narrative says scammer, scammed, fraudster or "fell victim".
+
+   Credit reporting, debt collection, mortgage, student loan and credit repair products are excluded. Each kept complaint gets a keyword bucket (pig_butchering, romance, fake_job, impersonation, marketplace, other), and at most 200 per bucket are taken in a seeded order, so rare buckets are not crowded out. Of 17,119,590 rows: 14,400,564 had a short or missing narrative, 2,177,288 were an excluded product and 513,051 were not scam-related; 28,687 matched and 1,176 were added (`fetched_via` `cfpb:wayback-2026-08-15:<bucket>`).
+
 Requests share a limit of one request per second and retry with backoff (5, 10, 20, 40 s) on HTTP 429, 5xx, network errors and Arctic Shift's 422 "Timeout" overload reply. Posts are deduplicated by id across sources.
 
-All 487 stories in the current `data/stories.json` come from Reddit through Arctic Shift; CFPB contributed none. Per source (the `fetched_via` field):
+The 2,074 stories in the current `data/stories.json` come from Reddit through Arctic Shift (1,774) and the archived CFPB file (300). Stories per source:
 
-| Source | Raw posts | Stories |
-|---|---|---|
-| `arctic:new` (newest posts) | 200 | 195 |
-| `arctic:top` (high-score slice) | 135 | 134 |
-| `arctic:task job` | 40 | 39 |
-| `arctic:remote job recruiter` | 40 | 39 |
-| `arctic:IRS` | 40 | 40 |
-| `arctic:zelle` | 40 | 40 |
-| **Total** | **495** | **487** |
+| Source | Stories |
+|---|---|
+| r/Scams (all passes, including the older `arctic:*` rows) | 868 |
+| r/Romancescam | 227 |
+| r/CryptoScams | 201 |
+| r/recruitinghell | 159 |
+| r/legaladvice | 71 |
+| r/jobs | 70 |
+| r/scammers | 61 |
+| r/FacebookMarketplace | 51 |
+| r/personalfinance | 49 |
+| r/PigButchering | 17 |
+| CFPB archive: other 55, romance 53, pig_butchering 50, marketplace 50, fake_job 46, impersonation 46 | 300 |
+| **Total** | **2,074** |
 
-The current `data/raw/posts.jsonl` predates the query list above: only four keyword queries appear in it, at 40 posts each rather than 35.
+The first 487 stories came from the earlier r/Scams scrape (`arctic:new` 195, `arctic:top` 134, and keyword queries). 5 of them are now in `data/exclude.json`, which leaves 482.
 
 ### Counts
 
 | Stage | Posts | Notes |
 |---|---|---|
-| Scraped (`data/raw/posts.jsonl`) | 495 | |
-| Cleaned (`data/clean/posts.jsonl`) | 493 | 2 dropped by the filters below: 1 meta post and 1 exact duplicate body |
-| Stories (`data/stories.json`) | 487 | 5 near-duplicates and 1 fictional post removed. TODO: say how they were found and removed (by hand or a script) |
+| Scraped (`data/raw/posts.jsonl`) | 3,272 | 495 from the first r/Scams scrape, 1,601 from the other subreddits, 1,176 from the CFPB archive |
+| Cleaned (`data/clean/posts.jsonl`) | 3,240 | 32 dropped: 2 meta posts, 9 link or screenshot only, 21 exact duplicate bodies |
+| Selected (`data/clean/selected.jsonl`) | 1,600 | 1,300 Reddit and 300 CFPB, from the posts not yet extracted. 853 were over a quota; 194 had no narrative, 59 were not first-person, 9 were only a question, 4 were a guide or PSA; 28 were near-duplicates and 11 were in `data/exclude.json` |
+| Stories (`data/stories.json`) | 2,074 | 482 earlier stories (487 less 5 in `data/exclude.json`) plus 1,592 new. 8 selected posts are held out for a manual look (child-safety content or not a scam story) |
 
-TODO: extraction split: ok / invalid (failed schema validation) / api error / not in cache.
+Extraction results for the 1,600 selected posts: 1,592 valid stories, 0 replies rejected by the schema check, 0 API errors. 2 replies came back with the wrong post id and were corrected by hand.
 
-What the 487 stories contain (from `data/stories.json`):
+What the 2,074 stories contain (from `data/stories.json`):
 
-- scam types: other 170, fake_job 105, impersonation 102, marketplace 67, romance 26, pig_butchering 17
-- outcomes: unknown 210, escaped 176, lost_money 101
-- 1,615 events (about 3.3 per story); 60 stories give an amount lost (median $1,000)
+- scam types: other 611, fake_job 389, romance 297, impersonation 295, pig_butchering 264, marketplace 218
+- outcomes: unknown 741, lost_money 781, escaped 552
+- 7,077 events (about 3.4 per story); 490 stories give an amount lost (median $2,723)
 
 ### Cleaning
 
@@ -121,7 +133,13 @@ Posts are taken in a seeded order, so reruns pick the same posts. Only posts fou
 - When a story is built, details and snippet are PII-redacted again, an amount of 0 or less becomes null, and the outcome is set to `lost_money` whenever there is an amount or a `money_lost` event. Each story is then validated against the contract schema; failures are dropped and printed with the reason.
 - `--from-cache-only` builds the stories file from the cache alone, with no API key or network. Posts with no cache entry are dropped and counted.
 
-The current `data/stories.json` was built with `--from-cache-only`. No API key was available, so the cache entries were written by hand-assisted extraction in the `record_story` format rather than by live Haiku calls (see the docstring in `pipeline/extract.py`). TODO: confirm this wording with Arya.
+The current `data/stories.json` was built with `--from-cache-only`. No API key was available, so none of the cache entries are live Haiku calls. They are model replies in the `record_story` format loaded with `--import`:
+
+- the first 487 stories: hand-assisted extraction (see the docstring in `pipeline/extract.py`);
+- the next 300: batches of 50 posts labelled with the instructions in `pipeline/prompts.py` by Gemini 3.8 Flash (150) and Claude Sonnet 4.6 (150), through an outside agent tool;
+- the last 1,300: batches of 50 labelled by Claude Haiku subagents with the same instructions.
+
+Every batch went through the same schema check, a check that each reply matches its own post, and a read of 5 random stories per batch. Models differ, so labelling style is not identical across batches.
 
 ### Accuracy
 
@@ -140,9 +158,29 @@ Spot-check accuracy (n = 20, the same seeded sample both times). The hand check 
 
 The two checks disagree on 5 stories. By hand, the only miss was the PayPal "mistaken payment" story (`reddit-ckg3bq`), wrong on scam type, outcome and amount. The model review accepted that one but was stricter on four others, about which payment step and outcome labels fit.
 
+On the new stories, a model review of 20 seeded stories drawn from the 1,592 added since the first 487 is in `data/spotcheck/results_new_model.jsonl` (`python -m pipeline.spotcheck --results data/spotcheck/results_new_model.jsonl --report`). It is separate from the hand check above and has not been checked by hand:
+
+| Field | Model review of new stories |
+|---|---|
+| `scam_type` | 100% (20/20) |
+| `events` | 85% (17/20) |
+| `outcome` | 100% (20/20) |
+| `amount_lost_usd` | 100% (20/20) |
+| All four fields right | 85% (17/20) |
+| Overall (field checks) | 96.2% (77/80) |
+
+The three `events` misses were a wrong step label (a paid-priority offer marked as `victim_suspicious`), a missing pressure step and unlisted fee payments. This sample is small, so each figure carries a wide margin.
+
 ### Caveats
 
-The stories are self-reported, so they skew toward people who posted about a scam, and many end before the outcome is known (210 of 487 are `unknown`). Read the graphs as patterns associated with loss, not causes.
+The stories are self-reported, so they skew toward people who posted about a scam, and many end before the outcome is known (741 of 2,074 are `unknown`). Read the graphs as patterns associated with loss, not causes.
+
+- **Selection lets some non-scam posts through.** Reddit posts from the general subreddits (jobs, legaladvice, personalfinance, recruitinghell) and a few CFPB account disputes are not scam stories. They come out as `other` with an `unknown` outcome and one placeholder event. Filter on `outcome` and event count if you need clean scam sequences.
+- **Amounts are the victim's stated loss, roughly.** Models converted other currencies at rough rates, took lower bounds ("over $100,000" as 100,000) and sometimes used a total from the post that is not one victim's loss. A few amounts of $500,000 or more are unchecked.
+- **CFPB is a frozen archive.** CFPB pulled narratives in September 2026, so these 300 stories are a snapshot taken on 2026-08-15 that skews to US banks and payment apps. They are written as short formal complaints, not the casual first-person posts on Reddit.
+- **Mixed labellers.** Three model families labelled different batches; see the Extraction section.
+- **Names.** Redaction uses fixed patterns, so a name elsewhere in a post can survive in the text, though snippets and event details were scanned for placeholders, emails, handles and phone numbers.
+
 
 ## Matcher
 
