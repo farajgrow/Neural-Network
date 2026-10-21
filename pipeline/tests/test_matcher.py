@@ -105,10 +105,54 @@ def test_demo_fallback_without_network(monkeypatch):
         assert matcher.match("  " + m["text"] + "\n", client=BrokenClient()) == responses[m["id"]]
 
 
-def test_no_fallback_for_unknown_text(monkeypatch):
+def test_no_key_uses_rules_not_error(monkeypatch):
     monkeypatch.setattr(matcher, "_load_api_key", lambda: None)
-    with pytest.raises(RuntimeError):
-        matcher.match("random text with no key")
+    result = matcher.match("random text with no key")
+    matcher.validate(result)
+
+
+def test_failing_client_falls_back_to_rules():
+    result = matcher.match("Hello, I'm Tom from your bank fraud department.", client=BrokenClient())
+    assert result["scam_type"] == "impersonation"
+
+
+@pytest.mark.parametrize("demo_id,expected", [("crypto_mentor", "pig_butchering"), ("fake_job", "fake_job")])
+def test_rule_match_labels_demo_messages(demo_id, expected):
+    msg = next(m for m in json.loads(matcher.DEMO_MESSAGES_PATH.read_text()) if m["id"] == demo_id)
+    result = matcher.rule_match(msg["text"])
+    assert result["scam_type"] == expected
+    assert result["confidence"] >= 0.6
+    assert "initial_contact" in result["steps_so_far"]
+    assert "platform_switch" in result["steps_so_far"]
+    assert result["steps_so_far"].index("initial_contact") < result["steps_so_far"].index("platform_switch")
+    assert result["likely_next_step"] not in result["steps_so_far"] or result["likely_next_step"] == "small_payment"
+
+
+def test_rule_match_non_demo_text(monkeypatch):
+    monkeypatch.setattr(matcher, "_load_api_key", lambda: None)
+    text = (
+        "Hey this is Jake, saw your listing for the PS5 on Facebook Marketplace. "
+        "I'm out of town so my courier will do pickup. I sent $50 extra by mistake, "
+        "can you refund it to my Zelle?"
+    )
+    result = matcher.match(text)
+    assert result["scam_type"] == "marketplace"
+    assert result["advice"] == matcher.ADVICE["marketplace"]
+
+
+def test_rule_match_harmless_text_low_confidence():
+    result = matcher.rule_match("See you at lunch tomorrow at noon.")
+    assert result["scam_type"] == "other"
+    assert result["confidence"] <= 0.3
+
+
+def test_next_step_transitions():
+    from collections import Counter
+
+    table = {("fake_job", "platform_switch"): Counter({"small_payment": 3, "trust_building": 1})}
+    assert matcher.next_step("fake_job", ["initial_contact", "platform_switch"], table) == "small_payment"
+    assert matcher.next_step("romance", ["authority_claim"], {}) == matcher.DEFAULT_NEXT["authority_claim"]
+    assert matcher.next_step("other", [], {}) == "initial_contact"
 
 
 def test_empty_text_rejected():
