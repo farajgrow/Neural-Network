@@ -101,7 +101,7 @@ Spot-check accuracy (n = 20). These checks were made by a model review of each s
 
 | Field | Correct |
 |---|---|
-| `scam_type` | 100% (19/19; one story was not checked on this field) |
+| `scam_type` | 100% (19/19; one story was marked unsure, as it could be a real debt collector) |
 | `events` | 90% (18/20) |
 | `outcome` | 90% (18/20) |
 | `amount_lost_usd` | 100% (20/20) |
