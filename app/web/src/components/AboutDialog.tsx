@@ -65,7 +65,7 @@ const STEPS: { title: string; who: 'Arya' | 'Faraj' | 'Both'; text: string }[] =
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
-  /** Show the animated "see how we built it" pointer next to the button. */
+  /** Pulse the button to draw the eye to it. */
   hint?: boolean
 }
 
@@ -78,12 +78,6 @@ export function AboutDialog({ open, onOpenChange, hint = false }: Props) {
             [ how we built it ]
           </Button>
         </Dialog.Trigger>
-        {hint && (
-          <span className="about-hint" aria-hidden>
-            <span className="about-hint__arrow">↑</span>
-            <span className="about-hint__text">see how we built it</span>
-          </span>
-        )}
       </span>
       <Dialog.Portal>
         <Dialog.Overlay className="about-overlay" />
