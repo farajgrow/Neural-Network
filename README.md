@@ -4,7 +4,7 @@
 
 **Live site: [scam-script-mapper.vercel.app](https://scam-script-mapper.vercel.app)**
 
-Built by **Faraj** (analysis, model, API and site) and **Arya** (data pipeline and matcher). It started as a two-hour hackathon build and was extended after.
+Built by **Faraj** (analysis, model, API and site) and **Arya** (data pipeline and matcher). We built it in a self-directed build sprint, out of our own interest.
 
 ![Scam Scripts: the all-types script graph with pinch and escape points](app/docs/graph-overview.png)
 
@@ -137,5 +137,5 @@ analysis/model/  GRU, baselines, evaluation, learning curve     (Faraj)
 app/api/         FastAPI backend                                (Faraj)
 app/web/         React + React Flow frontend                    (Faraj)
 app/docs/        screenshots
-PLAN.md          the original 2-hour build plan
+PLAN.md          the original build plan
 ```

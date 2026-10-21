@@ -58,7 +58,7 @@ const STEPS: { title: string; who: 'Arya' | 'Faraj' | 'Both'; text: string }[] =
   {
     title: 'Design and ship the site',
     who: 'Faraj',
-    text: 'Prototyped this retro look in Claude Design, then built it with React, React Flow and Tailwind on a FastAPI backend.',
+    text: 'Designed the retro look and built it with React, React Flow and Tailwind on a FastAPI backend.',
   },
 ]
 
@@ -106,7 +106,7 @@ export function AboutDialog({ open, onOpenChange, hint = false }: Props) {
                   neural network, the API and this site.
                 </li>
               </ul>
-              <p className="muted small">Started as a two-hour hackathon build, then extended.</p>
+              <p className="muted small">Built in a self-directed build sprint, out of our own interest.</p>
             </section>
 
             <section>
