@@ -36,14 +36,26 @@ Tests (no network, no API key):
 
 Requests share a limit of one request per second and retry with backoff (5, 10, 20, 40 s) on HTTP 429, 5xx, network errors and Arctic Shift's 422 "Timeout" overload reply. Posts are deduplicated by id across sources.
 
-All 487 stories in the current `data/stories.json` come from Reddit; CFPB contributed none. TODO: per-source and per-query counts from the scrape summary (`per fetched_via:`).
+All 487 stories in the current `data/stories.json` come from Reddit through Arctic Shift; CFPB contributed none. Per source (the `fetched_via` field):
+
+| Source | Raw posts | Stories |
+|---|---|---|
+| `arctic:new` (newest posts) | 200 | 195 |
+| `arctic:top` (high-score slice) | 135 | 134 |
+| `arctic:task job` | 40 | 39 |
+| `arctic:remote job recruiter` | 40 | 39 |
+| `arctic:IRS` | 40 | 40 |
+| `arctic:zelle` | 40 | 40 |
+| **Total** | **495** | **487** |
+
+The current `data/raw/posts.jsonl` predates the query list above: only four keyword queries appear in it, at 40 posts each rather than 35.
 
 ### Counts
 
 | Stage | Posts | Notes |
 |---|---|---|
 | Scraped (`data/raw/posts.jsonl`) | 495 | |
-| Cleaned (`data/clean/posts.jsonl`) | 493 | 2 dropped by the filters below. TODO: which filters |
+| Cleaned (`data/clean/posts.jsonl`) | 493 | 2 dropped by the filters below: 1 meta post and 1 exact duplicate body |
 | Stories (`data/stories.json`) | 487 | 5 near-duplicates and 1 fictional post removed. TODO: say how they were found and removed (by hand or a script) |
 
 TODO: extraction split: ok / invalid (failed schema validation) / api error / not in cache.
@@ -85,11 +97,34 @@ The current `data/stories.json` was built with `--from-cache-only`. No API key w
 
 `python -m pipeline.spotcheck` shows a seeded sample of 20 stories next to their clean posts and asks, for each one, whether `scam_type`, `events`, `outcome` and `amount_lost_usd` are right. `--report` prints accuracy per field and overall.
 
-TODO: spot-check accuracy (n = 20): scam_type __%, events __%, outcome __%, amount __%, overall __%.
+Spot-check accuracy (n = 20, the same seeded sample both times). The hand check is in `data/spotcheck/results_hand.jsonl` (`--results data/spotcheck/results_hand.jsonl --report`). An earlier model review of the same stories is in `data/spotcheck/results.jsonl`:
+
+| Field | By hand | Model review |
+|---|---|---|
+| `scam_type` | 95% (19/20) | 100% (19/19; one marked unsure, as it could be a real debt collector) |
+| `events` | 100% (20/20) | 90% (18/20) |
+| `outcome` | 95% (19/20) | 90% (18/20) |
+| `amount_lost_usd` | 95% (19/20) | 100% (20/20) |
+| All four fields right | 95% (19/20) | 85% (17/20) |
+| Overall (field checks) | 96.2% (77/80) | 94.9% (75/79) |
+
+The two checks disagree on 5 stories. By hand, the only miss was the PayPal "mistaken payment" story (`reddit-ckg3bq`), wrong on scam type, outcome and amount. The model review accepted that one but was stricter on four others, about which payment step and outcome labels fit.
 
 ### Caveats
 
 The stories are self-reported, so they skew toward people who posted about a scam, and many end before the outcome is known (210 of 487 are `unknown`). Read the graphs as patterns associated with loss, not causes.
+
+## Matcher
+
+`pipeline.matcher.match(text)` returns a dict valid against `contract/matcher.schema.json`. Try it with `python -m pipeline.matcher "text"`; the path that answered is printed to stderr. It tries these in order and falls through on any error or invalid answer:
+
+1. The disk cache in `pipeline/.cache/matcher/` (gitignored). Only valid model answers are cached.
+2. **Jev** (TypeSafe System One, `jev-latest`), when `TYPESAFE_API_KEY` is set. One request asks a Choice for the scam type, a Choice for the scammer's next move, a Noul for "is this a scam at all" and a Noul per step. For the scammer's own moves (platform switch, urgency and so on), the step counts when the scammer does it or asks for it. For the person's actions (paying, sharing codes, remote access), it counts only when they have done it. Code then builds the result: steps above 0.5 count as seen and are ordered by where they usually fall in the real stories. The next step is the move Jev rates most likely among those not seen yet; victim reactions such as `victim_suspicious` are never predicted, and the most common transition in `data/stories.json` is the fallback. `confidence` is P(scam type) × P(scam), and the advice comes from fixed templates. Below 0.5 on "is this a scam", the result is `other` with low confidence.
+3. **Sonnet** (`claude-sonnet-5-5`, forced tool use), when `ANTHROPIC_API_KEY` is set.
+4. The stored answers in `demo_responses.json`, if the text is one of the two demo messages.
+5. The offline regex rules.
+
+Keys are read from the environment or a repo-root `.env` (gitignored) and are never logged. Tests mock every API call; the live checks run only when a key is set: `python -m pytest -q pipeline/tests/test_matcher.py -k live`.
 
 ## Intermediate files (gitignored, local only)
 
