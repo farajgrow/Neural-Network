@@ -10,6 +10,9 @@ END) and sums to 1: "if the scammer makes another move, which one is it?". It ma
 give weight to a move already seen (scripts can repeat a move after a reaction).
 Outcome steps in the input (`money_lost`, `victim_exits`) and unknown steps are ignored,
 matching how the model was trained; reactions such as `victim_suspicious` are used.
+
+`predict()` runs the numpy forward pass (numpy_gru.py) on gru_weights.npz, so it needs
+only numpy. `load_model()` loads the PyTorch model from gru.pt and needs torch.
 """
 
 from __future__ import annotations
@@ -17,17 +20,19 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 
-import torch
-
-from analysis.model.data import Example, Vocab, script_steps
-from analysis.model.gru import GRUConfig, ScamGRU, predict_examples
+from analysis.model.data import Vocab, script_steps
+from analysis.model.numpy_gru import WEIGHTS_PATH, load_numpy_model
 
 MODEL_PATH = Path(__file__).resolve().parent / "gru.pt"
 
 
 @lru_cache(maxsize=4)
-def load_model(path: Path = MODEL_PATH) -> tuple[ScamGRU, Vocab]:
-    """Load the saved weights and the vocabulary they were trained with (cached)."""
+def load_model(path: Path = MODEL_PATH):
+    """Load the PyTorch model from gru.pt and its vocabulary (cached). Needs torch."""
+    import torch
+
+    from analysis.model.gru import GRUConfig, ScamGRU
+
     saved = torch.load(path, map_location="cpu", weights_only=True)
     vocab = Vocab(steps=tuple(saved["steps"]), scam_types=tuple(saved["scam_types"]))
     if tuple(saved.get("targets", ())) != vocab.targets:
@@ -38,22 +43,23 @@ def load_model(path: Path = MODEL_PATH) -> tuple[ScamGRU, Vocab]:
     return model, vocab
 
 
-def predict(steps: list[str], scam_type: str, path: Path = MODEL_PATH) -> dict:
+def predict(steps: list[str], scam_type: str, path: Path = WEIGHTS_PATH) -> dict:
     """Next-step probabilities and loss probability for the steps seen so far.
 
     Raises ValueError if no input step is left after filtering. An unknown scam_type
     is treated as "other".
     """
-    model, vocab = load_model(path)
+    model = load_numpy_model(path)
+    vocab = model.vocab
     prefix = script_steps(steps, vocab)
     if not prefix:
         raise ValueError("predict() needs at least one non-outcome step (outcome steps are ignored)")
     if scam_type not in vocab.scam_types:
         scam_type = "other"
-    next_probs, loss_probs = predict_examples(model, [Example("query", scam_type, prefix, "", None)], vocab)
-    probs = {target: float(p) for target, p in zip(vocab.targets, next_probs[0])}
+    next_probs, p_loss = model.predict_prefix(prefix, scam_type)
+    probs = {target: float(p) for target, p in zip(vocab.targets, next_probs)}
     return {
         "next_step_probs": probs,
         "top_next": max(probs, key=probs.get),
-        "p_loss": float(loss_probs[0]),
+        "p_loss": p_loss,
     }
