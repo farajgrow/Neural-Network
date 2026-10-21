@@ -1,0 +1,16 @@
+{
+  "crypto_mentor": {
+    "scam_type": "pig_butchering",
+    "confidence": 0.94,
+    "steps_so_far": ["initial_contact", "trust_building", "platform_switch", "fake_proof_shown", "urgency_pressure"],
+    "likely_next_step": "small_payment",
+    "advice": "This is a pig butchering script: a stranger who 'texted the wrong number' and offers to mentor you in crypto is a scammer. Do not deposit anything on that platform, stop replying and block the number."
+  },
+  "fake_job": {
+    "scam_type": "fake_job",
+    "confidence": 0.95,
+    "steps_so_far": ["initial_contact", "authority_claim", "platform_switch"],
+    "likely_next_step": "small_payment",
+    "advice": "Real employers never ask you to pay or top up an account to get work, and Amazon does not hire through Telegram. Do not send any money and stop contacting this recruiter."
+  }
+}
