@@ -3,11 +3,11 @@
 
 /* Our palette. Everything below (and the shadcn tokens) reads from these. */
 :root {
-  --ground: #FFFBF3;
+  --ground: #FFFDF8;
   --ink: #141414;
   --muted: #4A4740;
-  --node: #F4ECDA;
-  --node-unknown: #ECE5D6;
+  --node: #F7F3EA;
+  --node-unknown: #EEEBE4;
   --paper: #FFFFFF;
   --edge: #A9A496;
   --rule: #8A8579;
