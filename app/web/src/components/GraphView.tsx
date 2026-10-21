@@ -6,7 +6,7 @@ import {
   type NodeTypes,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { label, lower, type Clusters, type Graph, type GraphKey, type MatchResult, type Step } from '../api'
 import { ClusterPicker } from './ClusterPicker'
 import { ErrorState } from './ErrorState'
@@ -35,6 +35,33 @@ function AutoFit({ graphKey, onFitted }: { graphKey: string; onFitted: (key: str
     return () => clearTimeout(id)
   }, [graphKey, width, height, fitView, onFitted])
   return null
+}
+
+/** Phones get the top-to-bottom layout (same breakpoint as the CSS). */
+const NARROW = '(max-width: 720px)'
+
+function useNarrow(): boolean {
+  const [narrow, setNarrow] = useState(() => window.matchMedia(NARROW).matches)
+  useEffect(() => {
+    const mq = window.matchMedia(NARROW)
+    const on = () => setNarrow(mq.matches)
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [])
+  return narrow
+}
+
+/** Width of an element, kept up to date. */
+function useWidth<T extends HTMLElement>(): [React.RefObject<T | null>, number] {
+  const ref = useRef<T>(null)
+  const [width, setWidth] = useState(0)
+  useEffect(() => {
+    if (!ref.current) return
+    const ro = new ResizeObserver(([entry]) => setWidth(entry.contentRect.width))
+    ro.observe(ref.current)
+    return () => ro.disconnect()
+  }, [])
+  return [ref, width]
 }
 
 interface Props {
@@ -102,12 +129,22 @@ function GraphCanvas({ graph, loading, error, selectedStep, onSelectStep, highli
   const [showAll, setShowAll] = useState(false)
   // Hide the canvas until the first fit, so the unfitted frame never flashes.
   const [fittedKey, setFittedKey] = useState<string | null>(null)
-  const fitKey = graph ? `${graph.scam_type}:${showAll}` : ''
-  const base = useMemo(() => (graph ? layoutGraph(graph, showAll) : null), [graph, showAll])
+  const narrow = useNarrow()
+  const [scrollRef, scrollWidth] = useWidth<HTMLDivElement>()
+  const fitKey = graph ? `${graph.scam_type}:${showAll}:${narrow}` : ''
+  const base = useMemo(() => (graph ? layoutGraph(graph, showAll, narrow) : null), [graph, showAll, narrow])
   const { nodes, edges } = useMemo<Layout>(
-    () => (base ? decorate(base, selectedStep, highlight) : { nodes: [], edges: [], minorCount: 0 }),
+    () =>
+      base
+        ? decorate(base, selectedStep, highlight)
+        : { nodes: [], edges: [], minorCount: 0, bounds: { width: 0, height: 0 } },
     [base, selectedStep, highlight],
   )
+  // Vertical layout: make the canvas as tall as the graph is at this width, so it fits without scrolling sideways.
+  const canvasStyle =
+    narrow && base && base.bounds.width > 0 && scrollWidth > 0
+      ? { height: Math.round((scrollWidth * 0.96 * base.bounds.height) / base.bounds.width) + 16 }
+      : undefined
 
   let content
   if (error) content = <ErrorState error={error} />
@@ -153,8 +190,10 @@ function GraphCanvas({ graph, loading, error, selectedStep, onSelectStep, highli
 
   return (
     <>
-      <div className="graph-scroll">
-        <div className={graph && fittedKey !== fitKey ? 'graph-canvas is-fitting' : 'graph-canvas'}>{content}</div>
+      <div className="graph-scroll" ref={scrollRef}>
+        <div className={graph && fittedKey !== fitKey ? 'graph-canvas is-fitting' : 'graph-canvas'} style={canvasStyle}>
+          {content}
+        </div>
       </div>
       <Legend minorCount={base?.minorCount ?? 0} showAll={showAll} onToggleAll={() => setShowAll((v) => !v)} />
     </>

@@ -60,8 +60,17 @@ export function StepNode({ data: d }: NodeProps<StepFlowNode>) {
         <div className="node__name">{d.isOutcome ? OUTCOME_NAME[d.step] : lower(d.step)}</div>
         {!d.isOutcome && <div className="node__meta">{d.loss_rate == null ? 'unknown' : `${pct(d.loss_rate)} lost`}</div>}
       </div>
-      <Handle type="target" position={Position.Left} style={{ top: handleTop, left: inset }} />
-      <Handle type="source" position={Position.Right} style={{ top: handleTop, right: inset }} />
+      {d.vertical ? (
+        <>
+          <Handle type="target" position={Position.Top} />
+          <Handle type="source" position={Position.Bottom} />
+        </>
+      ) : (
+        <>
+          <Handle type="target" position={Position.Left} style={{ top: handleTop, left: inset }} />
+          <Handle type="source" position={Position.Right} style={{ top: handleTop, right: inset }} />
+        </>
+      )}
     </div>
   )
 }

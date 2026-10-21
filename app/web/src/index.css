@@ -308,9 +308,18 @@
   .brand { white-space: normal; }
   .tabs { flex-wrap: nowrap; overflow-x: auto; margin: 0 -16px; padding: 0 16px; width: calc(100% + 32px); border-top: 1px solid var(--ink); }
   .page { padding: 20px 16px 28px; }
-  .headline { font-size: 24px; }
+  .headline { font-size: clamp(19px, 5.6vw, 24px); }
   .graph-body { padding: 12px; }
-  .graph-canvas { height: 400px; }
+  /* The graph runs top to bottom here; GraphView sets the height to fit the width. */
+  .graph-scroll { overflow-x: visible; margin: 0; }
+  .graph-canvas { min-width: 0; height: 600px; }
+  /* Header: brand and the how-we-built-it button on one row, the tabs scrolling on the next. */
+  .menubar .menubar__right { display: contents; }
+  .menubar .about-anchor { margin-left: auto; }
+  .menubar > .brand { flex: 1 1 auto; min-width: 0; }
+  .menubar .brand__sub { display: none; }
+  .menubar__right > :last-child { order: 3; flex: 1 1 100%; min-width: 0; }
+  .menubar .about-trigger { font-size: 11px; padding: 4px 8px; }
 }
 
 /* ---- About dialog ------------------------------------------------------ */

@@ -39,6 +39,23 @@ function arcBack(a: Pt, b: Pt): string {
   return `M ${a.x},${a.y} Q ${mx},${Math.min(a.y, b.y) - lift} ${b.x},${b.y}`
 }
 
+/** Vertical layout path: from the source box's bottom to the target box's top. */
+function verticalPath(s: Pt, t: Pt, data: { back: boolean; sameCol: boolean; targetH: number }): string {
+  if (data.sameCol) {
+    // Same row: dip below the row and come up into the target's bottom.
+    const tb = { x: t.x, y: t.y + data.targetH }
+    const dip = 18 + Math.abs(tb.x - s.x) * 0.12
+    return `M ${s.x},${s.y} C ${s.x},${s.y + dip} ${tb.x},${tb.y + dip} ${tb.x},${tb.y}`
+  }
+  if (data.back || t.y <= s.y) {
+    // Going back up the script: a shallow dashed arc bowed to the left.
+    const lift = 24 + Math.hypot(t.x - s.x, t.y - s.y) * 0.15
+    return `M ${s.x},${s.y} Q ${Math.min(s.x, t.x) - lift},${(s.y + t.y) / 2} ${t.x},${t.y}`
+  }
+  const my = (s.y + t.y) / 2
+  return `M ${s.x},${s.y} C ${s.x},${my} ${t.x},${my} ${t.x},${t.y}`
+}
+
 const KIND_STROKE = { plain: 'var(--edge)', lost: 'var(--orange)', out: 'var(--blue)' } as const
 
 export function FlowEdge({ source, target, sourceX, sourceY, targetX, targetY, data }: EdgeProps<FlowEdgeType>) {
@@ -50,7 +67,9 @@ export function FlowEdge({ source, target, sourceX, sourceY, targetX, targetY, d
   // Box centres; the boxes hide the ends of centre-to-centre paths.
   const a = { x: sourceX - data.sourceSize / 2, y: sourceY }
   const b = { x: targetX + data.targetSize / 2, y: targetY }
-  if (data.sameCol) {
+  if (data.vertical) {
+    path = verticalPath(s, t, data)
+  } else if (data.sameCol) {
     // Bulging right.
     const bulge = 26 + Math.abs(b.y - a.y) * 0.08
     const dy = (b.y - a.y) / 3
