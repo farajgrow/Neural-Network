@@ -7,3 +7,4 @@ dist/
 .DS_Store
 pipeline/.cache/
 data/raw/
+data/clean/
