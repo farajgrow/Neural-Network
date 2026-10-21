@@ -1,0 +1,30 @@
+{
+  "steps": [
+    "initial_contact",
+    "platform_switch",
+    "trust_building",
+    "authority_claim",
+    "urgency_pressure",
+    "fake_proof_shown",
+    "small_payment",
+    "large_payment",
+    "credentials_shared",
+    "remote_access_granted",
+    "withdrawal_blocked",
+    "victim_suspicious",
+    "third_party_intervened",
+    "victim_exits",
+    "money_lost"
+  ],
+  "scam_types": [
+    "pig_butchering",
+    "fake_job",
+    "impersonation",
+    "marketplace",
+    "romance",
+    "other"
+  ],
+  "actors": ["scammer", "victim", "third_party"],
+  "outcomes": ["lost_money", "escaped", "unknown"],
+  "sources": ["reddit", "cfpb"]
+}

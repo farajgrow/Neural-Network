@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "matcher.schema.json",
+  "title": "Matcher result",
+  "description": "Return value of pipeline.matcher.match(text). The API adds loss_rate_if_continues from the graphs file before sending it to the UI.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["scam_type", "confidence", "steps_so_far", "likely_next_step", "advice"],
+  "properties": {
+    "scam_type": {
+      "enum": ["pig_butchering", "fake_job", "impersonation", "marketplace", "romance", "other"]
+    },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "steps_so_far": {
+      "type": "array",
+      "description": "Steps seen in the pasted text, in order.",
+      "items": {
+        "enum": [
+          "initial_contact", "platform_switch", "trust_building", "authority_claim",
+          "urgency_pressure", "fake_proof_shown", "small_payment", "large_payment",
+          "credentials_shared", "remote_access_granted", "withdrawal_blocked",
+          "victim_suspicious", "third_party_intervened", "victim_exits", "money_lost"
+        ]
+      }
+    },
+    "likely_next_step": {
+      "enum": [
+        "initial_contact", "platform_switch", "trust_building", "authority_claim",
+        "urgency_pressure", "fake_proof_shown", "small_payment", "large_payment",
+        "credentials_shared", "remote_access_granted", "withdrawal_blocked",
+        "victim_suspicious", "third_party_intervened", "victim_exits", "money_lost"
+      ]
+    },
+    "advice": { "type": "string", "minLength": 1, "description": "One or two sentences." }
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "story.schema.json",
+  "title": "Stories file",
+  "description": "data/stories.json: every clean, extracted story. Enum values must match contract/vocab.json.",
+  "type": "array",
+  "items": { "$ref": "#/$defs/story" },
+  "$defs": {
+    "story": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "source", "scam_type", "events", "outcome", "amount_lost_usd", "snippet"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable and unique. reddit-<post id>, cfpb-<complaint id>, or mock-<n>."
+        },
+        "source": { "enum": ["reddit", "cfpb"] },
+        "scam_type": {
+          "enum": ["pig_butchering", "fake_job", "impersonation", "marketplace", "romance", "other"],
+          "description": "impersonation covers bank, government and tech support."
+        },
+        "events": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Chronological order.",
+          "items": { "$ref": "#/$defs/event" }
+        },
+        "outcome": {
+          "enum": ["lost_money", "escaped", "unknown"],
+          "description": "lost_money: the victim lost any money. escaped: the victim got out with no money lost. unknown: the story doesn't say."
+        },
+        "amount_lost_usd": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Total loss in USD, or null when not stated or not applicable."
+        },
+        "snippet": {
+          "type": "string",
+          "minLength": 1,
+          "description": "1 to 2 sentence anonymised summary for the UI. No names, usernames, emails, phone numbers."
+        }
+      }
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["step", "actor", "detail"],
+      "properties": {
+        "step": {
+          "enum": [
+            "initial_contact", "platform_switch", "trust_building", "authority_claim",
+            "urgency_pressure", "fake_proof_shown", "small_payment", "large_payment",
+            "credentials_shared", "remote_access_granted", "withdrawal_blocked",
+            "victim_suspicious", "third_party_intervened", "victim_exits", "money_lost"
+          ]
+        },
+        "actor": { "enum": ["scammer", "victim", "third_party"] },
+        "detail": { "type": "string", "minLength": 1, "description": "Short, anonymised." }
+      }
+    }
+  }
+}
