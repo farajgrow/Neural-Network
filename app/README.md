@@ -44,6 +44,7 @@ Response = matcher fields (`contract/matcher.schema.json`) plus:
 | `next_step_count` | transitions `current_step -> likely_next_step` in that graph |
 | `current_step_out_count` | all transitions out of `current_step` in that graph |
 | `source` | `jev` (Jev just now), `live` (Sonnet just now), `cache` (stored answer: matcher disk cache, matcher demo responses or `demo_cache.json`), `fallback` (offline rule matcher), `mock` (matcher not importable) |
+| `model` | our GRU's forecast from `steps_so_far` (`analysis/model/`): `top_next`, top-3 `next_steps` (`END` = story stops), `p_loss`, and its cross-validated `eval` scores. `null` if torch isn't installed (`analysis/requirements.txt`) or no script step was seen |
 | `source_detail` | finer reason, e.g. `matcher_jev`, `matcher_api`, `matcher_rules`, `demo_cache`, `rules_after_timeout` |
 
 ## Endpoints

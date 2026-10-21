@@ -1,0 +1,3 @@
+# Neural network (analysis/model). Not needed by the app or the rest of analysis/.
+torch==2.14.1
+numpy==2.5.4

@@ -11,16 +11,60 @@ import {
 } from './api'
 import { GraphView } from './components/GraphView'
 import type { Highlight } from './components/graphLayout'
+import { AboutDialog } from './components/AboutDialog'
 import { MatcherPanel } from './components/MatcherPanel'
+import { WelcomeDialog } from './components/WelcomeDialog'
 import { ScamTypeSwitcher } from './components/ScamTypeSwitcher'
 import { StoryStrip } from './components/StoryStrip'
 import { SummaryBox } from './components/SummaryBox'
+
+const WELCOME_KEY = 'scam-scripts.welcomed.v1'
+
+/** Show the welcome popup on a first visit, or whenever the URL has ?welcome. */
+function shouldWelcome(): boolean {
+  try {
+    if (new URLSearchParams(window.location.search).has('welcome')) return true
+    return window.localStorage.getItem(WELCOME_KEY) !== '1'
+  } catch {
+    return true
+  }
+}
+
+function markWelcomed() {
+  try {
+    window.localStorage.setItem(WELCOME_KEY, '1')
+  } catch {
+    // Storage blocked (private window): the welcome just shows again next time.
+  }
+}
 
 export default function App() {
   const [types, setTypes] = useState<ScamTypeSummary[]>([])
   const [typesError, setTypesError] = useState<Error | null>(null)
   const [allLossRate, setAllLossRate] = useState<number | null>(null)
   const [scamType, setScamType] = useState<GraphKey>('all')
+  const [welcomeOpen, setWelcomeOpen] = useState(shouldWelcome)
+  const [aboutOpen, setAboutOpen] = useState(false)
+  const [aboutHint, setAboutHint] = useState(false)
+
+  useEffect(() => {
+    if (!aboutHint) return
+    const t = window.setTimeout(() => setAboutHint(false), 12000)
+    return () => window.clearTimeout(t)
+  }, [aboutHint])
+
+  function exploreMap() {
+    markWelcomed()
+    setWelcomeOpen(false)
+    setAboutHint(true)
+  }
+
+  function openHowWeBuiltIt() {
+    markWelcomed()
+    setWelcomeOpen(false)
+    setAboutHint(false)
+    setAboutOpen(true)
+  }
 
   const [graph, setGraph] = useState<Graph | null>(null)
   const [graphLoading, setGraphLoading] = useState(false)
@@ -132,13 +176,24 @@ export default function App() {
 
   return (
     <div className="app">
+      <WelcomeDialog open={welcomeOpen} onExplore={exploreMap} onHowWeBuiltIt={openHowWeBuiltIt} />
       <header className="menubar">
         <div className="brand">
           <span className="brand__mark" aria-hidden />
           SCAM SCRIPTS
-          {totalStories > 0 && <span className="brand__sub">/ {totalStories} victim stories mapped</span>}
+          {totalStories > 0 && <span className="brand__sub">/ {totalStories} stories</span>}
         </div>
-        <ScamTypeSwitcher types={types} allLossRate={allLossRate} value={scamType} onChange={setScamType} />
+        <div className="menubar__right">
+          <AboutDialog
+            open={aboutOpen}
+            onOpenChange={(o) => {
+              setAboutOpen(o)
+              if (o) setAboutHint(false)
+            }}
+            hint={aboutHint}
+          />
+          <ScamTypeSwitcher types={types} allLossRate={allLossRate} value={scamType} onChange={setScamType} />
+        </div>
       </header>
       {typesError && !graphError && <div className="banner">couldn't load scam types: {typesError.message}</div>}
       <div className="page">

@@ -329,6 +329,69 @@ def _graph_context(scam_type: str, current: str | None, nxt: str | None) -> dict
     return out
 
 
+# ---- Our model (analysis/model, GRU v1) ----------------------------------------
+#
+# A small GRU trained on data/stories.json predicts the next step and the chance of
+# losing money from the steps so far. It needs torch (analysis/requirements.txt);
+# without it, or when no script step was seen, `model` is null and nothing else changes.
+
+MODEL_CARD_PATH = REPO_ROOT / "analysis" / "model" / "model_card.json"
+
+# Not something a scammer gets the victim to do next: reactions, outcomes, and "story ends".
+_NOT_A_MOVE = {"victim_suspicious", "third_party_intervened", "victim_exits", "money_lost", "END"}
+
+
+def _model_card() -> dict:
+    try:
+        return json.loads(MODEL_CARD_PATH.read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def _model_eval() -> dict | None:
+    """Cross-validated accuracy from the model card, so the UI can show how good the model is."""
+    try:
+        cv = _model_card()["cv_metrics"]
+        return {
+            "next_top1": round(cv["gru_next_step"]["top1"]["mean"], 3),
+            "loss_auc": round(cv["gru_loss_all_prefixes"]["auc"]["mean"], 3),
+            "folds": cv.get("folds"),
+        }
+    except (OSError, KeyError, TypeError, ValueError):
+        return None
+
+
+def _model_prediction(steps: list[str], scam_type: str) -> dict | None:
+    """Run the GRU on the matched steps; None if torch, the weights or a script step is missing."""
+    try:
+        from analysis.model.predict import predict
+    except Exception as exc:  # torch not installed, or the model package failed to import
+        log.info("model: unavailable (%s)", type(exc).__name__)
+        return None
+    try:
+        out = predict(list(steps), scam_type)
+    except ValueError:
+        return None
+    except Exception as exc:
+        log.warning("model: prediction failed: %s", type(exc).__name__)
+        return None
+    # Show the scammer's likely next move: drop reactions, outcomes and END, then rescale.
+    # Steps the message already shows are left out too, as the matcher does.
+    seen = set(steps)
+    moves = {s: p for s, p in out["next_step_probs"].items() if s not in _NOT_A_MOVE and s not in seen}
+    total = sum(moves.values())
+    if total <= 0:
+        return None
+    ranked = sorted(((s, p / total) for s, p in moves.items()), key=lambda kv: kv[1], reverse=True)
+    return {
+        "name": _model_card().get("name", "gru"),
+        "top_next": ranked[0][0],
+        "next_steps": [{"step": s, "p": round(p, 4)} for s, p in ranked[:3]],
+        "p_loss": round(out["p_loss"], 4),
+        "eval": _model_eval(),
+    }
+
+
 @app.post("/api/match")
 def match_endpoint(req: MatchRequest) -> dict:
     result, source, detail = _run_matcher(req.text)
@@ -338,4 +401,5 @@ def match_endpoint(req: MatchRequest) -> dict:
     result.update(_graph_context(result.get("scam_type", ""), current, result.get("likely_next_step")))
     result["source"] = source
     result["source_detail"] = detail
+    result["model"] = _model_prediction(steps, result.get("scam_type", ""))
     return result

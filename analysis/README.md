@@ -81,3 +81,40 @@ These are associations in self-reported data, not causes.
   }
 }
 ```
+
+## Neural network (`analysis/model/`)
+
+A small GRU (`gru-v2`) that predicts the **scammer's next move** and the **probability of losing money** from the steps seen so far plus the scam type. It is cross-validated against Markov and logistic-regression baselines. Results and an honest read are in `findings.md` under "Neural network (v2: next scam move)". In short, it ties the baselines.
+
+This is the only part of `analysis/` that needs third-party packages. The rest stays standard library only.
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r analysis/requirements.txt -r app/requirements.txt pytest
+.venv/bin/python -m analysis.model.train     # 5-fold CV + final model, about 7 s on CPU
+.venv/bin/python -m pytest analysis/tests    # torch tests are skipped if torch is missing
+```
+
+```python
+from analysis.model.predict import predict
+predict(["initial_contact", "platform_switch"], "pig_butchering")
+# {"next_step_probs": {...11 scammer moves, sums to 1...}, "top_next": "trust_building", "p_loss": 0.2}
+```
+
+| File | What it is |
+|---|---|
+| `data.py` | Stories → step sequences (outcome steps removed) → prefix examples (`next_step_examples` for the move head, `loss_examples` for the loss head). Also builds the 5-fold story-level split, stratified by scam type. |
+| `baselines.py` | Most-frequent next move, Markov (order 1/2, optionally per scam type, with backoff), base-rate and logistic-regression loss models. |
+| `gru.py` | The PyTorch model (step and type embeddings → 1-layer GRU(32) → two heads), masked training loss, and early stopping. |
+| `metrics.py` | Top-k accuracy, top-1 among moves not already seen, log loss, ROC AUC, Brier score and calibration bins, in numpy. |
+| `train.py` | Runs the CV, prints the table, and writes `results.json`. Then trains on all stories and writes `gru.pt` and `model_card.json`. |
+| `predict.py` | `predict(steps, scam_type)` using the saved `gru.pt`. |
+| `learning_curve.py` | Retrains every model on 25/50/75/100% of each fold's training stories and writes `learning_curve.json` (about 10 s). |
+| `results.json`, `gru.pt`, `model_card.json` | Committed outputs (the model is about 28 KB), so the app can load it without retraining. |
+
+Definitions:
+
+- **Inputs** are the collapsed steps with `money_lost` and `victim_exits` removed. Repeats created by that removal are collapsed again. The model never sees the outcome. The reactions `victim_suspicious` and `third_party_intervened` **are kept as inputs**, because they carry signal (especially for loss risk); they are just never targets.
+- **Next-step targets (v2)** are the scammer's **moves**: the vocabulary minus the reactions (`victim_suspicious`, `third_party_intervened`, `victim_exits`) and minus `money_lost`, 11 steps (the matcher's script steps minus `money_lost`, defined in `data.py`). For each prefix the target is the next move later in the story, skipping any reactions in between. A prefix with no later move gives no next-step example, and there is no `END` class. (v1 predicted the very next step or `END`; `victim_suspicious` was 331 of 953 such transitions, so v1 mostly predicted that.)
+- **Loss label:** 1 = `lost_money`, 0 = `escaped`, applied to every prefix of the story, including prefixes with no later move, so the loss head uses the same examples as v1. `unknown` stories train only the next-step head, because the loss head's loss is masked for them.
+- **Fair comparison:** the GRU's early-stopping split (15% of the training stories) is also used to pick each baseline's single setting. Test folds are only used for scoring. Runs are seeded and deterministic.

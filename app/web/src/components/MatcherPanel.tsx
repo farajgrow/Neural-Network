@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { api, lower, pct, type MatchResult } from '../api'
+import { api, lower, pct, type MatchResult, type ModelPrediction } from '../api'
 import { Window } from './Window'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -101,7 +101,42 @@ function ResultCard({ result: r }: { result: MatchResult }) {
           {r.context_graph && r.context_graph !== r.scam_type && ` (${lower(r.context_graph === 'all' ? 'all types' : r.context_graph)})`}
         </div>
       )}
+      {r.model && <ModelBox model={r.model} />}
       <p className="result__advice">{r.advice}</p>
+    </div>
+  )
+}
+
+/** Our GRU's forecast, shown beside the matcher's answer and clearly labelled as ours. */
+function ModelBox({ model: m }: { model: ModelPrediction }) {
+  const stepName = (s: string) => lower(s)
+  const about = m.eval
+    ? `A small neural network (GRU) we trained on the 487 stories. In ${m.eval.folds ?? 5}-fold cross-validation it named the scammer's next move ${pct(m.eval.next_top1)} of the time and ranked loss risk with AUC ${m.eval.loss_auc.toFixed(2)}, about the same as simple frequency counts.`
+    : 'A small neural network (GRU) we trained on the 487 stories.'
+  return (
+    <div className="model-box">
+      <div className="model-box__head">
+        <span className="loss-box__label">our model · {m.name.replace('-', ' ')}</span>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button type="button" className="model-box__info" aria-label="About our model">?</button>
+          </TooltipTrigger>
+          <TooltipContent side="left" className="max-w-[260px]">{about}</TooltipContent>
+        </Tooltip>
+      </div>
+      <div className="muted">scammer's likely next move</div>
+      <ol className="model-box__next">
+        {m.next_steps.map((n, i) => (
+          <li key={n.step} className={i === 0 ? 'model-box__top' : undefined}>
+            <span>{stepName(n.step)}</span>
+            <span>{pct(n.p)}</span>
+          </li>
+        ))}
+      </ol>
+      <div className="model-box__row">
+        <span className="muted">loss risk from these steps</span>
+        <span className="model-box__risk">{pct(m.p_loss)}</span>
+      </div>
     </div>
   )
 }
