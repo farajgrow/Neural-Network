@@ -1,24 +1,26 @@
 import dagre from '@dagrejs/dagre'
 import type { Edge, Node } from '@xyflow/react'
 import { OUTCOME_STEPS, type EscapePoint, type Graph, type GraphNode, type PinchPoint, type Step } from '../api'
-import { lossColor, LOST, SAFE } from '../colors'
 
-// Node geometry. Each node is a fixed-width box: badge zone, circle, label zone.
-// The badge and label zones have the same height so the circle sits on the box's
+// Node geometry. Each node is a fixed-width box: badge zone, square, label zone.
+// The badge and label zones have the same height so the square sits on the box's
 // vertical centre, which is where dagre routes edges to.
-export const NODE_W = 94
-export const ZONE_H = 36
-const D_MIN = 30
-const D_MAX = 70
-const RANK_SEP = 20
-const NODE_SEP = 40
+export const NODE_W = 116
+export const ZONE_H = 40
+const S_MIN = 24
+const S_MAX = 58
+const RANK_SEP = 18
+const NODE_SEP = 26
+/** Share of stories an edge needs to be drawn by default. */
+const MINOR_SHARE = 0.05
 
 export type NodeState = 'normal' | 'dim' | 'path' | 'next'
 export type EdgeState = 'normal' | 'dim' | 'path' | 'next' | 'focus'
+/** What an edge leads into: an outcome gets the outcome colour. */
+export type EdgeKind = 'plain' | 'lost' | 'out'
 
 export type StepNodeData = GraphNode & {
-  diameter: number
-  color: string
+  size: number
   isOutcome: boolean
   pinch?: PinchPoint
   escape?: EscapePoint
@@ -26,16 +28,13 @@ export type StepNodeData = GraphNode & {
   selected: boolean
   state: NodeState
   seqIndex?: number
-  hlColor?: string
 }
 export type StepFlowNode = Node<StepNodeData, 'step'>
 
 export type FlowEdgeData = {
   count: number
   width: number
-  opacity: number
-  sourceColor: string
-  targetColor: string
+  kind: EdgeKind
   /** Interior bend points from dagre (absolute coordinates), empty for short edges. */
   points: { x: number; y: number }[]
   /** Goes against the avg_position order (drawn as a dashed loop). */
@@ -43,7 +42,6 @@ export type FlowEdgeData = {
   /** Rare transition: hidden unless it is part of the focus or a highlight. */
   minor: boolean
   state: EdgeState
-  hlColor?: string
 }
 export type FlowEdge = Edge<FlowEdgeData, 'flow'>
 
@@ -54,16 +52,12 @@ export interface Layout {
   minorCount: number
 }
 
-/** What to emphasise on the graph: a cluster's typical path or a matched message. */
+/** What to emphasise on the graph: a variant's typical path or a matched message. */
 export interface Highlight {
   kind: 'cluster' | 'match'
-  color: string
   sequence: Step[]
   next?: Step | null
 }
-
-const nodeColor = (n: GraphNode) =>
-  n.step === 'money_lost' ? LOST : n.step === 'victim_exits' ? SAFE : lossColor(n.loss_rate)
 
 const edgeId = (from: string, to: string) => `${from}->${to}`
 
@@ -77,7 +71,7 @@ const edgeId = (from: string, to: string) => `${from}->${to}`
  * final column of their own.
  *
  * On bigger datasets most transitions are rare and turn the graph into a
- * hairball, so edges below ~4% of stories are "minor": left out of the layout and
+ * hairball, so edges below ~5% of stories are "minor": left out of the layout and
  * only drawn when they touch the selected step or a highlighted path. Every step
  * keeps its strongest incoming and outgoing edge. Back-edges need twice the count.
  */
@@ -85,8 +79,8 @@ export function layoutGraph(graph: Graph, showAll = false): Layout {
   const pinch = new Map(graph.pinch_points.map((p) => [p.step, p]))
   const escape = new Map(graph.escape_points.map((p) => [p.step, p]))
   const maxCount = Math.max(1, ...graph.nodes.map((n) => n.count))
-  const diameter = (count: number) => Math.round(D_MIN + (D_MAX - D_MIN) * Math.sqrt(count / maxCount))
-  const height = (count: number) => diameter(count) + 2 * ZONE_H
+  const size = (count: number) => Math.round(S_MIN + (S_MAX - S_MIN) * Math.sqrt(count / maxCount))
+  const height = (count: number) => size(count) + 2 * ZONE_H
 
   const order = [...graph.nodes].sort(
     (a, b) =>
@@ -99,7 +93,7 @@ export function layoutGraph(graph: Graph, showAll = false): Layout {
   const isForward = (from: Step, to: Step) => (rankOf.get(from) ?? 0) < (rankOf.get(to) ?? 0)
 
   const edgesIn = graph.edges.filter((e) => e.from !== e.to && rankOf.has(e.from) && rankOf.has(e.to))
-  const minCount = Math.max(1, Math.ceil(graph.n_stories * 0.04))
+  const minCount = Math.max(1, Math.ceil(graph.n_stories * MINOR_SHARE))
   const strongest = new Set<string>()
   for (const key of ['from', 'to'] as const) {
     const best = new Map<string, (typeof edgesIn)[number]>()
@@ -140,7 +134,7 @@ export function layoutGraph(graph: Graph, showAll = false): Layout {
     const lastX = Math.max(...steps.map((n) => centre.get(n.step)!.x))
     const ys = steps.map((n) => centre.get(n.step)!.y)
     const midY = (Math.min(...ys) + Math.max(...ys)) / 2
-    const gap = 64
+    const gap = 40
     const total = outcomes.reduce((s, n) => s + height(n.count), 0) + gap * (outcomes.length - 1)
     let y = midY - total / 2
     for (const n of outcomes) {
@@ -161,8 +155,7 @@ export function layoutGraph(graph: Graph, showAll = false): Layout {
       height: h,
       data: {
         ...n,
-        diameter: diameter(n.count),
-        color: nodeColor(n),
+        size: size(n.count),
         isOutcome: OUTCOME_STEPS.has(n.step),
         pinch: pinch.get(n.step),
         escape: escape.get(n.step),
@@ -171,7 +164,6 @@ export function layoutGraph(graph: Graph, showAll = false): Layout {
       },
     }
   })
-  const byStep = new Map(nodes.map((n) => [n.id, n.data]))
 
   const maxEdge = Math.max(1, ...graph.edges.map((e) => e.count))
   let minorCount = 0
@@ -193,10 +185,8 @@ export function layoutGraph(graph: Graph, showAll = false): Layout {
         zIndex: Math.round(t * 10),
         data: {
           count: e.count,
-          width: 1.25 + 7 * Math.pow(t, 0.85),
-          opacity: 0.22 + 0.58 * t,
-          sourceColor: byStep.get(e.from)!.color,
-          targetColor: byStep.get(e.to)!.color,
+          width: 1 + 2.5 * Math.pow(t, 0.8),
+          kind: (e.to === 'money_lost' ? 'lost' : e.to === 'victim_exits' ? 'out' : 'plain') as EdgeKind,
           points,
           back: !forward,
           minor,
@@ -236,7 +226,6 @@ export function decorate(layout: Layout, selected: Step | null, highlight: Highl
   }
 
   const active = highlight != null || selected != null
-  const hlColor = highlight?.color
 
   const nodes = layout.nodes.map((n) => {
     let state: NodeState = 'normal'
@@ -244,7 +233,7 @@ export function decorate(layout: Layout, selected: Step | null, highlight: Highl
     else if (pathSteps.has(n.id)) state = highlight ? 'path' : 'normal'
     else if (active) state = 'dim'
     const seqIndex = highlight ? pathSteps.get(n.id) : undefined
-    return { ...n, data: { ...n.data, selected: n.id === selected, state, seqIndex, hlColor } }
+    return { ...n, data: { ...n.data, selected: n.id === selected, state, seqIndex } }
   })
 
   const edges = layout.edges.map((e) => {
@@ -252,7 +241,7 @@ export function decorate(layout: Layout, selected: Step | null, highlight: Highl
     if (e.id === nextEdge) state = 'next'
     else if (pathEdges.has(e.id)) state = highlight ? 'path' : 'focus'
     else if (active) state = 'dim'
-    return { ...e, data: { ...e.data!, state, hlColor } }
+    return { ...e, data: { ...e.data!, state } }
   })
 
   return { nodes, edges, minorCount: layout.minorCount }

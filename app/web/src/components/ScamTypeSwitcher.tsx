@@ -1,6 +1,4 @@
-import type { CSSProperties } from 'react'
 import { label, pct, type GraphKey, type ScamTypeSummary } from '../api'
-import { lossColor } from '../colors'
 
 interface Props {
   types: ScamTypeSummary[]
@@ -18,19 +16,16 @@ export function ScamTypeSwitcher({ types, allLossRate, value, onChange }: Props)
     { key: 'all', n: total, loss: allLossRate },
   ]
   return (
-    <nav className="switcher" aria-label="Scam type">
+    <nav className="tabs" aria-label="Scam type">
       {options.map((o) => (
         <button
           key={o.key}
           className={o.key === value ? 'tab active' : 'tab'}
+          aria-pressed={o.key === value}
           onClick={() => onChange(o.key)}
-          style={{ '--lc': lossColor(o.loss) } as CSSProperties}
           title={`${o.n} stories · ${pct(o.loss)} lost money`}
         >
-          <span className="tab__name">{o.key === 'all' ? 'All types' : label(o.key)}</span>
-          <span className="tab__meta">
-            {o.n} · <span className="tab__loss">{pct(o.loss)} lost</span>
-          </span>
+          {o.key === 'all' ? 'All types' : label(o.key)} · {pct(o.loss)}
         </button>
       ))}
     </nav>

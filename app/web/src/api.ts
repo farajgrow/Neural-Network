@@ -104,7 +104,19 @@ export interface MatchResult {
   likely_next_step: Step
   advice: string
   loss_rate_if_continues: number | null
-  source: 'live' | 'mock'
+  /** Where the conversation is now, if the matcher reports it. */
+  current_step?: string | null
+  /** How the answer was produced. */
+  source?: 'live' | 'cache' | 'fallback' | 'mock' | null
+  /** Human-readable detail about the source, for a tooltip. */
+  source_detail?: string | null
+  /** The graph the numbers came from: a scam type or "all". */
+  context_graph?: string | null
+  /** Stories in context_graph that reached likely_next_step. */
+  next_step_story_count?: number | null
+  /** Edges going straight from current_step to likely_next_step (often 0). */
+  next_step_count?: number | null
+  current_step_out_count?: number | null
 }
 
 /** Error from the API, with the HTTP status (0 when the request never got a response). */
@@ -163,6 +175,9 @@ export const label = (s: string) => {
 }
 
 const KNOWN_TOKENS: ReadonlySet<string> = new Set<string>([...STEPS, ...SCAM_TYPES])
+
+/** "small_payment" -> "small payment". */
+export const lower = (s: string) => s.replace(/_/g, ' ')
 
 /** Humanise every vocabulary token inside a free-text label, e.g. cluster labels. */
 export const humanize = (s: string) => {

@@ -1,6 +1,6 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { CSSProperties } from 'react'
-import { label, pct, pts } from '../api'
+import { label, lower, pct, pts } from '../api'
 import { NODE_W, ZONE_H, type StepFlowNode, type StepNodeData } from './graphLayout'
 
 function tooltip(d: StepNodeData): string {
@@ -14,40 +14,39 @@ function tooltip(d: StepNodeData): string {
   return lines.join('\n')
 }
 
-/** One step in the scam script: a circle sized by count and coloured by loss rate. */
+const OUTCOME_NAME: Record<string, string> = { money_lost: 'MONEY LOST', victim_exits: 'GOT OUT' }
+
+/** One step in the scam script: a square sized by story count. */
 export function StepNode({ data: d }: NodeProps<StepFlowNode>) {
+  const kind = d.step === 'money_lost' ? 'lost' : d.step === 'victim_exits' ? 'out' : 'step'
   const cls = [
-    'step-node',
-    d.isOutcome && 'is-outcome',
-    d.selected && 'is-selected',
+    'node',
+    `node--${kind}`,
     `state-${d.state}`,
+    d.loss_rate == null && !d.isOutcome && 'is-unknown',
+    d.selected && 'is-selected',
   ]
     .filter(Boolean)
     .join(' ')
-  const style = {
-    '--c': d.color,
-    '--hl': d.hlColor ?? 'var(--accent)',
-    '--d': `${d.diameter}px`,
-    width: NODE_W,
-  } as CSSProperties
-  const handleTop = ZONE_H + d.diameter / 2
-  const inset = (NODE_W - d.diameter) / 2
+  const style = { '--s': `${d.size}px`, width: NODE_W } as CSSProperties
+  const handleTop = ZONE_H + d.size / 2
+  const inset = (NODE_W - d.size) / 2
+  const next = d.state === 'next'
 
   return (
     <div className={cls} style={style} title={tooltip(d)}>
-      <div className="step-node__badges">
-        {d.state === 'next' && <span className="node-badge node-badge--next">next?</span>}
-        {d.pinch && <span className="node-badge node-badge--pinch">▲ {pts(d.pinch.jump)}</span>}
-        {d.escape && <span className="node-badge node-badge--escape">↗ {d.escape.exit_count} out</span>}
+      <div className="node__badges">
+        {d.pinch && <span className="tag tag--orange">▲ {pts(d.pinch.jump)}{next && ' · next?'}</span>}
+        {next && !d.pinch && <span className="tag tag--orange">next?</span>}
+        {d.escape && <span className="tag tag--blue">↗ {d.escape.exit_count} out</span>}
       </div>
-      <div className="step-node__dot">
-        <span className="step-node__count">{d.count}</span>
-        {d.seqIndex != null && d.seqIndex > 0 && <span className="step-node__seq">{d.seqIndex}</span>}
+      <div className="node__box">
+        {d.count}
+        {d.seqIndex != null && d.seqIndex > 0 && <span className="node__seq">{d.seqIndex}</span>}
       </div>
-      <div className="step-node__label">
-        <div className="step-node__name">{label(d.step)}</div>
-        {!d.isOutcome && <div className="step-node__meta">{d.loss_rate == null ? 'outcome unknown' : `${pct(d.loss_rate)} lost`}</div>}
-        {d.isOutcome && <div className="step-node__meta">outcome</div>}
+      <div className="node__label">
+        <div className="node__name">{d.isOutcome ? OUTCOME_NAME[d.step] : lower(d.step)}</div>
+        {!d.isOutcome && <div className="node__meta">{d.loss_rate == null ? 'unknown' : `${pct(d.loss_rate)} lost`}</div>}
       </div>
       <Handle type="target" position={Position.Left} style={{ top: handleTop, left: inset }} />
       <Handle type="source" position={Position.Right} style={{ top: handleTop, right: inset }} />

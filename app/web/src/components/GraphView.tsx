@@ -1,7 +1,4 @@
 import {
-  Background,
-  BackgroundVariant,
-  Controls,
   ReactFlow,
   useNodesInitialized,
   useReactFlow,
@@ -11,13 +8,14 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { useEffect, useMemo, useState } from 'react'
-import { label, type Clusters, type Graph, type MatchResult, type Step } from '../api'
+import { label, lower, type Clusters, type Graph, type GraphKey, type MatchResult, type Step } from '../api'
 import { ClusterPicker } from './ClusterPicker'
 import { ErrorState } from './ErrorState'
 import { FlowEdge } from './FlowEdge'
 import { decorate, layoutGraph, type Highlight, type Layout } from './graphLayout'
 import { Legend } from './Legend'
 import { StepNode } from './StepNode'
+import { Window } from './Window'
 
 const nodeTypes: NodeTypes = { step: StepNode }
 const edgeTypes: EdgeTypes = { flow: FlowEdge }
@@ -30,13 +28,14 @@ function AutoFit({ graphKey }: { graphKey: string }) {
   const height = useStore((s) => s.height)
   useEffect(() => {
     if (!initialized) return
-    const id = requestAnimationFrame(() => fitView({ padding: { top: 0.16, bottom: 0.2, left: 0.04, right: 0.04 }, maxZoom: 1.15, duration: 250 }))
+    const id = requestAnimationFrame(() => fitView({ padding: { top: 0.04, bottom: 0.04, left: 0.02, right: 0.02 }, maxZoom: 1.1 }))
     return () => cancelAnimationFrame(id)
   }, [initialized, graphKey, width, height, fitView])
   return null
 }
 
 interface Props {
+  graphKey: GraphKey
   graph: Graph | null
   loading: boolean
   error: Error | null
@@ -45,14 +44,58 @@ interface Props {
   clusters: Clusters | null
   clusterId: string | null
   onClusterChange: (id: string | null) => void
-  /** Highlight to draw (cluster path or matched message), computed by the parent. */
+  /** Highlight to draw (variant path or matched message), computed by the parent. */
   highlight: Highlight | null
   match: MatchResult | null
   onClearMatch: () => void
 }
 
 export function GraphView(props: Props) {
-  const { graph, loading, error, selectedStep, onSelectStep, highlight, match } = props
+  const { graphKey, match } = props
+  const fileName = graphKey === 'all' ? 'all_types' : graphKey
+  return (
+    <Window title={`fig_1 · ${fileName}.script`} label="Script graph" className="graph-window">
+      <div className="window__body graph-body">
+        <div className="graph-toolbar">
+          {props.clusters && props.clusters.clusters.length > 0 ? (
+            <ClusterPicker
+              clusters={props.clusters}
+              value={props.clusterId}
+              onChange={props.onClusterChange}
+              disabled={match != null}
+            />
+          ) : (
+            <span />
+          )}
+          <div className="graph-status" aria-live="polite">
+            {props.loading && <span className="muted">loading…</span>}
+            {!props.loading && match && (
+              <>
+                <span className="muted">matched: </span>
+                <b>{match.steps_so_far.length} steps</b>
+                {match.likely_next_step && (
+                  <>
+                    <span className="muted"> → next likely </span>
+                    <b className="c-orange-text">{lower(match.likely_next_step)}</b>
+                  </>
+                )}
+                <button className="link-btn" onClick={props.onClearMatch} aria-label="Clear match highlight">
+                  [×]
+                </button>
+              </>
+            )}
+            {!props.loading && !match && props.graph && (
+              <span className="muted">click a step to read its stories</span>
+            )}
+          </div>
+        </div>
+        <GraphCanvas {...props} />
+      </div>
+    </Window>
+  )
+}
+
+function GraphCanvas({ graph, loading, error, selectedStep, onSelectStep, highlight }: Props) {
   const [showAll, setShowAll] = useState(false)
   const base = useMemo(() => (graph ? layoutGraph(graph, showAll) : null), [graph, showAll])
   const { nodes, edges } = useMemo<Layout>(
@@ -60,26 +103,23 @@ export function GraphView(props: Props) {
     [base, selectedStep, highlight],
   )
 
-  if (error) return <ErrorState error={error} />
-  if (!graph) {
-    return (
+  let content
+  if (error) content = <ErrorState error={error} />
+  else if (!graph)
+    content = (
       <div className="state">
-        <div className="spinner" aria-hidden />
-        <p className="muted">{loading ? 'Loading graph…' : 'No graph selected'}</p>
+        <p className="muted blink">{loading ? 'loading graph…' : 'no graph selected'}</p>
       </div>
     )
-  }
-  if (graph.nodes.length === 0) {
-    return (
+  else if (graph.nodes.length === 0)
+    content = (
       <div className="state">
         <h3>No stories yet</h3>
         <p className="muted">There are no stories for {label(graph.scam_type)} in the current dataset.</p>
       </div>
     )
-  }
-
-  return (
-    <>
+  else
+    content = (
       <ReactFlow
         key={graph.scam_type}
         nodes={nodes}
@@ -91,46 +131,26 @@ export function GraphView(props: Props) {
         nodesConnectable={false}
         nodesDraggable={false}
         elementsSelectable={false}
+        panOnDrag={false}
+        zoomOnScroll={false}
+        zoomOnPinch={false}
+        zoomOnDoubleClick={false}
+        preventScrolling={false}
         fitView
-        minZoom={0.25}
+        minZoom={0.2}
         maxZoom={2}
-        colorMode="dark"
         proOptions={{ hideAttribution: true }}
       >
-        <Background variant={BackgroundVariant.Dots} gap={22} size={1.2} color="#252c38" />
-        <Controls showInteractive={false} position="bottom-right" />
         <AutoFit graphKey={`${graph.scam_type}:${showAll}`} />
       </ReactFlow>
+    )
 
-      <div className="graph-overlay graph-overlay--top">
-        {props.clusters && props.clusters.clusters.length > 0 && !match && (
-          <ClusterPicker clusters={props.clusters} value={props.clusterId} onChange={props.onClusterChange} />
-        )}
-        {match && (
-          <div className="match-chip">
-            <span className="match-chip__pulse" />
-            <span>
-              Matched message · {match.steps_so_far.length} steps seen
-              {match.likely_next_step && (
-                <>
-                  , next likely <strong>{label(match.likely_next_step)}</strong>
-                </>
-              )}
-            </span>
-            <button className="match-chip__close" onClick={props.onClearMatch} aria-label="Clear match highlight">
-              ✕
-            </button>
-          </div>
-        )}
-        {loading && <span className="loading-pill">Loading…</span>}
+  return (
+    <>
+      <div className="graph-scroll">
+        <div className="graph-canvas">{content}</div>
       </div>
-      <div className="graph-overlay graph-overlay--bottom">
-        <Legend
-          minorCount={base?.minorCount ?? 0}
-          showAll={showAll}
-          onToggleAll={() => setShowAll((v) => !v)}
-        />
-      </div>
+      <Legend minorCount={base?.minorCount ?? 0} showAll={showAll} onToggleAll={() => setShowAll((v) => !v)} />
     </>
   )
 }

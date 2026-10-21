@@ -26,11 +26,11 @@ function describeError(err: Error): { title: string; hint: string; command?: str
 export function ErrorState({ error }: { error: Error }) {
   const { title, hint, command } = describeError(error)
   return (
-    <div className="state">
-      <div className="state__icon state__icon--error" aria-hidden>!</div>
+    <div className="state" role="alert">
+      <div className="state__icon" aria-hidden>!</div>
       <h3>{title}</h3>
       <p className="muted">{hint}</p>
-      {command && <code className="state__cmd">{command}</code>}
+      {command && <code className="state__cmd">$ {command}</code>}
     </div>
   )
 }

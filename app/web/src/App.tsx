@@ -9,12 +9,12 @@ import {
   type Step,
   type StorySummary,
 } from './api'
-import { clusterColor, MATCH } from './colors'
 import { GraphView } from './components/GraphView'
 import type { Highlight } from './components/graphLayout'
 import { MatcherPanel } from './components/MatcherPanel'
 import { ScamTypeSwitcher } from './components/ScamTypeSwitcher'
-import { SidePanel } from './components/SidePanel'
+import { StoryStrip } from './components/StoryStrip'
+import { SummaryBox } from './components/SummaryBox'
 
 export default function App() {
   const [types, setTypes] = useState<ScamTypeSummary[]>([])
@@ -90,14 +90,13 @@ export default function App() {
     if (!clusters || !clusterId) return null
     const index = clusters.clusters.findIndex((c) => c.id === clusterId)
     if (index < 0) return null
-    const c = clusters.clusters[index]
-    return { ...c, index, color: clusterColor(index, c.outlier) }
+    return { ...clusters.clusters[index], index }
   }, [clusters, clusterId])
 
   // A matched message takes precedence over a cluster highlight.
   const highlight = useMemo<Highlight | null>(() => {
-    if (match) return { kind: 'match', color: MATCH, sequence: match.steps_so_far, next: match.likely_next_step }
-    if (cluster) return { kind: 'cluster', color: cluster.color, sequence: cluster.typical_sequence }
+    if (match) return { kind: 'match', sequence: match.steps_so_far, next: match.likely_next_step }
+    if (cluster) return { kind: 'cluster', sequence: cluster.typical_sequence }
     return null
   }, [match, cluster])
 
@@ -114,51 +113,61 @@ export default function App() {
     setStep(null)
   }
 
+  const totalStories = types.reduce((n, t) => n + t.n_stories, 0)
+
   return (
     <div className="app">
-      <header className="header">
+      <header className="menubar">
         <div className="brand">
-          <div className="brand__mark" aria-hidden>
-            <span />
-            <span />
-            <span />
-          </div>
-          <div>
-            <h1>Scam Scripts</h1>
-            <p className="tagline">Real victim stories mapped into scripts: where people get hooked, and where they get out.</p>
-          </div>
+          <span className="brand__mark" aria-hidden />
+          SCAM SCRIPTS
+          {totalStories > 0 && <span className="brand__sub">/ {totalStories} victim stories mapped</span>}
         </div>
         <ScamTypeSwitcher types={types} allLossRate={allLossRate} value={scamType} onChange={setScamType} />
       </header>
-      {typesError && !graphError && <div className="banner error">Couldn't load scam types: {typesError.message}</div>}
-      <main className="layout">
-        <section className="panel graph-area">
-          <GraphView
-            graph={graph}
-            loading={graphLoading}
-            error={graphError}
-            selectedStep={step}
-            onSelectStep={setStep}
-            clusters={clusters}
-            clusterId={clusterId}
-            onClusterChange={onClusterChange}
-            highlight={highlight}
-            match={match}
-            onClearMatch={() => setMatch(null)}
-          />
-        </section>
-        <SidePanel
-          graph={graph}
-          step={step}
-          onSelectStep={setStep}
-          stories={stories}
-          loading={storiesLoading}
-          error={storiesError}
-          cluster={match ? null : cluster}
-          onClearCluster={() => setClusterId(null)}
-        />
-        <MatcherPanel onResult={onMatch} />
-      </main>
+      {typesError && !graphError && <div className="banner">couldn't load scam types: {typesError.message}</div>}
+      <div className="page">
+        <h1 className="headline">
+          Where victims get hooked,
+          <br />
+          and where they get out.
+        </h1>
+        <div className="columns">
+          <main className="col-main">
+            <GraphView
+              graphKey={scamType}
+              graph={graph}
+              loading={graphLoading}
+              error={graphError}
+              selectedStep={step}
+              onSelectStep={setStep}
+              clusters={clusters}
+              clusterId={clusterId}
+              onClusterChange={onClusterChange}
+              highlight={highlight}
+              match={match}
+              onClearMatch={() => setMatch(null)}
+            />
+            <StoryStrip
+              graph={graph}
+              step={step}
+              onSelectStep={setStep}
+              stories={stories}
+              loading={storiesLoading}
+              error={storiesError}
+            />
+          </main>
+          <aside className="col-side">
+            <MatcherPanel onResult={onMatch} />
+            <SummaryBox
+              graph={graph}
+              cluster={match ? null : cluster}
+              onClearCluster={() => setClusterId(null)}
+              onSelectStep={setStep}
+            />
+          </aside>
+        </div>
+      </div>
     </div>
   )
 }
