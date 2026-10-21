@@ -125,8 +125,8 @@ function ResultCard({ result: r }: { result: MatchResult }) {
 function ModelBox({ model: m }: { model: ModelPrediction }) {
   const stepName = (s: string) => lower(s)
   const about = m.eval
-    ? `A small neural network (GRU) we trained on the 487 stories. In ${m.eval.folds ?? 5}-fold cross-validation it named the scammer's next move ${pct(m.eval.next_top1)} of the time and ranked loss risk with AUC ${m.eval.loss_auc.toFixed(2)}, about the same as simple frequency counts.`
-    : 'A small neural network (GRU) we trained on the 487 stories.'
+    ? `A small neural network (GRU) we trained on 2,054 of the stories. In ${m.eval.folds ?? 5}-fold cross-validation it named the scammer's next move ${pct(m.eval.next_top1)} of the time and ranked loss risk with AUC ${m.eval.loss_auc.toFixed(2)}, about the same as simple frequency counts.`
+    : 'A small neural network (GRU) we trained on 2,054 of the stories.'
   return (
     <div className="model-box">
       <div className="model-box__head">

@@ -13,7 +13,7 @@ const STEPS: { title: string; who: 'Arya' | 'Faraj' | 'Both'; text: string }[] =
   {
     title: 'Collect real stories',
     who: 'Arya',
-    text: 'Scraped posts from r/Scams through a Reddit archive, keeping only posts long enough to tell a story.',
+    text: 'Scraped posts from r/Scams and other scam subreddits through a Reddit archive, plus scam complaints from an archived copy of the CFPB consumer complaints database, keeping only posts long enough to tell a story.',
   },
   {
     title: 'Clean and anonymise',
@@ -23,12 +23,12 @@ const STEPS: { title: string; who: 'Arya' | 'Faraj' | 'Both'; text: string }[] =
   {
     title: 'Turn each story into steps',
     who: 'Arya',
-    text: 'Each post became a timeline of steps from the shared list, with the scam type, the outcome and any amount lost. 487 stories made it through.',
+    text: 'Each post became a timeline of steps from the shared list, with the scam type, the outcome and any amount lost. 2,074 stories made it through.',
   },
   {
     title: 'Check the labels by hand',
     who: 'Arya',
-    text: 'A hand spot check of 20 random stories found 96.2% of fields correct.',
+    text: 'A hand spot check of 20 random stories from the first 487 found 96.2% of fields correct.',
   },
   {
     title: 'Map the scripts',
@@ -53,7 +53,7 @@ const STEPS: { title: string; who: 'Arya' | 'Faraj' | 'Both'; text: string }[] =
   {
     title: 'Train our own model',
     who: 'Faraj',
-    text: 'A small neural network (GRU) trained on the stories to predict the scammer’s next move and the chance of losing money. Tested fairly against simple counting rules, it currently ties them. More stories should change that.',
+    text: 'A small neural network (GRU) trained on the stories to predict the scammer’s next move and the chance of losing money. Tested fairly against simple counting rules, it ties them, even after retraining on four times as many stories.',
   },
   {
     title: 'Design and ship the site',
@@ -88,7 +88,7 @@ export function AboutDialog({ open, onOpenChange, hint = false }: Props) {
           </div>
           <div className="about__body">
             <Dialog.Description className="about__lede">
-              <strong>Scams follow scripts.</strong> We turned 487 real victim stories into step-by-step timelines, mapped
+              <strong>Scams follow scripts.</strong> We turned 2,074 real victim stories into step-by-step timelines, mapped
               each scam type as a graph, and found where people get hooked and where they get out. Paste a suspicious
               message and the site tells you which script you’re in, where you are in it, and how often people who took the
               next step lost money.
@@ -128,12 +128,12 @@ export function AboutDialog({ open, onOpenChange, hint = false }: Props) {
               <h3 className="about__h">What we found</h3>
               <ul className="about__list">
                 <li>
-                  Once victims make even a <strong>small payment</strong>, the loss rate goes from 37% to{' '}
-                  <strong className="about__loss">87%</strong>.
+                  Once victims make even a <strong>small payment</strong>, the loss rate goes from 60% to{' '}
+                  <strong className="about__loss">96%</strong>.
                 </li>
                 <li>
-                  People who got suspicious <strong>before</strong> paying lost money 5% of the time. Those who only got
-                  suspicious after paying: <strong className="about__loss">89%</strong>.
+                  People who got suspicious <strong>before</strong> paying lost money 6% of the time. Those who only got
+                  suspicious after paying: <strong className="about__loss">95%</strong>.
                 </li>
                 <li>The shape of the script says more about how a story ends than the scam’s name does.</li>
               </ul>
@@ -142,9 +142,8 @@ export function AboutDialog({ open, onOpenChange, hint = false }: Props) {
             <section>
               <h3 className="about__h">Read with care</h3>
               <p className="small">
-                These are associations in self-reported Reddit stories, not causes. 43% of stories don’t say how they
-                ended, so every loss rate counts only known outcomes. Small scam types (pig butchering, romance) are too
-                thin to quote on their own.
+                These are associations in self-reported stories from Reddit and CFPB complaints, not causes. 36% of stories
+                don’t say how they ended, so every loss rate counts only known outcomes.
               </p>
             </section>
 

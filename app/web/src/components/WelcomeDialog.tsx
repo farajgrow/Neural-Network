@@ -26,7 +26,7 @@ export function WelcomeDialog({ open, onExplore, onHowWeBuiltIt }: Props) {
               <h2 className="welcome__title">Scams follow scripts. We mapped them.</h2>
             </div>
             <Dialog.Description className="about__lede">
-              We turned <strong>487 real victim stories</strong> from Reddit into step-by-step timelines and mapped how each
+              We turned <strong>2,074 real victim stories</strong> from Reddit and CFPB complaints into step-by-step timelines and mapped how each
               type of scam plays out: where people get hooked, and where they get out.
             </Dialog.Description>
             <ul className="welcome__list">
@@ -40,7 +40,7 @@ export function WelcomeDialog({ open, onExplore, onHowWeBuiltIt }: Props) {
                 <span className="welcome__num">02</span>
                 <span>
                   <strong>Spot the turning points.</strong> Once someone makes even a small payment, the loss rate jumps from
-                  37% to <strong className="about__loss">87%</strong>.
+                  60% to <strong className="about__loss">96%</strong>.
                 </span>
               </li>
               <li>
