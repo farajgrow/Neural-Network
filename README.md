@@ -2,6 +2,8 @@
 
 **Scams follow scripts.** We turned 487 real victim stories from r/Scams into step-by-step event sequences, mapped each scam type as a graph, and found where victims commit (pinch points) and where they get out (escape points). Paste a suspicious message and the site tells you which script you're in, which step you're at, what usually comes next, and how often people who took that step lost money. A small neural network we trained on the stories adds its own forecast of the scammer's next move.
 
+**Live site: [scam-script-mapper.vercel.app](https://scam-script-mapper.vercel.app)**
+
 Built by **Faraj** (analysis, model, API and site) and **Arya** (data pipeline and matcher). It started as a two-hour hackathon build and was extended after.
 
 ![Scam Scripts: the all-types script graph with pinch and escape points](app/docs/graph-overview.png)

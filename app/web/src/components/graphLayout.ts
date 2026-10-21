@@ -10,6 +10,9 @@ const S_MIN = 24
 const S_MAX = 58
 const RANK_SEP = 36
 const NODE_SEP = 12
+// Vertical (phone) layout: rows of steps, read top to bottom.
+const ROW_SEP = 22
+const ROW_NODE_SEP = 2
 /** Share of stories an edge needs to be drawn by default. */
 const MINOR_SHARE = 0.05
 
@@ -27,6 +30,8 @@ export type StepNodeData = GraphNode & {
   selected: boolean
   state: NodeState
   seqIndex?: number
+  /** Top-to-bottom layout: handles on the top and bottom edges. */
+  vertical: boolean
 }
 export type StepFlowNode = Node<StepNodeData, 'step'>
 
@@ -44,6 +49,11 @@ export type FlowEdgeData = {
   sameCol: boolean
   sourceSize: number
   targetSize: number
+  /** Node box heights, for the vertical layout's same-row edges. */
+  sourceH: number
+  targetH: number
+  /** Top-to-bottom layout (phones): edges leave from the bottom and enter at the top. */
+  vertical: boolean
   /** Rare transition: hidden unless it is part of the focus or a highlight. */
   minor: boolean
   state: EdgeState
@@ -55,6 +65,8 @@ export interface Layout {
   edges: FlowEdge[]
   /** Number of rare transitions hidden by default. */
   minorCount: number
+  /** Size of the laid-out graph, used to size the canvas in the vertical layout. */
+  bounds: { width: number; height: number }
 }
 
 /** What to emphasise on the graph: a variant's typical path or a matched message. */
@@ -82,7 +94,7 @@ const edgeId = (from: string, to: string) => `${from}->${to}`
  * or a highlighted path. Every step keeps its strongest incoming and outgoing
  * edge. Back-edges (against the avg_position order) are always minor.
  */
-export function layoutGraph(graph: Graph, showAll = false): Layout {
+export function layoutGraph(graph: Graph, showAll = false, vertical = false): Layout {
   const pinch = new Map(graph.pinch_points.map((p) => [p.step, p]))
   const escape = new Map(graph.escape_points.map((p) => [p.step, p]))
   const maxCount = Math.max(1, ...graph.nodes.map((n) => n.count))
@@ -141,6 +153,19 @@ export function layoutGraph(graph: Graph, showAll = false): Layout {
       y += h + NODE_SEP
     }
   }
+  // Vertical layout: each column becomes a row, centred, with rows stacked downwards.
+  let rowTop = 0
+  const placeRow = (row: GraphNode[], i: number) => {
+    const rowH = Math.max(...row.map((n) => height(n.count)))
+    if (i === nCols && outcomes.length) rowTop += ROW_SEP
+    const total = row.length * NODE_W + ROW_NODE_SEP * (row.length - 1)
+    let x = -total / 2
+    for (const n of row) {
+      centre.set(n.step, { x: x + NODE_W / 2, y: rowTop + rowH / 2 })
+      x += NODE_W + ROW_NODE_SEP
+    }
+    rowTop += rowH + ROW_SEP
+  }
   const colX = (i: number) => i * (NODE_W + RANK_SEP) + (i === nCols && outcomes.length ? RANK_SEP : 0)
   const kept = edgesIn.filter((e) => isForward(e.from, e.to) && !isMinor(e))
   columns.forEach((col, i) => {
@@ -154,14 +179,15 @@ export function layoutGraph(graph: Graph, showAll = false): Layout {
           const c = e.to === n.step ? centre.get(e.from) : undefined
           if (c) {
             w += e.count
-            sum += e.count * c.y
+            sum += e.count * (vertical ? c.x : c.y)
           }
         }
         bary.set(n.step, w ? sum / w : j * 1e-3)
       })
       col.sort((a, b) => bary.get(a.step)! - bary.get(b.step)!)
     }
-    place(col, colX(i))
+    if (vertical) placeRow(col, i)
+    else place(col, colX(i))
   })
 
   const nodes: StepFlowNode[] = order.map((n) => {
@@ -181,9 +207,16 @@ export function layoutGraph(graph: Graph, showAll = false): Layout {
         escape: escape.get(n.step),
         selected: false,
         state: 'normal',
+        vertical,
       },
     }
   })
+
+  const xs = nodes.flatMap((n) => [n.position.x, n.position.x + NODE_W])
+  const ys = nodes.flatMap((n) => [n.position.y, n.position.y + (n.height ?? 0)])
+  const bounds = nodes.length
+    ? { width: Math.max(...xs) - Math.min(...xs), height: Math.max(...ys) - Math.min(...ys) }
+    : { width: 0, height: 0 }
 
   const maxEdge = Math.max(1, ...graph.edges.map((e) => e.count))
   let minorCount = 0
@@ -209,13 +242,16 @@ export function layoutGraph(graph: Graph, showAll = false): Layout {
           sameCol: colOf.get(e.from) === colOf.get(e.to),
           sourceSize: size(countOf.get(e.from) ?? 1),
           targetSize: size(countOf.get(e.to) ?? 1),
+          sourceH: height(countOf.get(e.from) ?? 1),
+          targetH: height(countOf.get(e.to) ?? 1),
+          vertical,
           minor,
           state: 'normal',
         },
       }
     })
 
-  return { nodes, edges, minorCount }
+  return { nodes, edges, minorCount, bounds }
 }
 
 /** Apply selection and highlight state without re-running the layout. */
@@ -272,5 +308,5 @@ export function decorate(layout: Layout, selected: Step | null, highlight: Highl
   const rank = { dim: 0, normal: 1, focus: 2, path: 3, next: 3 } as const
   edges.sort((a, b) => rank[a.data!.state] - rank[b.data!.state])
 
-  return { nodes, edges, minorCount: layout.minorCount }
+  return { nodes, edges, minorCount: layout.minorCount, bounds: layout.bounds }
 }
