@@ -27,6 +27,8 @@ export type GraphNode = {
   step: Step
   count: number
   loss_rate: number | null
+  /** Stories at this step with a known outcome (the loss rate's denominator). */
+  n_known?: number
   avg_position: number
 }
 
@@ -34,6 +36,8 @@ export interface GraphEdge {
   from: Step
   to: Step
   count: number
+  loss_rate?: number | null
+  n_known?: number
 }
 
 export interface PinchPoint {
@@ -41,6 +45,8 @@ export interface PinchPoint {
   loss_rate: number | null
   prev_loss_rate: number | null
   jump: number
+  n_known?: number
+  score?: number
 }
 
 export interface EscapePoint {
@@ -66,11 +72,16 @@ export interface Cluster {
   label: string
   size: number
   loss_rate: number | null
+  n_known?: number
   scam_type_counts: Partial<Record<ScamType, number>>
   typical_sequence: Step[]
   medoid_id?: string
   outlier?: boolean
   story_ids?: string[]
+  /** Steps named in the label. */
+  label_steps?: Step[]
+  /** Transitions within this variant's stories. */
+  edges?: { from: Step; to: Step; count: number }[]
 }
 
 export interface ClusterAgreement {
@@ -104,7 +115,19 @@ export interface MatchResult {
   likely_next_step: Step
   advice: string
   loss_rate_if_continues: number | null
-  source: 'live' | 'mock'
+  /** Where the conversation is now, if the matcher reports it. */
+  current_step?: string | null
+  /** How the answer was produced. */
+  source?: 'live' | 'cache' | 'fallback' | 'mock' | null
+  /** Human-readable detail about the source, for a tooltip. */
+  source_detail?: string | null
+  /** The graph the numbers came from: a scam type or "all". */
+  context_graph?: string | null
+  /** Stories in context_graph that reached likely_next_step. */
+  next_step_story_count?: number | null
+  /** Edges going straight from current_step to likely_next_step (often 0). */
+  next_step_count?: number | null
+  current_step_out_count?: number | null
 }
 
 /** Error from the API, with the HTTP status (0 when the request never got a response). */
@@ -145,7 +168,12 @@ export const api = {
     if (params.step) q.set('step', params.step)
     return request<StorySummary[]>(`/api/stories?${q}`)
   },
-  clusters: () => request<Clusters | null>('/api/clusters'),
+  /**
+   * Variants for one scam type, or across types for "all". The scam_type
+   * parameter is ignored by APIs that only serve the cross-type clusters.
+   */
+  clusters: (key: GraphKey) =>
+    request<Clusters | null>(key === 'all' ? '/api/clusters' : `/api/clusters?scam_type=${encodeURIComponent(key)}`),
   match: (text: string) =>
     request<MatchResult>('/api/match', {
       method: 'POST',
@@ -164,6 +192,9 @@ export const label = (s: string) => {
 
 const KNOWN_TOKENS: ReadonlySet<string> = new Set<string>([...STEPS, ...SCAM_TYPES])
 
+/** "small_payment" -> "small payment". */
+export const lower = (s: string) => s.replace(/_/g, ' ')
+
 /** Humanise every vocabulary token inside a free-text label, e.g. cluster labels. */
 export const humanize = (s: string) => {
   const out = s.replace(/[a-z]+(?:_[a-z]+)*/g, (tok) => (KNOWN_TOKENS.has(tok) ? tok.replace(/_/g, ' ') : tok))
@@ -175,3 +206,10 @@ export const pts = (x: number) => `${x >= 0 ? '+' : '−'}${Math.round(Math.abs(
 
 export const money = (n: number | null | undefined) => (n == null ? null : `$${Math.round(n).toLocaleString()}`)
 export const pct = (x: number | null | undefined) => (x == null ? '—' : `${Math.round(x * 100)}%`)
+
+/** "34% (10/29 known)": a loss rate with its known-outcome denominator. */
+export const knownPct = (rate: number | null | undefined, nKnown: number | null | undefined) => {
+  if (nKnown == null) return pct(rate)
+  if (rate == null || nKnown === 0) return `— (0 known)`
+  return `${pct(rate)} (${Math.round(rate * nKnown)}/${nKnown} known)`
+}

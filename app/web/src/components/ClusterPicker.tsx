@@ -1,47 +1,40 @@
-import type { CSSProperties } from 'react'
-import { humanize, pct, type Clusters } from '../api'
-import { clusterColor } from '../colors'
+import { humanize, knownPct, pct, SCAM_TYPES, type Clusters } from '../api'
+
+/** Drop a leading "fake_job · " when every variant shares the type anyway. */
+const short = (l: string) => {
+  const [head, ...rest] = l.split(' · ')
+  return rest.length && (SCAM_TYPES as readonly string[]).includes(head) ? rest.join(' · ') : l
+}
 
 interface Props {
   clusters: Clusters
   value: string | null
   onChange: (id: string | null) => void
+  disabled?: boolean
 }
 
-/** Toggle for highlighting one script variant (sequence cluster) on the graph. */
-export function ClusterPicker({ clusters, value, onChange }: Props) {
+/** Picker for highlighting one script variant (sequence cluster) on the graph. */
+export function ClusterPicker({ clusters, value, onChange, disabled }: Props) {
   const a = clusters.agreement
+  const agree = a
+    ? `Sequence clusters vs. the LLM's scam_type labels: purity ${pct(a.purity)}, ARI ${a.adjusted_rand.toFixed(2)} (0 ≈ chance, 1 = identical).`
+    : undefined
   return (
-    <div className="cluster-picker">
-      <div className="cluster-picker__head">
-        <span className="overlay-title">Script variants</span>
-        {a && (
-          <span
-            className="cluster-picker__agree"
-            title="How well the sequence clusters line up with the LLM's scam_type labels. Purity: share of stories matching their cluster's majority type. ARI: 0 ≈ chance, 1 = identical."
-          >
-            vs. labels: purity {pct(a.purity)} · ARI {a.adjusted_rand.toFixed(2)}
-          </span>
-        )}
-      </div>
-      <div className="cluster-picker__chips">
-        <button className={value == null ? 'vchip active' : 'vchip'} onClick={() => onChange(null)}>
-          Off
-        </button>
+    <div className="variant" title={disabled ? 'Clear the matched message to pick a variant' : agree}>
+      <label htmlFor="variant" className="muted">variant</label>
+      <select
+        id="variant"
+        value={value ?? ''}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value || null)}
+      >
+        <option value="">all stories</option>
         {clusters.clusters.map((c, i) => (
-          <button
-            key={c.id}
-            className={value === c.id ? 'vchip active' : 'vchip'}
-            style={{ '--vc': clusterColor(i, c.outlier) } as CSSProperties}
-            onClick={() => onChange(value === c.id ? null : c.id)}
-            title={`${humanize(c.label)} · ${c.size} stories · ${pct(c.loss_rate)} lost money`}
-          >
-            <span className="vchip__dot" />
-            {c.outlier ? 'Outliers' : `Variant ${i + 1}`}
-            <span className="vchip__n">{c.size}</span>
-          </button>
+          <option key={c.id} value={c.id}>
+            {c.outlier ? 'outliers' : `${i + 1}: ${humanize(short(c.label)).toLowerCase()}`} ({c.size}) · {knownPct(c.loss_rate, c.n_known)} lost
+          </option>
         ))}
-      </div>
+      </select>
     </div>
   )
 }

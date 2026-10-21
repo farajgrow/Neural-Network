@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { api, label, pct, type MatchResult } from '../api'
+import { api, lower, pct, type MatchResult } from '../api'
+import { Window } from './Window'
 
 interface Props {
   onResult?: (result: MatchResult | null) => void
@@ -13,7 +14,7 @@ export function MatcherPanel({ onResult }: Props) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
-    if (!text.trim()) return
+    if (!text.trim() || loading) return
     setLoading(true)
     setError(null)
     try {
@@ -30,51 +31,77 @@ export function MatcherPanel({ onResult }: Props) {
   }
 
   return (
-    <section className="panel matcher">
-      <form onSubmit={submit} className="matcher__form">
-        <h2>Check a message</h2>
+    <Window title="check_message" label="Check a message" className="matcher">
+      <form onSubmit={submit} className="window__body matcher__form">
+        <label htmlFor="msg" className="b">Got a message like this?</label>
         <textarea
+          id="msg"
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Paste a suspicious message or conversation…"
           rows={5}
         />
-        <button type="submit" className="primary" disabled={loading || !text.trim()}>
-          {loading ? 'Checking…' : 'Check'}
+        <button type="submit" className="btn-primary" disabled={loading || !text.trim()}>
+          {loading ? '[ matching… ]' : '[ find the script ]'}
         </button>
-        {error && <p className="error">{error}</p>}
+        {loading && (
+          <div className="result" aria-live="polite">
+            <p className="muted blink">matching… reading the message against known scripts</p>
+          </div>
+        )}
+        {!loading && error && (
+          <div className="result" role="alert">
+            <p className="c-orange-text">couldn't check it: {error}</p>
+          </div>
+        )}
+        {!loading && !error && result && <ResultCard result={result} />}
       </form>
-      {result && <ResultCard result={result} />}
-    </section>
+    </Window>
   )
 }
 
-function ResultCard({ result }: { result: MatchResult }) {
+function ResultCard({ result: r }: { result: MatchResult }) {
+  const next = r.likely_next_step
+  const nextInSeen = next != null && r.steps_so_far.includes(next)
   return (
-    <div className="result-card">
-      <div className="result-card__head">
-        <span className="result-card__type">{label(result.scam_type)}</span>
-        <span className="muted">{pct(result.confidence)} confidence</span>
-        {result.source === 'mock' && <span className="badge">mock</span>}
+    <div className="result" aria-live="polite">
+      <div className="result__meta">
+        <span>match · {pct(r.confidence)} confident</span>
+        {r.source && (
+          <span className="source-tag" title={r.source_detail ?? undefined}>
+            {r.source}
+          </span>
+        )}
       </div>
-      <dl className="result-card__grid">
-        <div>
-          <dt>Where you are</dt>
-          <dd>{result.steps_so_far.length ? label(result.steps_so_far[result.steps_so_far.length - 1]) : '—'}</dd>
-        </div>
-        <div>
-          <dt>What usually comes next</dt>
-          <dd>{label(result.likely_next_step)}</dd>
-        </div>
-        <div>
-          <dt>Lost money if it continues</dt>
-          <dd className="result-card__loss">{pct(result.loss_rate_if_continues)}</dd>
-        </div>
-      </dl>
-      <p className="result-card__advice">{result.advice}</p>
-      {result.steps_so_far.length > 0 && (
-        <p className="muted small">Steps seen: {result.steps_so_far.map(label).join(' → ')}</p>
+      <div className="result__type">{lower(r.scam_type)}</div>
+      {(r.steps_so_far.length > 0 || next) && (
+        <ol className="result__steps">
+          {r.steps_so_far.map((s, i) => (
+            <li key={`${s}-${i}`} className={s === next ? 'is-next' : undefined}>
+              {lower(s)}
+              {r.current_step === s && i === r.steps_so_far.lastIndexOf(s) && <span className="muted"> ← now</span>}
+              {s === next && ' ← likely next'}
+            </li>
+          ))}
+          {next && !nextInSeen && <li className="is-next">{lower(next)} ← likely next</li>}
+        </ol>
       )}
+      <div className="loss-box">
+        <span className="loss-box__pct">{pct(r.loss_rate_if_continues)}</span>
+        <span className="loss-box__text">
+          <span className="loss-box__label">loss rate if they continue</span>
+          {r.loss_rate_if_continues == null
+            ? 'not enough known cases at this step'
+            : `of known cases that reached ${next ? lower(next) : 'this step'} lost money`}
+        </span>
+      </div>
+      {r.next_step_story_count != null && r.next_step_story_count > 0 && next && (
+        <div className="result__count muted small">
+          {r.next_step_story_count} {r.next_step_story_count === 1 ? 'story' : 'stories'} reached {lower(next)}
+          {r.context_graph && r.context_graph !== r.scam_type && ` (${lower(r.context_graph === 'all' ? 'all types' : r.context_graph)})`}
+        </div>
+      )}
+      <p className="result__advice">{r.advice}</p>
     </div>
   )
 }
