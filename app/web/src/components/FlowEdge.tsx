@@ -32,11 +32,11 @@ function curveThrough(pts: Pt[]): string {
   return d
 }
 
-/** A back-edge leaves rightwards and loops above both nodes to re-enter from the left. */
-function loopBack(s: Pt, t: Pt): string {
-  const lift = 46 + Math.abs(s.x - t.x) * 0.12
-  const top = Math.min(s.y, t.y) - lift
-  return `M ${s.x},${s.y} C ${s.x + 40},${s.y} ${s.x + 40},${top} ${s.x},${top} L ${t.x},${top} C ${t.x - 40},${top} ${t.x - 40},${t.y} ${t.x},${t.y}`
+/** A back-edge: a shallow dashed arc between the two box centres, bowed upwards. */
+function arcBack(a: Pt, b: Pt): string {
+  const mx = (a.x + b.x) / 2
+  const lift = 20 + Math.hypot(b.x - a.x, b.y - a.y) * 0.18
+  return `M ${a.x},${a.y} Q ${mx},${Math.min(a.y, b.y) - lift} ${b.x},${b.y}`
 }
 
 const KIND_STROKE = { plain: 'var(--edge)', lost: 'var(--orange)', out: 'var(--blue)' } as const
@@ -47,14 +47,15 @@ export function FlowEdge({ source, target, sourceX, sourceY, targetX, targetY, d
   const s = { x: sourceX, y: sourceY }
   const t = { x: targetX, y: targetY }
   let path: string
+  // Box centres; the boxes hide the ends of centre-to-centre paths.
+  const a = { x: sourceX - data.sourceSize / 2, y: sourceY }
+  const b = { x: targetX + data.targetSize / 2, y: targetY }
   if (data.sameCol) {
-    // Centre to centre, bulging right; the boxes hide the ends.
-    const a = { x: sourceX - data.sourceSize / 2, y: sourceY }
-    const b = { x: targetX + data.targetSize / 2, y: targetY }
+    // Bulging right.
     const bulge = 26 + Math.abs(b.y - a.y) * 0.08
     const dy = (b.y - a.y) / 3
     path = `M ${a.x},${a.y} C ${a.x + bulge},${a.y + dy} ${b.x + bulge},${b.y - dy} ${b.x},${b.y}`
-  } else path = data.back ? loopBack(s, t) : curveThrough([s, ...data.points, t])
+  } else path = data.back ? arcBack(a, b) : curveThrough([s, ...data.points, t])
   const baseWidth = data.back ? Math.min(1.5, data.width) : data.width
 
   let stroke: string = KIND_STROKE[data.kind]

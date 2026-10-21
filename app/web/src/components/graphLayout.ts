@@ -202,7 +202,7 @@ export function layoutGraph(graph: Graph, showAll = false): Layout {
           count: e.count,
           lossRate: e.loss_rate,
           nKnown: e.n_known,
-          width: 1 + 2.5 * Math.pow(t, 0.8),
+          width: 1 + 2 * Math.pow(t, 0.8),
           kind: (e.to === 'money_lost' ? 'lost' : e.to === 'victim_exits' ? 'out' : 'plain') as EdgeKind,
           points: [],
           back: !forward && colOf.get(e.from) !== colOf.get(e.to),

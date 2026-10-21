@@ -1,6 +1,5 @@
 import {
   ReactFlow,
-  useNodesInitialized,
   useReactFlow,
   useStore,
   type EdgeTypes,
@@ -20,17 +19,20 @@ import { Window } from './Window'
 const nodeTypes: NodeTypes = { step: StepNode }
 const edgeTypes: EdgeTypes = { flow: FlowEdge }
 
-/** Re-fit when a new graph's nodes have been measured or the pane is resized. */
-function AutoFit({ graphKey }: { graphKey: string }) {
+/** Re-fit when the graph changes or the pane is resized. */
+function AutoFit({ graphKey, onFitted }: { graphKey: string; onFitted: (key: string) => void }) {
   const { fitView } = useReactFlow()
-  const initialized = useNodesInitialized()
   const width = useStore((s) => s.width)
   const height = useStore((s) => s.height)
   useEffect(() => {
-    if (!initialized) return
-    const id = requestAnimationFrame(() => fitView({ padding: { top: 0.04, bottom: 0.04, left: 0.02, right: 0.02 }, maxZoom: 1.1 }))
-    return () => cancelAnimationFrame(id)
-  }, [initialized, graphKey, width, height, fitView])
+    // Node sizes are set up front, so the pane size is all fitView needs.
+    if (!width || !height) return
+    const id = setTimeout(() => {
+      fitView({ padding: { top: 0.04, bottom: 0.04, left: 0.02, right: 0.02 }, maxZoom: 1.1 })
+      onFitted(graphKey)
+    }, 0)
+    return () => clearTimeout(id)
+  }, [graphKey, width, height, fitView, onFitted])
   return null
 }
 
@@ -97,6 +99,9 @@ export function GraphView(props: Props) {
 
 function GraphCanvas({ graph, loading, error, selectedStep, onSelectStep, highlight }: Props) {
   const [showAll, setShowAll] = useState(false)
+  // Hide the canvas until the first fit, so the unfitted frame never flashes.
+  const [fittedKey, setFittedKey] = useState<string | null>(null)
+  const fitKey = graph ? `${graph.scam_type}:${showAll}` : ''
   const base = useMemo(() => (graph ? layoutGraph(graph, showAll) : null), [graph, showAll])
   const { nodes, edges } = useMemo<Layout>(
     () => (base ? decorate(base, selectedStep, highlight) : { nodes: [], edges: [], minorCount: 0 }),
@@ -141,14 +146,14 @@ function GraphCanvas({ graph, loading, error, selectedStep, onSelectStep, highli
         maxZoom={2}
         proOptions={{ hideAttribution: true }}
       >
-        <AutoFit graphKey={`${graph.scam_type}:${showAll}`} />
+        <AutoFit graphKey={fitKey} onFitted={setFittedKey} />
       </ReactFlow>
     )
 
   return (
     <>
       <div className="graph-scroll">
-        <div className="graph-canvas">{content}</div>
+        <div className={graph && fittedKey !== fitKey ? 'graph-canvas is-fitting' : 'graph-canvas'}>{content}</div>
       </div>
       <Legend minorCount={base?.minorCount ?? 0} showAll={showAll} onToggleAll={() => setShowAll((v) => !v)} />
     </>
