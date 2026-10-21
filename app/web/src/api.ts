@@ -68,12 +68,24 @@ export interface Cluster {
   loss_rate: number | null
   scam_type_counts: Partial<Record<ScamType, number>>
   typical_sequence: Step[]
+  medoid_id?: string
+  outlier?: boolean
+  story_ids?: string[]
+}
+
+export interface ClusterAgreement {
+  n: number
+  purity: number
+  inverse_purity: number
+  adjusted_rand: number
 }
 
 export interface Clusters {
   method: string
+  params?: Record<string, number>
   assignments: Record<string, string>
   clusters: Cluster[]
+  agreement?: ClusterAgreement
 }
 
 export interface StorySummary {
@@ -95,8 +107,22 @@ export interface MatchResult {
   source: 'live' | 'mock'
 }
 
+/** Error from the API, with the HTTP status (0 when the request never got a response). */
+export class ApiError extends Error {
+  status: number
+  constructor(message: string, status: number) {
+    super(message)
+    this.status = status
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, init)
+  let res: Response
+  try {
+    res = await fetch(path, init)
+  } catch (e) {
+    throw new ApiError((e as Error).message, 0)
+  }
   if (!res.ok) {
     let detail = `${res.status} ${res.statusText}`
     try {
@@ -105,7 +131,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     } catch {
       /* non-JSON error body */
     }
-    throw new Error(detail)
+    throw new ApiError(detail, res.status)
   }
   return res.json() as Promise<T>
 }
@@ -128,5 +154,24 @@ export const api = {
     }),
 }
 
-export const label = (s: string) => s.replace(/_/g, ' ')
+export const OUTCOME_STEPS: ReadonlySet<string> = new Set(['money_lost', 'victim_exits'])
+
+/** "small_payment" -> "Small payment". */
+export const label = (s: string) => {
+  const t = s.replace(/_/g, ' ')
+  return t.charAt(0).toUpperCase() + t.slice(1)
+}
+
+const KNOWN_TOKENS: ReadonlySet<string> = new Set<string>([...STEPS, ...SCAM_TYPES])
+
+/** Humanise every vocabulary token inside a free-text label, e.g. cluster labels. */
+export const humanize = (s: string) => {
+  const out = s.replace(/[a-z]+(?:_[a-z]+)*/g, (tok) => (KNOWN_TOKENS.has(tok) ? tok.replace(/_/g, ' ') : tok))
+  return out.charAt(0).toUpperCase() + out.slice(1)
+}
+
+/** Signed percentage-point difference, e.g. 0.29 -> "+29 pts". */
+export const pts = (x: number) => `${x >= 0 ? '+' : '−'}${Math.round(Math.abs(x) * 100)} pts`
+
+export const money = (n: number | null | undefined) => (n == null ? null : `$${Math.round(n).toLocaleString()}`)
 export const pct = (x: number | null | undefined) => (x == null ? '—' : `${Math.round(x * 100)}%`)
