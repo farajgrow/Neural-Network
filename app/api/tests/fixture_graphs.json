@@ -1,0 +1,69 @@
+{
+  "generated_at": "2026-10-21T15:00:00Z",
+  "n_stories": 3,
+  "scam_types": ["pig_butchering", "fake_job"],
+  "graphs": {
+    "pig_butchering": {
+      "scam_type": "pig_butchering",
+      "n_stories": 2,
+      "loss_rate": 0.5,
+      "outcome_counts": {"lost_money": 1, "escaped": 1, "unknown": 0},
+      "nodes": [
+        {"step": "initial_contact", "count": 2, "loss_rate": 0.5, "avg_position": 0.0},
+        {"step": "fake_proof_shown", "count": 2, "loss_rate": 0.5, "avg_position": 0.4},
+        {"step": "small_payment", "count": 1, "loss_rate": 1.0, "avg_position": 0.6},
+        {"step": "money_lost", "count": 1, "loss_rate": 1.0, "avg_position": 1.0},
+        {"step": "victim_exits", "count": 1, "loss_rate": 0.0, "avg_position": 1.0}
+      ],
+      "edges": [
+        {"from": "initial_contact", "to": "fake_proof_shown", "count": 2},
+        {"from": "fake_proof_shown", "to": "small_payment", "count": 1},
+        {"from": "small_payment", "to": "money_lost", "count": 1},
+        {"from": "fake_proof_shown", "to": "victim_exits", "count": 1}
+      ],
+      "pinch_points": [
+        {"step": "small_payment", "loss_rate": 1.0, "prev_loss_rate": 0.5, "jump": 0.5}
+      ],
+      "escape_points": [
+        {"step": "fake_proof_shown", "exit_count": 1, "exit_rate": 0.5}
+      ],
+      "step_to_story_ids": {
+        "initial_contact": ["t-001", "t-002"],
+        "fake_proof_shown": ["t-001", "t-002"],
+        "small_payment": ["t-001"],
+        "money_lost": ["t-001"],
+        "victim_exits": ["t-002"]
+      }
+    },
+    "fake_job": {
+      "scam_type": "fake_job",
+      "n_stories": 1,
+      "loss_rate": null,
+      "outcome_counts": {"lost_money": 0, "escaped": 0, "unknown": 1},
+      "nodes": [
+        {"step": "initial_contact", "count": 1, "loss_rate": null, "avg_position": 0.0},
+        {"step": "platform_switch", "count": 1, "loss_rate": null, "avg_position": 1.0}
+      ],
+      "edges": [
+        {"from": "initial_contact", "to": "platform_switch", "count": 1}
+      ],
+      "pinch_points": [],
+      "escape_points": [],
+      "step_to_story_ids": {"initial_contact": ["t-003"], "platform_switch": ["t-003"]}
+    },
+    "all": {
+      "scam_type": "all",
+      "n_stories": 3,
+      "loss_rate": 0.5,
+      "outcome_counts": {"lost_money": 1, "escaped": 1, "unknown": 1},
+      "nodes": [
+        {"step": "initial_contact", "count": 3, "loss_rate": 0.5, "avg_position": 0.0}
+      ],
+      "edges": [],
+      "pinch_points": [],
+      "escape_points": [],
+      "step_to_story_ids": {"initial_contact": ["t-001", "t-002", "t-003"]}
+    }
+  },
+  "clusters": null
+}
