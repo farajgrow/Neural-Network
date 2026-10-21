@@ -292,7 +292,7 @@ def test_match_includes_model_prediction(client, monkeypatch):
     fake_matcher(monkeypatch, lambda text: (dict(PB), "jev"))
     body = client.post("/api/match", json={"text": "x"}).json()
     m = body["model"]
-    assert m["name"] == "gru-v1"
+    assert m["name"].startswith("gru")
     assert 0.0 <= m["p_loss"] <= 1.0
     assert len(m["next_steps"]) == 3
     assert m["top_next"] == m["next_steps"][0]["step"]

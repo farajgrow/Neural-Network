@@ -341,10 +341,17 @@ MODEL_CARD_PATH = REPO_ROOT / "analysis" / "model" / "model_card.json"
 _NOT_A_MOVE = {"victim_suspicious", "third_party_intervened", "victim_exits", "money_lost", "END"}
 
 
+def _model_card() -> dict:
+    try:
+        return json.loads(MODEL_CARD_PATH.read_text())
+    except (OSError, ValueError):
+        return {}
+
+
 def _model_eval() -> dict | None:
     """Cross-validated accuracy from the model card, so the UI can show how good the model is."""
     try:
-        cv = json.loads(MODEL_CARD_PATH.read_text())["cv_metrics"]
+        cv = _model_card()["cv_metrics"]
         return {
             "next_top1": round(cv["gru_next_step"]["top1"]["mean"], 3),
             "loss_auc": round(cv["gru_loss_all_prefixes"]["auc"]["mean"], 3),
@@ -377,7 +384,7 @@ def _model_prediction(steps: list[str], scam_type: str) -> dict | None:
         return None
     ranked = sorted(((s, p / total) for s, p in moves.items()), key=lambda kv: kv[1], reverse=True)
     return {
-        "name": "gru-v1",
+        "name": _model_card().get("name", "gru"),
         "top_next": ranked[0][0],
         "next_steps": [{"step": s, "p": round(p, 4)} for s, p in ranked[:3]],
         "p_loss": round(out["p_loss"], 4),

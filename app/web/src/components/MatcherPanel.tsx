@@ -111,12 +111,12 @@ function ResultCard({ result: r }: { result: MatchResult }) {
 function ModelBox({ model: m }: { model: ModelPrediction }) {
   const stepName = (s: string) => lower(s)
   const about = m.eval
-    ? `A small neural network (GRU) we trained on the 487 stories. In ${m.eval.folds ?? 5}-fold cross-validation it picked the right next step ${pct(m.eval.next_top1)} of the time and ranked loss risk with AUC ${m.eval.loss_auc.toFixed(2)}, about the same as simple frequency counts.`
+    ? `A small neural network (GRU) we trained on the 487 stories. In ${m.eval.folds ?? 5}-fold cross-validation it named the scammer's next move ${pct(m.eval.next_top1)} of the time and ranked loss risk with AUC ${m.eval.loss_auc.toFixed(2)}, about the same as simple frequency counts.`
     : 'A small neural network (GRU) we trained on the 487 stories.'
   return (
     <div className="model-box">
       <div className="model-box__head">
-        <span className="loss-box__label">our model · gru v1</span>
+        <span className="loss-box__label">our model · {m.name.replace('-', ' ')}</span>
         <Tooltip>
           <TooltipTrigger asChild>
             <button type="button" className="model-box__info" aria-label="About our model">?</button>
