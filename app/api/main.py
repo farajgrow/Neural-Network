@@ -11,13 +11,16 @@ Override paths with SCAM_GRAPHS_PATH and SCAM_STORIES_PATH.
 from __future__ import annotations
 
 import json
+import logging
 import os
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FutureTimeout
 from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -137,10 +140,73 @@ def clusters() -> dict | None:
 
 
 # ---- Matcher ---------------------------------------------------------------
+#
+# POST /api/match runs pipeline.matcher in a worker thread with a timeout, so a
+# slow or hung model call never blocks the UI. `source` in the response says
+# where the answer came from:
+#   live      Sonnet answered just now
+#   cache     a stored answer: the matcher's disk cache, its stored demo
+#             responses, or app/api/demo_cache.json for the app/demo messages
+#   fallback  the matcher's offline rule-based matcher (no key, API failure,
+#             or the model call timed out)
+#   mock      pipeline.matcher could not be imported or crashed; canned answer
+
+log = logging.getLogger("app.api.match")
+
+DEMO_DIR = REPO_ROOT / "app" / "demo"
+DEMO_CACHE_PATH = Path(__file__).resolve().parent / "demo_cache.json"
+
+_MATCHER_SOURCES = {"api": "live", "cache": "cache", "demo": "cache", "rules": "fallback"}
+
+_executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="matcher")
+
+
+def match_timeout() -> float:
+    try:
+        return float(os.environ.get("SCAM_MATCH_TIMEOUT", "20"))
+    except ValueError:
+        return 20.0
+
+
+def _demo_cache_first() -> bool:
+    return os.environ.get("SCAM_DEMO_CACHE_FIRST", "").lower() in ("1", "true", "yes")
 
 
 class MatchRequest(BaseModel):
     text: str = Field(..., min_length=1)
+
+    @field_validator("text")
+    @classmethod
+    def _not_blank(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("text is blank")
+        return v
+
+
+def _normalise(text: str) -> str:
+    return " ".join(text.split())
+
+
+def _load_demo_cache() -> dict[str, dict]:
+    """Normalised demo text -> stored response, from demo_cache.json + app/demo/*.txt."""
+    try:
+        entries = json.loads(DEMO_CACHE_PATH.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        log.warning("demo cache unavailable: %s", exc)
+        return {}
+    out = {}
+    for name, entry in entries.items():
+        try:
+            text = (DEMO_DIR / entry["file"]).read_text()
+        except (OSError, KeyError):
+            continue
+        out[_normalise(text)] = entry["response"]
+    return out
+
+
+def demo_cached(text: str) -> dict | None:
+    hit = _load_demo_cache().get(_normalise(text))
+    return dict(hit) if hit else None
 
 
 _MOCK_PIG_BUTCHERING = {
@@ -169,35 +235,93 @@ def _mock_match(text: str) -> dict:
     return dict(_MOCK_PIG_BUTCHERING)
 
 
-def _run_matcher(text: str) -> tuple[dict, str]:
+def _import_matcher():
+    """Returns (match_with_source, rule_match); either may be None."""
     try:
-        from pipeline.matcher import match  # type: ignore
-    except Exception:
-        return _mock_match(text), "mock"
-    try:
-        return match(text), "live"
-    except Exception as exc:  # live matcher failed (e.g. no API key); keep the demo alive
-        print(f"pipeline.matcher.match failed, using mock: {exc!r}")
-        return _mock_match(text), "mock"
+        from pipeline import matcher  # type: ignore
+    except Exception as exc:
+        log.warning("pipeline.matcher not importable: %s", type(exc).__name__)
+        return None, None
+    mws = getattr(matcher, "match_with_source", None)
+    if mws is None and hasattr(matcher, "match"):
+        mws = lambda text: (matcher.match(text), "api")  # noqa: E731
+    return mws, getattr(matcher, "rule_match", None)
 
 
-def _node_loss_rate(scam_type: str, step: str | None) -> float | None:
-    if not step:
-        return None
+def _run_matcher(text: str) -> tuple[dict, str, str]:
+    """Returns (result, source, source_detail)."""
+    demo = demo_cached(text)
+    if demo and _demo_cache_first():
+        return demo, "cache", "demo_cache"
+
+    match_with_source, rule_match = _import_matcher()
+    if match_with_source is None:
+        return (demo, "cache", "demo_cache") if demo else (_mock_match(text), "mock", "matcher_unavailable")
+
+    detail = "error"
+    try:
+        result, raw = _executor.submit(match_with_source, text).result(timeout=match_timeout())
+    except FutureTimeout:
+        log.warning("matcher timed out after %.0fs, falling back", match_timeout())
+        detail = "timeout"
+    except Exception as exc:
+        log.warning("matcher failed, falling back: %s", type(exc).__name__)
+    else:
+        source = _MATCHER_SOURCES.get(raw, "live")
+        # For the two demo messages, the stored answer beats the keyword rules.
+        if source == "fallback" and demo:
+            return demo, "cache", "demo_cache"
+        return dict(result), source, f"matcher_{raw}"
+
+    if demo:
+        return demo, "cache", "demo_cache"
+    if rule_match is not None:
+        try:
+            return rule_match(text), "fallback", f"rules_after_{detail}"
+        except Exception as exc:
+            log.warning("rule matcher failed: %s", type(exc).__name__)
+    return _mock_match(text), "mock", f"mock_after_{detail}"
+
+
+def _graph_context(scam_type: str, current: str | None, nxt: str | None) -> dict:
+    """Loss rate of the next step plus transition counts, from the type's graph
+    (or the combined "all" graph if the type has no node for the next step)."""
+    out = {
+        "loss_rate_if_continues": None,
+        "context_graph": None,
+        "next_step_count": None,
+        "current_step_out_count": None,
+        "next_step_story_count": None,
+    }
+    if not nxt:
+        return out
     try:
         graphs = load_graphs().get("graphs", {})
     except HTTPException:
-        return None
-    for node in graphs.get(scam_type, {}).get("nodes", []):
-        if node.get("step") == step:
-            return node.get("loss_rate")
-    return None
+        return out
+    for name in (scam_type, "all"):
+        g = graphs.get(name) or {}
+        node = next((n for n in g.get("nodes", []) if n.get("step") == nxt), None)
+        if node is None:
+            continue
+        out["loss_rate_if_continues"] = node.get("loss_rate")
+        out["context_graph"] = name
+        out["next_step_story_count"] = node.get("count")
+        if current:
+            edges = [e for e in g.get("edges", []) if e.get("from") == current]
+            out["current_step_out_count"] = sum(e.get("count", 0) for e in edges)
+            out["next_step_count"] = sum(e.get("count", 0) for e in edges if e.get("to") == nxt)
+        return out
+    return out
 
 
 @app.post("/api/match")
 def match_endpoint(req: MatchRequest) -> dict:
-    result, source = _run_matcher(req.text)
-    result = dict(result)
-    result["loss_rate_if_continues"] = _node_loss_rate(result.get("scam_type", ""), result.get("likely_next_step"))
+    result, source, detail = _run_matcher(req.text)
+    steps = result.get("steps_so_far") or []
+    current = steps[-1] if steps else None
+    result["current_step"] = current
+    result.update(_graph_context(result.get("scam_type", ""), current, result.get("likely_next_step")))
     result["source"] = source
+    result["source_detail"] = detail
     return result

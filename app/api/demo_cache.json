@@ -1,0 +1,24 @@
+{
+  "crypto_mentor": {
+    "file": "crypto_mentor.txt",
+    "note": "Hand-written from the expected steps in app/demo/messages.md (no API key when generated).",
+    "response": {
+      "scam_type": "pig_butchering",
+      "confidence": 0.93,
+      "steps_so_far": ["initial_contact", "platform_switch", "trust_building", "fake_proof_shown", "urgency_pressure"],
+      "likely_next_step": "small_payment",
+      "advice": "This is a pig butchering script: a 'wrong number' stranger who moves you to WhatsApp and shows trading profits is setting you up to deposit money. Do not download the app or send anything, and block the contact."
+    }
+  },
+  "fake_job": {
+    "file": "fake_job.txt",
+    "note": "Hand-written from the expected steps in app/demo/messages.md (no API key when generated).",
+    "response": {
+      "scam_type": "fake_job",
+      "confidence": 0.94,
+      "steps_so_far": ["initial_contact", "authority_claim", "platform_switch", "fake_proof_shown", "urgency_pressure"],
+      "likely_next_step": "small_payment",
+      "advice": "Real employers never ask you to top up an account with crypto to unlock tasks or wages. Do not deposit any USDT and stop contacting this recruiter."
+    }
+  }
+}
