@@ -1,0 +1,192 @@
+{
+  "name": "gru-v2",
+  "version": 2,
+  "model": "ScamGRU (analysis/model/gru.py)",
+  "trained_at": "2026-10-21T09:02:59Z",
+  "inputs": {
+    "steps": [
+      "initial_contact",
+      "platform_switch",
+      "trust_building",
+      "authority_claim",
+      "urgency_pressure",
+      "fake_proof_shown",
+      "small_payment",
+      "large_payment",
+      "credentials_shared",
+      "remote_access_granted",
+      "withdrawal_blocked",
+      "victim_suspicious",
+      "third_party_intervened"
+    ],
+    "step_ids": "1..13 in this order, 0 = padding",
+    "scam_types": [
+      "pig_butchering",
+      "fake_job",
+      "impersonation",
+      "marketplace",
+      "romance",
+      "other"
+    ]
+  },
+  "next_step_targets": [
+    "initial_contact",
+    "platform_switch",
+    "trust_building",
+    "authority_claim",
+    "urgency_pressure",
+    "fake_proof_shown",
+    "small_payment",
+    "large_payment",
+    "credentials_shared",
+    "remote_access_granted",
+    "withdrawal_blocked"
+  ],
+  "next_step_definition": "the scammer's next move later in the story: reactions (victim_suspicious, third_party_intervened, victim_exits) are skipped, outcomes are never targets, and prefixes with no later move have no next-step target (no END class). Reactions stay in the inputs.",
+  "outputs": {
+    "next_step_probs": "softmax over next_step_targets (scammer moves only)",
+    "p_loss": "probability the story ends with the victim losing money"
+  },
+  "excluded_from_inputs": [
+    "money_lost",
+    "victim_exits"
+  ],
+  "hyperparameters": {
+    "step_dim": 16,
+    "type_dim": 4,
+    "hidden": 32,
+    "dropout": 0.3,
+    "lr": 0.005,
+    "weight_decay": 0.001,
+    "batch_size": 32,
+    "max_epochs": 200,
+    "patience": 15,
+    "loss_weight": 1.0,
+    "seed": 0
+  },
+  "training": {
+    "n_stories": 487,
+    "n_next_step_examples": 554,
+    "n_loss_examples": 917,
+    "n_fit": 414,
+    "n_early_stopping_val": 73,
+    "n_known_outcome": 277,
+    "n_lost": 101,
+    "best_epoch": 33,
+    "best_val_objective": 2.222154378890991,
+    "epochs_run": 48
+  },
+  "n_parameters": 5828,
+  "cv_metrics": {
+    "folds": 5,
+    "gru_next_step": {
+      "top1": {
+        "mean": 0.35905249056144195,
+        "std": 0.034056802610680156
+      },
+      "top3": {
+        "mean": 0.6638615272195835,
+        "std": 0.05739579652929588
+      },
+      "log_loss": {
+        "mean": 1.7787745420116656,
+        "std": 0.07891476716264895
+      },
+      "top1_unseen": {
+        "mean": 0.3612408963585435,
+        "std": 0.024328435797046615
+      },
+      "top1_len1": {
+        "mean": 0.33416149068322976,
+        "std": 0.028047696473088905
+      },
+      "top1_len2": {
+        "mean": 0.3597810617935814,
+        "std": 0.09876734611726926
+      },
+      "top1_len3": {
+        "mean": 0.427534965034965,
+        "std": 0.057770396399721355
+      },
+      "top1_len4+": {
+        "mean": 0.49682539682539684,
+        "std": 0.1261879804085828
+      }
+    },
+    "gru_loss_all_prefixes": {
+      "auc": {
+        "mean": 0.8387404114806916,
+        "std": 0.054966760689488324
+      },
+      "brier": {
+        "mean": 0.153213540556155,
+        "std": 0.03068644861099173
+      },
+      "log_loss": {
+        "mean": 0.4814570084068654,
+        "std": 0.10036010002690211
+      },
+      "n": {
+        "mean": 183.4,
+        "std": 15.962455951387932
+      }
+    },
+    "gru_early_warning": {
+      "first_1": {
+        "auc": {
+          "mean": 0.6924822117763295,
+          "std": 0.09735372656151756
+        },
+        "brier": {
+          "mean": 0.196461218730822,
+          "std": 0.017709707895532573
+        },
+        "log_loss": {
+          "mean": 0.5761654261372939,
+          "std": 0.04131241955128837
+        },
+        "n": {
+          "mean": 55.4,
+          "std": 5.594640292279745
+        }
+      },
+      "first_2": {
+        "auc": {
+          "mean": 0.8149995266465856,
+          "std": 0.10312821877621592
+        },
+        "brier": {
+          "mean": 0.1485598633990855,
+          "std": 0.04671320741859003
+        },
+        "log_loss": {
+          "mean": 0.46830149329820464,
+          "std": 0.13573929452121972
+        },
+        "n": {
+          "mean": 55.4,
+          "std": 5.594640292279745
+        }
+      },
+      "first_3": {
+        "auc": {
+          "mean": 0.9068289144759734,
+          "std": 0.024607975566728165
+        },
+        "brier": {
+          "mean": 0.1124858665700321,
+          "std": 0.02957777297826534
+        },
+        "log_loss": {
+          "mean": 0.36988561370325923,
+          "std": 0.08440166131951128
+        },
+        "n": {
+          "mean": 55.4,
+          "std": 5.594640292279745
+        }
+      }
+    }
+  },
+  "caveats": "487 self-reported r/Scams stories, LLM-extracted labels, 277 known outcomes. Only 554 prefixes (from 315 stories) have a later scammer move to predict. The loss head sees payment steps and victim_suspicious, so part of its signal is built in. Ties the Markov and logistic baselines. See analysis/findings.md, 'Neural network (v2: next scam move)'."
+}

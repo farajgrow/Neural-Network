@@ -1,0 +1,505 @@
+{
+  "generated_at": "2026-10-21T09:05:13Z",
+  "model_name": "gru-v2",
+  "folds": 5,
+  "seed": 0,
+  "fractions": [
+    0.25,
+    0.5,
+    0.75,
+    1.0
+  ],
+  "note": "Each fraction of the fold's training stories, subsampled by story and stratified by scam type; always scored on the full test fold. Extrapolation = least-squares fit of metric vs ln(n_train_stories) on the 4 fraction means; a rough estimate only.",
+  "curve": {
+    "0.25": {
+      "n_train_stories": {
+        "mean": 97.2,
+        "std": 0.4472135954999579
+      },
+      "next_step.markov1_by_type.top1": {
+        "mean": 0.3156331750091341,
+        "std": 0.019191851629373414
+      },
+      "next_step.gru.top1": {
+        "mean": 0.33993459992692726,
+        "std": 0.03857935055216004
+      },
+      "next_step.markov1_by_type.log_loss": {
+        "mean": 2.0175881073826356,
+        "std": 0.2096014836362915
+      },
+      "next_step.gru.log_loss": {
+        "mean": 2.025298170139147,
+        "std": 0.06473257040192308
+      },
+      "loss_all_prefixes.logistic.auc": {
+        "mean": 0.8244750625939318,
+        "std": 0.05619602474927928
+      },
+      "loss_all_prefixes.gru.auc": {
+        "mean": 0.8019463029112739,
+        "std": 0.03592844891645926
+      },
+      "loss_all_prefixes.logistic.brier": {
+        "mean": 0.17592592102778132,
+        "std": 0.02157258555198972
+      },
+      "loss_all_prefixes.gru.brier": {
+        "mean": 0.17554454951776416,
+        "std": 0.033096971922585726
+      },
+      "gap.next_step.top1.gru_minus_markov1_by_type": {
+        "mean": 0.02430142491779321,
+        "std": 0.045538243222918724
+      },
+      "gap.next_step.log_loss.gru_minus_markov1_by_type": {
+        "mean": 0.00771006275651116,
+        "std": 0.15064293357686
+      },
+      "gap.loss_all_prefixes.auc.gru_minus_logistic": {
+        "mean": -0.022528759682657884,
+        "std": 0.03750975919981312
+      },
+      "gap.loss_all_prefixes.brier.gru_minus_logistic": {
+        "mean": -0.00038137151001715885,
+        "std": 0.04379207908910623
+      }
+    },
+    "0.5": {
+      "n_train_stories": {
+        "mean": 193.8,
+        "std": 0.447213595499958
+      },
+      "next_step.markov1_by_type.top1": {
+        "mean": 0.35218389964681523,
+        "std": 0.014936264716931269
+      },
+      "next_step.gru.top1": {
+        "mean": 0.33930325173547676,
+        "std": 0.0444190506693735
+      },
+      "next_step.markov1_by_type.log_loss": {
+        "mean": 1.8479035563348485,
+        "std": 0.08720460695768566
+      },
+      "next_step.gru.log_loss": {
+        "mean": 1.9169510495609838,
+        "std": 0.064416978924781
+      },
+      "loss_all_prefixes.logistic.auc": {
+        "mean": 0.8258262454558339,
+        "std": 0.051374047500814306
+      },
+      "loss_all_prefixes.gru.auc": {
+        "mean": 0.8238127119391703,
+        "std": 0.02970402044153566
+      },
+      "loss_all_prefixes.logistic.brier": {
+        "mean": 0.16249288657354372,
+        "std": 0.025248771272681027
+      },
+      "loss_all_prefixes.gru.brier": {
+        "mean": 0.15965372386258514,
+        "std": 0.02127004951759681
+      },
+      "gap.next_step.top1.gru_minus_markov1_by_type": {
+        "mean": -0.012880647911338439,
+        "std": 0.03587231722044044
+      },
+      "gap.next_step.log_loss.gru_minus_markov1_by_type": {
+        "mean": 0.0690474932261353,
+        "std": 0.10193465499782324
+      },
+      "gap.loss_all_prefixes.auc.gru_minus_logistic": {
+        "mean": -0.002013533516663646,
+        "std": 0.025592948123363966
+      },
+      "gap.loss_all_prefixes.brier.gru_minus_logistic": {
+        "mean": -0.0028391627109585925,
+        "std": 0.00817171499364245
+      }
+    },
+    "0.75": {
+      "n_train_stories": {
+        "mean": 292.4,
+        "std": 0.8944271909999159
+      },
+      "next_step.markov1_by_type.top1": {
+        "mean": 0.34299549384971384,
+        "std": 0.022913970292021347
+      },
+      "next_step.gru.top1": {
+        "mean": 0.37017038119595663,
+        "std": 0.06405657381900402
+      },
+      "next_step.markov1_by_type.log_loss": {
+        "mean": 1.8007660107532817,
+        "std": 0.09407420533834511
+      },
+      "next_step.gru.log_loss": {
+        "mean": 1.8649913808934844,
+        "std": 0.12370972093429772
+      },
+      "loss_all_prefixes.logistic.auc": {
+        "mean": 0.8490278837692447,
+        "std": 0.05298432885240936
+      },
+      "loss_all_prefixes.gru.auc": {
+        "mean": 0.8389572546295458,
+        "std": 0.04652710252935495
+      },
+      "loss_all_prefixes.logistic.brier": {
+        "mean": 0.1531696826491456,
+        "std": 0.027468592746499043
+      },
+      "loss_all_prefixes.gru.brier": {
+        "mean": 0.15664828795067115,
+        "std": 0.02302648249570902
+      },
+      "gap.next_step.top1.gru_minus_markov1_by_type": {
+        "mean": 0.02717488734624285,
+        "std": 0.04622771536010813
+      },
+      "gap.next_step.log_loss.gru_minus_markov1_by_type": {
+        "mean": 0.0642253701402025,
+        "std": 0.04602969831578215
+      },
+      "gap.loss_all_prefixes.auc.gru_minus_logistic": {
+        "mean": -0.010070629139698806,
+        "std": 0.007392244308783835
+      },
+      "gap.loss_all_prefixes.brier.gru_minus_logistic": {
+        "mean": 0.0034786053015255503,
+        "std": 0.007974197799717123
+      }
+    },
+    "1.0": {
+      "n_train_stories": {
+        "mean": 389.6,
+        "std": 0.5477225575051662
+      },
+      "next_step.markov1_by_type.top1": {
+        "mean": 0.34371818292534406,
+        "std": 0.028640023723858033
+      },
+      "next_step.gru.top1": {
+        "mean": 0.35905249056144195,
+        "std": 0.034056802610680156
+      },
+      "next_step.markov1_by_type.log_loss": {
+        "mean": 1.7703127005114958,
+        "std": 0.09199235461932555
+      },
+      "next_step.gru.log_loss": {
+        "mean": 1.7787745420116656,
+        "std": 0.07891476716264895
+      },
+      "loss_all_prefixes.logistic.auc": {
+        "mean": 0.8481236553073883,
+        "std": 0.043564054956306074
+      },
+      "loss_all_prefixes.gru.auc": {
+        "mean": 0.8387404114806916,
+        "std": 0.054966760689488324
+      },
+      "loss_all_prefixes.logistic.brier": {
+        "mean": 0.1559455587785706,
+        "std": 0.021377241940229705
+      },
+      "loss_all_prefixes.gru.brier": {
+        "mean": 0.153213540556155,
+        "std": 0.03068644861099173
+      },
+      "gap.next_step.top1.gru_minus_markov1_by_type": {
+        "mean": 0.015334307636097921,
+        "std": 0.03426776963269202
+      },
+      "gap.next_step.log_loss.gru_minus_markov1_by_type": {
+        "mean": 0.008461841500170087,
+        "std": 0.05517463176068379
+      },
+      "gap.loss_all_prefixes.auc.gru_minus_logistic": {
+        "mean": -0.009383243826696686,
+        "std": 0.021340357545510204
+      },
+      "gap.loss_all_prefixes.brier.gru_minus_logistic": {
+        "mean": -0.002732018222415611,
+        "std": 0.012689720901902337
+      }
+    }
+  },
+  "extrapolation_rough": {
+    "next_step.markov1_by_type.top1": {
+      "slope_per_doubling": 0.013504865703720224,
+      "x2": 0.36369920728326555,
+      "x5": 0.38155166867469403
+    },
+    "next_step.gru.top1": {
+      "slope_per_doubling": 0.01316054948694068,
+      "x2": 0.3765426114271745,
+      "x5": 0.39393991153811686
+    },
+    "next_step.markov1_by_type.log_loss": {
+      "slope_per_doubling": -0.12436166853902339,
+      "x2": 1.6283136281999104,
+      "x5": 1.4639164446311055
+    },
+    "next_step.gru.log_loss": {
+      "slope_per_doubling": -0.11714993999185536,
+      "x2": 1.679060583258372,
+      "x5": 1.52419678626877
+    },
+    "loss_all_prefixes.logistic.auc": {
+      "slope_per_doubling": 0.01363113340486154,
+      "x2": 0.8621640979792763,
+      "x5": 0.8801834761923204
+    },
+    "loss_all_prefixes.gru.auc": {
+      "slope_per_doubling": 0.019656680457086642,
+      "x2": 0.8623491359798112,
+      "x5": 0.8883338541282574
+    },
+    "loss_all_prefixes.logistic.brier": {
+      "slope_per_doubling": -0.01108856419267635,
+      "x2": 0.14130191479196966,
+      "x5": 0.12664363025370878
+    },
+    "loss_all_prefixes.gru.brier": {
+      "slope_per_doubling": -0.011059520262631364,
+      "x2": 0.140737336742261,
+      "x5": 0.12611744619111254
+    }
+  },
+  "per_fold": [
+    {
+      "0.25": {
+        "n_train_stories": 97,
+        "next_step.markov1_by_type.top1": 0.33043478260869563,
+        "next_step.gru.top1": 0.3565217391304348,
+        "next_step.markov1_by_type.log_loss": 2.018231538712836,
+        "next_step.gru.log_loss": 2.053822339488498,
+        "loss_all_prefixes.logistic.auc": 0.8668564199873497,
+        "loss_all_prefixes.gru.auc": 0.8041324056504322,
+        "loss_all_prefixes.logistic.brier": 0.14449823229536027,
+        "loss_all_prefixes.gru.brier": 0.21229585326075198
+      },
+      "0.5": {
+        "n_train_stories": 193,
+        "next_step.markov1_by_type.top1": 0.3565217391304348,
+        "next_step.gru.top1": 0.3826086956521739,
+        "next_step.markov1_by_type.log_loss": 1.9424017806144038,
+        "next_step.gru.log_loss": 1.839054787774376,
+        "loss_all_prefixes.logistic.auc": 0.8485135989879823,
+        "loss_all_prefixes.gru.auc": 0.8310141260805397,
+        "loss_all_prefixes.logistic.brier": 0.15417258828701624,
+        "loss_all_prefixes.gru.brier": 0.16151043103681761
+      },
+      "0.75": {
+        "n_train_stories": 292,
+        "next_step.markov1_by_type.top1": 0.3739130434782609,
+        "next_step.gru.top1": 0.4782608695652174,
+        "next_step.markov1_by_type.log_loss": 1.8040940614345133,
+        "next_step.gru.log_loss": 1.806215865753795,
+        "loss_all_prefixes.logistic.auc": 0.8779253636938646,
+        "loss_all_prefixes.gru.auc": 0.866909129243095,
+        "loss_all_prefixes.logistic.brier": 0.14769228293006098,
+        "loss_all_prefixes.gru.brier": 0.161949619397513
+      },
+      "1.0": {
+        "n_train_stories": 389,
+        "next_step.markov1_by_type.top1": 0.3739130434782609,
+        "next_step.gru.top1": 0.41739130434782606,
+        "next_step.markov1_by_type.log_loss": 1.767884146234256,
+        "next_step.gru.log_loss": 1.7049877794838042,
+        "loss_all_prefixes.logistic.auc": 0.8602150537634409,
+        "loss_all_prefixes.gru.auc": 0.8698081383090871,
+        "loss_all_prefixes.logistic.brier": 0.15696038926970562,
+        "loss_all_prefixes.gru.brier": 0.14199108186347917
+      }
+    },
+    {
+      "0.25": {
+        "n_train_stories": 98,
+        "next_step.markov1_by_type.top1": 0.3277310924369748,
+        "next_step.gru.top1": 0.37815126050420167,
+        "next_step.markov1_by_type.log_loss": 2.339597074137232,
+        "next_step.gru.log_loss": 2.1183601592553405,
+        "loss_all_prefixes.logistic.auc": 0.7696428571428572,
+        "loss_all_prefixes.gru.auc": 0.766504329004329,
+        "loss_all_prefixes.logistic.brier": 0.20313965709184664,
+        "loss_all_prefixes.gru.brier": 0.20366766122669408
+      },
+      "0.5": {
+        "n_train_stories": 194,
+        "next_step.markov1_by_type.top1": 0.3277310924369748,
+        "next_step.gru.top1": 0.2689075630252101,
+        "next_step.markov1_by_type.log_loss": 1.8455911321265843,
+        "next_step.gru.log_loss": 1.9814082694312372,
+        "loss_all_prefixes.logistic.auc": 0.7351190476190477,
+        "loss_all_prefixes.gru.auc": 0.7722402597402598,
+        "loss_all_prefixes.logistic.brier": 0.20597823863962111,
+        "loss_all_prefixes.gru.brier": 0.19459204907844863
+      },
+      "0.75": {
+        "n_train_stories": 291,
+        "next_step.markov1_by_type.top1": 0.3277310924369748,
+        "next_step.gru.top1": 0.31092436974789917,
+        "next_step.markov1_by_type.log_loss": 1.7969925840497272,
+        "next_step.gru.log_loss": 1.8503194746094536,
+        "loss_all_prefixes.logistic.auc": 0.7548160173160173,
+        "loss_all_prefixes.gru.auc": 0.7569264069264069,
+        "loss_all_prefixes.logistic.brier": 0.201236615870686,
+        "loss_all_prefixes.gru.brier": 0.19349697360367715
+      },
+      "1.0": {
+        "n_train_stories": 389,
+        "next_step.markov1_by_type.top1": 0.36134453781512604,
+        "next_step.gru.top1": 0.3445378151260504,
+        "next_step.markov1_by_type.log_loss": 1.772872279641178,
+        "next_step.gru.log_loss": 1.7572520190095522,
+        "loss_all_prefixes.logistic.auc": 0.7718073593073593,
+        "loss_all_prefixes.gru.auc": 0.7527597402597402,
+        "loss_all_prefixes.logistic.brier": 0.192186984313283,
+        "loss_all_prefixes.gru.brier": 0.20440699822478683
+      }
+    },
+    {
+      "0.25": {
+        "n_train_stories": 97,
+        "next_step.markov1_by_type.top1": 0.3,
+        "next_step.gru.top1": 0.325,
+        "next_step.markov1_by_type.log_loss": 2.0058148490515633,
+        "next_step.gru.log_loss": 2.022312455386355,
+        "loss_all_prefixes.logistic.auc": 0.7693391794550579,
+        "loss_all_prefixes.gru.auc": 0.7648762918885061,
+        "loss_all_prefixes.logistic.brier": 0.1735908150441374,
+        "loss_all_prefixes.gru.brier": 0.1758823801729535
+      },
+      "0.5": {
+        "n_train_stories": 194,
+        "next_step.markov1_by_type.top1": 0.36666666666666664,
+        "next_step.gru.top1": 0.325,
+        "next_step.markov1_by_type.log_loss": 1.8052861307688735,
+        "next_step.gru.log_loss": 1.9022268894428973,
+        "loss_all_prefixes.logistic.auc": 0.8370654556843095,
+        "loss_all_prefixes.gru.auc": 0.8387879736924523,
+        "loss_all_prefixes.logistic.brier": 0.1553161532224774,
+        "loss_all_prefixes.gru.brier": 0.15620008967166163
+      },
+      "0.75": {
+        "n_train_stories": 293,
+        "next_step.markov1_by_type.top1": 0.3333333333333333,
+        "next_step.gru.top1": 0.3416666666666667,
+        "next_step.markov1_by_type.log_loss": 1.8044977815125849,
+        "next_step.gru.log_loss": 1.87531941314153,
+        "loss_all_prefixes.logistic.auc": 0.8636861885374256,
+        "loss_all_prefixes.gru.auc": 0.8463044159098027,
+        "loss_all_prefixes.logistic.brier": 0.13533263950549138,
+        "loss_all_prefixes.gru.brier": 0.13820984820004367
+      },
+      "1.0": {
+        "n_train_stories": 390,
+        "next_step.markov1_by_type.top1": 0.3333333333333333,
+        "next_step.gru.top1": 0.3333333333333333,
+        "next_step.markov1_by_type.log_loss": 1.7490411112296946,
+        "next_step.gru.log_loss": 1.7876593123239783,
+        "loss_all_prefixes.logistic.auc": 0.8574224866896336,
+        "loss_all_prefixes.gru.auc": 0.8182743501409333,
+        "loss_all_prefixes.logistic.brier": 0.1487879959183822,
+        "loss_all_prefixes.gru.brier": 0.15782672851191687
+      }
+    },
+    {
+      "0.25": {
+        "n_train_stories": 97,
+        "next_step.markov1_by_type.top1": 0.29,
+        "next_step.gru.top1": 0.36,
+        "next_step.markov1_by_type.log_loss": 1.9707289448478946,
+        "next_step.gru.log_loss": 1.9770684837488366,
+        "loss_all_prefixes.logistic.auc": 0.822875816993464,
+        "loss_all_prefixes.gru.auc": 0.8423747276688454,
+        "loss_all_prefixes.logistic.brier": 0.17190932782715357,
+        "loss_all_prefixes.gru.brier": 0.1504762581171753
+      },
+      "0.5": {
+        "n_train_stories": 194,
+        "next_step.markov1_by_type.top1": 0.36,
+        "next_step.gru.top1": 0.36,
+        "next_step.markov1_by_type.log_loss": 1.919136438823588,
+        "next_step.gru.log_loss": 1.9847087348050434,
+        "loss_all_prefixes.logistic.auc": 0.8480392156862745,
+        "loss_all_prefixes.gru.auc": 0.8474945533769063,
+        "loss_all_prefixes.logistic.brier": 0.15706085382381432,
+        "loss_all_prefixes.gru.brier": 0.14596413944053033
+      },
+      "0.75": {
+        "n_train_stories": 293,
+        "next_step.markov1_by_type.top1": 0.32,
+        "next_step.gru.top1": 0.35,
+        "next_step.markov1_by_type.log_loss": 1.9320799182373665,
+        "next_step.gru.log_loss": 2.0630561164043404,
+        "loss_all_prefixes.logistic.auc": 0.8775599128540305,
+        "loss_all_prefixes.gru.auc": 0.8635076252723312,
+        "loss_all_prefixes.logistic.brier": 0.14594898667887668,
+        "loss_all_prefixes.gru.brier": 0.1523373758292558
+      },
+      "1.0": {
+        "n_train_stories": 390,
+        "next_step.markov1_by_type.top1": 0.3,
+        "next_step.gru.top1": 0.36,
+        "next_step.markov1_by_type.log_loss": 1.9096501789946012,
+        "next_step.gru.log_loss": 1.9091329958249623,
+        "loss_all_prefixes.logistic.auc": 0.879193899782135,
+        "loss_all_prefixes.gru.auc": 0.8917211328976035,
+        "loss_all_prefixes.logistic.brier": 0.14305012896906724,
+        "loss_all_prefixes.gru.brier": 0.12937832348135186
+      }
+    },
+    {
+      "0.25": {
+        "n_train_stories": 97,
+        "next_step.markov1_by_type.top1": 0.33,
+        "next_step.gru.top1": 0.28,
+        "next_step.markov1_by_type.log_loss": 1.753568130163654,
+        "next_step.gru.log_loss": 1.9549274128167051,
+        "loss_all_prefixes.logistic.auc": 0.8936610393909301,
+        "loss_all_prefixes.gru.auc": 0.8318437603442569,
+        "loss_all_prefixes.logistic.brier": 0.1864915728804087,
+        "loss_all_prefixes.gru.brier": 0.13540059481124594
+      },
+      "0.5": {
+        "n_train_stories": 194,
+        "next_step.markov1_by_type.top1": 0.35,
+        "next_step.gru.top1": 0.36,
+        "next_step.markov1_by_type.log_loss": 1.7271022993407938,
+        "next_step.gru.log_loss": 1.8773565663513663,
+        "loss_all_prefixes.logistic.auc": 0.8603939093015558,
+        "loss_all_prefixes.gru.auc": 0.8295266468056934,
+        "loss_all_prefixes.logistic.brier": 0.13993659889478957,
+        "loss_all_prefixes.gru.brier": 0.1400019100854675
+      },
+      "0.75": {
+        "n_train_stories": 293,
+        "next_step.markov1_by_type.top1": 0.36,
+        "next_step.gru.top1": 0.37,
+        "next_step.markov1_by_type.log_loss": 1.6661657085322177,
+        "next_step.gru.log_loss": 1.730046034558303,
+        "loss_all_prefixes.logistic.auc": 0.8711519364448858,
+        "loss_all_prefixes.gru.auc": 0.861138695796094,
+        "loss_all_prefixes.logistic.brier": 0.1356378882606129,
+        "loss_all_prefixes.gru.brier": 0.13724762272286606
+      },
+      "1.0": {
+        "n_train_stories": 390,
+        "next_step.markov1_by_type.top1": 0.35,
+        "next_step.gru.top1": 0.34,
+        "next_step.markov1_by_type.log_loss": 1.6521157864577487,
+        "next_step.gru.log_loss": 1.734840603416032,
+        "loss_all_prefixes.logistic.auc": 0.8719794769943727,
+        "loss_all_prefixes.gru.auc": 0.861138695796094,
+        "loss_all_prefixes.logistic.brier": 0.13874229542241498,
+        "loss_all_prefixes.gru.brier": 0.13246457069924025
+      }
+    }
+  ]
+}

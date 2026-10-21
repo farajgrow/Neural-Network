@@ -1,0 +1,305 @@
+"""Tests for analysis/model. Torch-only tests are skipped when torch is not installed."""
+
+import math
+
+import numpy as np
+import pytest
+
+from analysis.graphs import OUTCOME_STEPS, load_vocab
+from analysis.model.baselines import BaseRateLoss, LogisticLoss, MarkovNext, MostFrequentNext
+from analysis.model.data import (REACTION_STEPS, Story, holdout_by_story, kfold_by_story, load_dataset,
+                                 loss_examples, make_vocab, next_step_examples, prefix_examples, to_story)
+from analysis.model.metrics import calibration_table, roc_auc, top1_unseen, topk_accuracy
+
+RAW_VOCAB = load_vocab()
+VOCAB = make_vocab(RAW_VOCAB)
+
+
+def raw_story(sid, steps, outcome="unknown", scam_type="fake_job"):
+    return {"id": sid, "source": "reddit", "scam_type": scam_type, "outcome": outcome,
+            "events": [{"step": s, "actor": "scammer", "detail": "x"} for s in steps],
+            "amount_lost_usd": None, "snippet": "x"}
+
+
+def story(sid, steps, lost=None, scam_type="fake_job"):
+    return Story(sid, scam_type, tuple(steps), lost)
+
+
+# --- data -------------------------------------------------------------------------------
+
+def test_outcome_steps_are_not_inputs_or_targets():
+    raw = raw_story("a", ["initial_contact", "small_payment", "money_lost", "small_payment", "victim_exits"],
+                    "lost_money")
+    s = to_story(raw, VOCAB, RAW_VOCAB)
+    # money_lost removed, and the two small_payments it separated collapse into one
+    assert s.script == ("initial_contact", "small_payment")
+    assert s.lost == 1
+    assert not OUTCOME_STEPS & set(VOCAB.steps)
+    assert not OUTCOME_STEPS & set(VOCAB.targets)
+
+
+def test_targets_are_moves_only():
+    assert len(VOCAB.targets) == 11
+    assert not (REACTION_STEPS | OUTCOME_STEPS) & set(VOCAB.targets)
+    assert "END" not in VOCAB.targets
+    # reactions are still inputs
+    assert {"victim_suspicious", "third_party_intervened"} <= set(VOCAB.steps)
+
+
+def test_no_outcome_steps_in_real_data_inputs_and_only_moves_as_targets():
+    stories, _ = load_dataset()
+    for e in prefix_examples(stories):
+        assert not OUTCOME_STEPS & set(e.prefix)
+    for e in next_step_examples(stories):
+        assert e.next_step in VOCAB.targets
+        assert e.next_step not in REACTION_STEPS | OUTCOME_STEPS | {"END"}
+
+
+def test_prefix_generation():
+    examples = prefix_examples([story("a", ["initial_contact", "trust_building", "small_payment"], lost=1)])
+    assert [(e.prefix, e.next_step) for e in examples] == [
+        (("initial_contact",), "trust_building"),
+        (("initial_contact", "trust_building"), "small_payment"),
+        (("initial_contact", "trust_building", "small_payment"), None),
+    ]
+    assert all(e.lost == 1 for e in examples)
+
+
+def test_reactions_are_skipped_when_finding_the_next_move():
+    s = story("a", ["initial_contact", "victim_suspicious", "small_payment"])
+    examples = next_step_examples([s])
+    assert [(e.prefix, e.next_step) for e in examples] == [
+        (("initial_contact",), "small_payment"),
+        (("initial_contact", "victim_suspicious"), "small_payment"),
+    ]
+
+
+def test_prefixes_without_a_later_move_have_no_next_step_example_but_keep_loss():
+    s = story("a", ["initial_contact", "small_payment", "victim_suspicious", "third_party_intervened"], lost=0)
+    assert [e.prefix for e in next_step_examples([s])] == [("initial_contact",)]
+    assert len(loss_examples([s])) == 4                      # every prefix still trains/tests the loss head
+    assert next_step_examples([story("b", ["victim_suspicious"])]) == []
+    assert loss_examples([story("c", ["initial_contact"], lost=None)]) == []
+
+
+def test_unknown_outcome_gives_no_loss_label():
+    s = to_story(raw_story("a", ["initial_contact"], "unknown"), VOCAB, RAW_VOCAB)
+    assert s.lost is None
+    assert to_story(raw_story("b", ["initial_contact"], "escaped"), VOCAB, RAW_VOCAB).lost == 0
+
+
+def test_folds_never_share_a_story_and_cover_everything():
+    stories, _ = load_dataset()
+    folds = kfold_by_story(stories, k=5, seed=0)
+    test_ids = [s.id for _, test in folds for s in test]
+    assert sorted(test_ids) == sorted(s.id for s in stories)          # each story tested exactly once
+    for train, test in folds:
+        assert not {s.id for s in train} & {s.id for s in test}
+        fit, val = holdout_by_story(train)
+        assert not {s.id for s in fit} & {s.id for s in val}
+        assert not {s.id for s in val} & {s.id for s in test}
+    assert kfold_by_story(stories, seed=0)[0][1] == kfold_by_story(stories, seed=0)[0][1]   # deterministic
+
+
+# --- baselines ----------------------------------------------------------------------------
+
+def test_markov_baseline_on_tiny_dataset():
+    a, b, c = "initial_contact", "trust_building", "small_payment"
+    stories = [story("1", [a, b]), story("2", [a, b]), story("3", [a, c]),
+               story("4", [a, c], scam_type="romance"), story("5", [a, c], scam_type="romance")]
+    examples = prefix_examples(stories)
+    query = prefix_examples([story("q", [a], scam_type="fake_job")])[:1]
+    assert sum(e.next_step is None for e in examples) == 5     # last prefixes are ignored by fit
+
+    markov = MarkovNext(VOCAB, order=1, backoff=0.0).fit(examples)
+    probs = markov.predict_proba(query)[0]
+    assert probs[VOCAB.target_id(c)] == pytest.approx(3 / 5)   # a -> c in 3 of 5 stories
+    assert probs[VOCAB.target_id(b)] == pytest.approx(2 / 5)
+
+    by_type = MarkovNext(VOCAB, order=1, by_type=True, backoff=0.0).fit(examples)
+    probs = by_type.predict_proba(query)[0]
+    assert probs[VOCAB.target_id(b)] == pytest.approx(2 / 3)   # within fake_job: a -> b in 2 of 3
+    assert VOCAB.targets[int(np.argmax(probs))] == b
+
+    # no move ever follows b (there is no END class), so with backoff it falls back to simpler contexts
+    smoothed = MarkovNext(VOCAB, order=1, by_type=True).fit(examples)
+    after_b = smoothed.predict_proba(prefix_examples([story("q", [a, b])])[1:])[0]
+    assert after_b.shape == (len(VOCAB.targets),)
+    assert after_b.sum() == pytest.approx(1.0)
+
+
+def test_markov_backs_off_for_unseen_context():
+    a, b = "initial_contact", "trust_building"
+    examples = prefix_examples([story("1", [a, b]), story("2", [a, b])])
+    model = MarkovNext(VOCAB, order=2, by_type=True).fit(examples)
+    unseen = prefix_examples([story("q", ["withdrawal_blocked"], scam_type="romance")])
+    np.testing.assert_allclose(model.predict_proba(unseen)[0], MostFrequentNext(VOCAB).fit(examples).probs)
+
+
+def test_baseline_probabilities_sum_to_one():
+    stories, _ = load_dataset()
+    examples = prefix_examples(stories[:100])
+    for model in (MostFrequentNext(VOCAB), MarkovNext(VOCAB), MarkovNext(VOCAB, order=2, by_type=True)):
+        np.testing.assert_allclose(model.fit(examples).predict_proba(examples).sum(axis=1), 1.0)
+
+
+def test_loss_baselines_ignore_unknown_outcomes():
+    examples = prefix_examples([story("1", ["small_payment"], 1), story("2", ["victim_suspicious"], 0),
+                                story("3", ["small_payment"], None), story("4", ["small_payment"], None)])
+    assert BaseRateLoss().fit(examples).rate == 0.5
+    p = LogisticLoss(VOCAB).fit(examples).predict(examples[:2])
+    assert p[0] > 0.5 > p[1]
+
+
+# --- metrics ------------------------------------------------------------------------------
+
+def test_metrics_on_hand_examples():
+    assert roc_auc(np.array([0.1, 0.4, 0.35, 0.8]), np.array([0, 0, 1, 1])) == 0.75
+    assert roc_auc(np.array([0.5, 0.5]), np.array([0, 1])) == 0.5
+    probs = np.array([[0.6, 0.3, 0.1], [0.2, 0.3, 0.5]])
+    assert topk_accuracy(probs, np.array([1, 2]), 1) == 0.5
+    assert topk_accuracy(probs, np.array([1, 2]), 2) == 1.0
+    seen = np.array([[True, False, False], [False, False, True]])
+    assert top1_unseen(probs, np.array([1, 1]), seen) == 1.0       # row 1: 0 seen -> 1; row 2: 2 seen -> 1
+    table = calibration_table(np.array([0.05, 0.15, 0.95]), np.array([0, 1, 1]), bins=5)
+    assert table[0]["n"] == 2 and table[0]["observed"] == 0.5 and table[4]["n"] == 1
+
+
+# --- GRU (needs torch) --------------------------------------------------------------------
+
+def test_gru_forward_shape_and_masked_loss():
+    torch = pytest.importorskip("torch")
+    from analysis.model.gru import GRUConfig, ScamGRU, encode_stories, masked_losses
+
+    stories = [story("1", ["initial_contact", "trust_building", "small_payment"], lost=1),
+               story("2", ["initial_contact"], lost=None)]
+    batch = encode_stories(stories, VOCAB)
+    model = ScamGRU(len(VOCAB.steps), len(VOCAB.scam_types), len(VOCAB.targets), GRUConfig()).eval()
+    next_logits, loss_logits = model(batch["steps"], batch["types"])
+    assert next_logits.shape == (2, 3, len(VOCAB.targets))
+    assert loss_logits.shape == (2, 3)
+    assert batch["mask"].sum() == 4                      # 3 + 1 real positions
+    assert batch["next_mask"].sum() == 2                 # only story 1's first two positions have a later move
+    assert batch["loss_mask"].sum() == 3                 # only story 1 has a known outcome
+
+    # Changing the unknown story's loss logits must not change the loss-head term.
+    _, risk = masked_losses(next_logits, loss_logits, batch)
+    tweaked = loss_logits.clone()
+    tweaked[1] += 100.0
+    _, risk_tweaked = masked_losses(next_logits, tweaked, batch)
+    assert torch.isclose(risk, risk_tweaked)
+
+    # A batch with no known outcomes contributes zero loss-head loss.
+    unknown = encode_stories([stories[1]], VOCAB)
+    with torch.no_grad():
+        _, risk_unknown = masked_losses(*model(unknown["steps"], unknown["types"]), unknown)
+    assert risk_unknown.item() == 0.0
+
+
+def test_gru_output_at_position_t_equals_prefix_prediction():
+    torch = pytest.importorskip("torch")
+    from analysis.model.gru import GRUConfig, ScamGRU, encode_stories, predict_examples
+
+    torch.manual_seed(0)
+    s = story("1", ["initial_contact", "platform_switch", "trust_building"], lost=0)
+    model = ScamGRU(len(VOCAB.steps), len(VOCAB.scam_types), len(VOCAB.targets), GRUConfig()).eval()
+    batch = encode_stories([s], VOCAB)
+    with torch.no_grad():
+        full = torch.softmax(model(batch["steps"], batch["types"])[0][0], dim=-1).numpy()
+    per_prefix, _ = predict_examples(model, prefix_examples([s]), VOCAB)
+    np.testing.assert_allclose(per_prefix, full, atol=1e-6)
+
+
+def test_predict_returns_valid_probabilities():
+    from analysis.model.predict import predict
+    result = predict(["initial_contact", "platform_switch", "money_lost"], "pig_butchering")
+    probs = result["next_step_probs"]
+    assert set(probs) == set(VOCAB.targets)
+    assert "END" not in probs and not (REACTION_STEPS | OUTCOME_STEPS) & set(probs)
+    assert math.isclose(sum(probs.values()), 1.0, rel_tol=1e-5)
+    assert all(0.0 <= p <= 1.0 for p in probs.values())
+    assert result["top_next"] == max(probs, key=probs.get)
+    assert 0.0 <= result["p_loss"] <= 1.0
+    assert predict(["initial_contact"], "not_a_type")["p_loss"] >= 0.0      # falls back to "other"
+    reacted = predict(["initial_contact", "victim_suspicious"], "fake_job")["next_step_probs"]
+    assert set(reacted) == set(VOCAB.targets)
+    assert math.isclose(sum(reacted.values()), 1.0, rel_tol=1e-5)
+    with pytest.raises(ValueError):
+        predict(["money_lost"], "fake_job")
+
+
+def test_numpy_gru_matches_torch_on_random_prefixes():
+    torch = pytest.importorskip("torch")
+    import random
+
+    from analysis.model.data import Example
+    from analysis.model.gru import predict_examples
+    from analysis.model.numpy_gru import load_numpy_model
+    from analysis.model.predict import MODEL_PATH, load_model
+
+    if not MODEL_PATH.exists():
+        pytest.skip("gru.pt not trained yet (python -m analysis.model.train)")
+    torch_model, vocab = load_model(MODEL_PATH)
+    np_model = load_numpy_model()
+    assert np_model.vocab == vocab
+    rng = random.Random(0)
+    examples = [Example(str(i), scam_type, tuple(rng.choice(vocab.steps) for _ in range(rng.randint(1, 12))), None, None)
+                for i in range(50) for scam_type in vocab.scam_types]
+    torch_next, torch_loss = predict_examples(torch_model, examples, vocab)
+    worst = 0.0
+    for i, e in enumerate(examples):
+        np_next, np_loss = np_model.predict_prefix(e.prefix, e.scam_type)
+        worst = max(worst, np.abs(np_next - torch_next[i]).max(), abs(np_loss - torch_loss[i]))
+    assert worst < 1e-5
+
+
+def test_predict_works_without_torch(monkeypatch):
+    import builtins
+    import sys
+
+    real_import = builtins.__import__
+
+    def no_torch(name, *args, **kwargs):
+        if name == "torch" or name.startswith("torch."):
+            raise ImportError("torch blocked for this test")
+        return real_import(name, *args, **kwargs)
+
+    for mod in [m for m in sys.modules if m == "torch" or m.startswith(("torch.", "analysis.model"))]:
+        monkeypatch.delitem(sys.modules, mod)
+    monkeypatch.setattr(builtins, "__import__", no_torch)
+
+    from analysis.model.predict import predict
+
+    assert "torch" not in sys.modules
+    for scam_type in VOCAB.scam_types:
+        result = predict(["initial_contact", "trust_building"], scam_type)
+        probs = result["next_step_probs"]
+        assert set(probs) == set(VOCAB.targets)
+        assert math.isclose(sum(probs.values()), 1.0, rel_tol=1e-9)
+        assert all(0.0 <= p <= 1.0 for p in probs.values())
+        assert 0.0 <= result["p_loss"] <= 1.0
+    with pytest.raises(ValueError):
+        predict(["money_lost"], "fake_job")
+
+
+# --- learning curve -----------------------------------------------------------------------
+
+def test_learning_curve_subsamples_by_story_without_leaking_into_test():
+    pytest.importorskip("torch")
+    from analysis.model.learning_curve import FRACTIONS, subsample_by_story
+
+    stories, _ = load_dataset()
+    train, test = kfold_by_story(stories, k=5, seed=0)[0]
+    test_ids = {s.id for s in test}
+    previous: set[str] = set()
+    for fraction in FRACTIONS:
+        subset = subsample_by_story(train, fraction, seed=0)
+        ids = {s.id for s in subset}
+        assert len(ids) == len(subset)                              # whole stories, no duplicates
+        assert ids <= {s.id for s in train} and not ids & test_ids  # never a test story
+        assert previous <= ids                                      # nested: more data adds stories
+        assert {s.scam_type for s in subset} == {s.scam_type for s in train}   # every type kept
+        assert abs(len(subset) - fraction * len(train)) <= 6        # ~fraction of stories (rounding per type)
+        assert ids == {s.id for s in subsample_by_story(train, fraction, seed=0)}   # deterministic
+        previous = ids
+    assert previous == {s.id for s in train}                        # 100% is the full training set

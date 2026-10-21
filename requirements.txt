@@ -1,0 +1,6 @@
+# Python dependencies for the Vercel deployment (api/index.py).
+# Local development uses app/, pipeline/ and analysis/requirements.txt instead.
+fastapi==0.156.4
+jsonschema==4.26.0
+typesafe-sdk==0.7.5
+numpy==2.5.4
