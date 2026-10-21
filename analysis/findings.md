@@ -137,6 +137,22 @@ Read these with care. 395 of 487 stories start with `initial_contact`, so the fi
 - **The loss head is partly circular.** Payment steps are inputs, and you can't lose money without paying (§1: 92% of stories with a payment lost money). `victim_suspicious` is the same kind of near-outcome signal. A high AUC here does not mean the model foresees losses before the victim commits.
 - **"No later move" is partly an artefact of storytelling.** Many posts stop when the victim gets suspicious, so the scripts we see are cut short, and late moves are under-represented.
 
+### Does more data help?
+
+Learning curve (`python -m analysis.model.learning_curve`, about 10 s, writes `learning_curve.json`): in each of the same 5 folds, every model is retrained on 25%, 50%, 75% and 100% of that fold's training stories (subsampled by story, stratified by scam type, seeded and nested) and always scored on the full test fold. Mean ± std over folds:
+
+| Training stories | Markov (last step + type) top-1 | GRU top-1 | Markov log loss | GRU log loss | Logistic loss AUC | GRU loss AUC | Logistic Brier | GRU Brier |
+|---|---|---|---|---|---|---|---|---|
+| 97 (25%) | 0.316 ± 0.019 | 0.340 ± 0.039 | 2.018 ± 0.210 | 2.025 ± 0.065 | 0.824 ± 0.056 | 0.802 ± 0.036 | 0.176 ± 0.022 | 0.176 ± 0.033 |
+| 194 (50%) | 0.352 ± 0.015 | 0.339 ± 0.044 | 1.848 ± 0.087 | 1.917 ± 0.064 | 0.826 ± 0.051 | 0.824 ± 0.030 | 0.162 ± 0.025 | 0.160 ± 0.021 |
+| 292 (75%) | 0.343 ± 0.023 | 0.370 ± 0.064 | 1.801 ± 0.094 | 1.865 ± 0.124 | 0.849 ± 0.053 | 0.839 ± 0.047 | 0.153 ± 0.027 | 0.157 ± 0.023 |
+| 390 (100%) | 0.344 ± 0.029 | 0.359 ± 0.034 | 1.770 ± 0.092 | 1.779 ± 0.079 | 0.848 ± 0.044 | 0.839 ± 0.055 | 0.156 ± 0.021 | 0.153 ± 0.031 |
+
+- **Next-move top-1 has flattened.** Both models sit around 0.34–0.37 from 50% of the data on; the ups and downs are smaller than the fold std. **Next-move log loss is still falling at 100%** for both (Markov 2.02 → 1.77, GRU 2.03 → 1.78), so more stories would make the probabilities better calibrated even if the top pick rarely changes.
+- **Loss risk is close to a plateau.** Logistic AUC stops improving after 75% (0.849 → 0.848); the GRU's AUC rises from 0.80 to 0.84 and is flat over the last step. Brier still creeps down slightly.
+- **The GRU's gap to the baseline does not change in a consistent way with more data.** Paired per fold, GRU minus Markov top-1 is +0.024, −0.013, +0.027, +0.015 at 25/50/75/100% (std 0.03–0.05), and GRU minus logistic AUC is −0.023, −0.002, −0.010, −0.009. The GRU's log loss does catch up with Markov at 100% (gap +0.06 at 50–75%, +0.01 at 100%), which is the only hint that the network gains more from extra data than the count table, and it is within noise.
+- **Rough estimate, not a measurement:** a straight-line fit of each metric against ln(number of training stories) over these four points gives, at 2x and 5x today's data, next-move top-1 of about 0.36 / 0.38 (Markov) and 0.38 / 0.39 (GRU), next-move log loss of about 1.63 / 1.46 (Markov) and 1.68 / 1.52 (GRU), and loss AUC of about 0.86 / 0.88 (both). That is roughly +0.01–0.02 top-1 or AUC per doubling. Four noisy points, one dataset, and curves that usually flatten faster than a log fit assumes: treat these as an optimistic upper bound. More stories of the same kind would help a little; they would not by themselves make the GRU clearly better than the baselines.
+
 ### What more data would change
 
 - With thousands of stories, especially in the small types (pig_butchering 17, romance 26), the per-type and second-order contexts would stop being sparse. That is where a GRU could start to pull ahead of count tables, since it shares strength across similar contexts.

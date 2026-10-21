@@ -230,3 +230,26 @@ def test_predict_returns_valid_probabilities():
     assert math.isclose(sum(reacted.values()), 1.0, rel_tol=1e-5)
     with pytest.raises(ValueError):
         predict(["money_lost"], "fake_job")
+
+
+# --- learning curve -----------------------------------------------------------------------
+
+def test_learning_curve_subsamples_by_story_without_leaking_into_test():
+    pytest.importorskip("torch")
+    from analysis.model.learning_curve import FRACTIONS, subsample_by_story
+
+    stories, _ = load_dataset()
+    train, test = kfold_by_story(stories, k=5, seed=0)[0]
+    test_ids = {s.id for s in test}
+    previous: set[str] = set()
+    for fraction in FRACTIONS:
+        subset = subsample_by_story(train, fraction, seed=0)
+        ids = {s.id for s in subset}
+        assert len(ids) == len(subset)                              # whole stories, no duplicates
+        assert ids <= {s.id for s in train} and not ids & test_ids  # never a test story
+        assert previous <= ids                                      # nested: more data adds stories
+        assert {s.scam_type for s in subset} == {s.scam_type for s in train}   # every type kept
+        assert abs(len(subset) - fraction * len(train)) <= 6        # ~fraction of stories (rounding per type)
+        assert ids == {s.id for s in subsample_by_story(train, fraction, seed=0)}   # deterministic
+        previous = ids
+    assert previous == {s.id for s in train}                        # 100% is the full training set

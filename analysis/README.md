@@ -109,6 +109,7 @@ predict(["initial_contact", "platform_switch"], "pig_butchering")
 | `metrics.py` | Top-k accuracy, top-1 among moves not already seen, log loss, ROC AUC, Brier score and calibration bins, in numpy. |
 | `train.py` | Runs the CV, prints the table, and writes `results.json`. Then trains on all stories and writes `gru.pt` and `model_card.json`. |
 | `predict.py` | `predict(steps, scam_type)` using the saved `gru.pt`. |
+| `learning_curve.py` | Retrains every model on 25/50/75/100% of each fold's training stories and writes `learning_curve.json` (about 10 s). |
 | `results.json`, `gru.pt`, `model_card.json` | Committed outputs (the model is about 28 KB), so the app can load it without retraining. |
 
 Definitions:
