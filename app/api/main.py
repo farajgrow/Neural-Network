@@ -369,9 +369,9 @@ def _model_prediction(steps: list[str], scam_type: str) -> dict | None:
         log.warning("model: prediction failed: %s", type(exc).__name__)
         return None
     # Show the scammer's likely next move: drop reactions, outcomes and END, then rescale.
-    # The current step is left out too: repeats were collapsed in the training data.
-    current = steps[-1] if steps else None
-    moves = {s: p for s, p in out["next_step_probs"].items() if s not in _NOT_A_MOVE and s != current}
+    # Steps the message already shows are left out too, as the matcher does.
+    seen = set(steps)
+    moves = {s: p for s, p in out["next_step_probs"].items() if s not in _NOT_A_MOVE and s not in seen}
     total = sum(moves.values())
     if total <= 0:
         return None
