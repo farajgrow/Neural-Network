@@ -23,7 +23,7 @@ interface Props {
 export function ClusterPicker({ clusters, value, onChange, disabled }: Props) {
   const a = clusters.agreement
   const agree = a
-    ? `Sequence clusters vs. the LLM's scam_type labels: purity ${pct(a.purity)}, ARI ${a.adjusted_rand.toFixed(2)} (0 ≈ chance, 1 = identical).`
+    ? `Sequence clusters vs. the scam-type labels: purity ${pct(a.purity)}, ARI ${a.adjusted_rand.toFixed(2)} (0 ≈ chance, 1 = identical).`
     : undefined
   const hint = disabled ? 'Clear the matched message to pick a variant' : agree
   // The hint must not sit on top of the open dropdown.
