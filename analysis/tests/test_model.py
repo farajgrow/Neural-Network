@@ -211,11 +211,7 @@ def test_gru_output_at_position_t_equals_prefix_prediction():
 
 
 def test_predict_returns_valid_probabilities():
-    pytest.importorskip("torch")
-    from analysis.model.predict import MODEL_PATH, predict
-
-    if not MODEL_PATH.exists():
-        pytest.skip("gru.pt not trained yet (python -m analysis.model.train)")
+    from analysis.model.predict import predict
     result = predict(["initial_contact", "platform_switch", "money_lost"], "pig_butchering")
     probs = result["next_step_probs"]
     assert set(probs) == set(VOCAB.targets)
@@ -228,6 +224,60 @@ def test_predict_returns_valid_probabilities():
     reacted = predict(["initial_contact", "victim_suspicious"], "fake_job")["next_step_probs"]
     assert set(reacted) == set(VOCAB.targets)
     assert math.isclose(sum(reacted.values()), 1.0, rel_tol=1e-5)
+    with pytest.raises(ValueError):
+        predict(["money_lost"], "fake_job")
+
+
+def test_numpy_gru_matches_torch_on_random_prefixes():
+    torch = pytest.importorskip("torch")
+    import random
+
+    from analysis.model.data import Example
+    from analysis.model.gru import predict_examples
+    from analysis.model.numpy_gru import load_numpy_model
+    from analysis.model.predict import MODEL_PATH, load_model
+
+    if not MODEL_PATH.exists():
+        pytest.skip("gru.pt not trained yet (python -m analysis.model.train)")
+    torch_model, vocab = load_model(MODEL_PATH)
+    np_model = load_numpy_model()
+    assert np_model.vocab == vocab
+    rng = random.Random(0)
+    examples = [Example(str(i), scam_type, tuple(rng.choice(vocab.steps) for _ in range(rng.randint(1, 12))), None, None)
+                for i in range(50) for scam_type in vocab.scam_types]
+    torch_next, torch_loss = predict_examples(torch_model, examples, vocab)
+    worst = 0.0
+    for i, e in enumerate(examples):
+        np_next, np_loss = np_model.predict_prefix(e.prefix, e.scam_type)
+        worst = max(worst, np.abs(np_next - torch_next[i]).max(), abs(np_loss - torch_loss[i]))
+    assert worst < 1e-5
+
+
+def test_predict_works_without_torch(monkeypatch):
+    import builtins
+    import sys
+
+    real_import = builtins.__import__
+
+    def no_torch(name, *args, **kwargs):
+        if name == "torch" or name.startswith("torch."):
+            raise ImportError("torch blocked for this test")
+        return real_import(name, *args, **kwargs)
+
+    for mod in [m for m in sys.modules if m == "torch" or m.startswith(("torch.", "analysis.model"))]:
+        monkeypatch.delitem(sys.modules, mod)
+    monkeypatch.setattr(builtins, "__import__", no_torch)
+
+    from analysis.model.predict import predict
+
+    assert "torch" not in sys.modules
+    for scam_type in VOCAB.scam_types:
+        result = predict(["initial_contact", "trust_building"], scam_type)
+        probs = result["next_step_probs"]
+        assert set(probs) == set(VOCAB.targets)
+        assert math.isclose(sum(probs.values()), 1.0, rel_tol=1e-9)
+        assert all(0.0 <= p <= 1.0 for p in probs.values())
+        assert 0.0 <= result["p_loss"] <= 1.0
     with pytest.raises(ValueError):
         predict(["money_lost"], "fake_job")
 

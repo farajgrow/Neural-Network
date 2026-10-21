@@ -2,7 +2,8 @@
 
 Usage (from the repo root):  python -m analysis.model.train
 
-Writes analysis/model/results.json, analysis/model/gru.pt and analysis/model/model_card.json.
+Writes analysis/model/results.json, analysis/model/gru.pt, analysis/model/gru_weights.npz
+and analysis/model/model_card.json.
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ import torch
 from analysis.model.baselines import BaseRateLoss, LogisticLoss, MarkovNext, MostFrequentNext
 from analysis.model.data import (Example, Story, Vocab, holdout_by_story, kfold_by_story, load_dataset,
                                  loss_examples, next_step_examples, prefix_examples)
+from analysis.model.export_weights import export as export_weights
 from analysis.model.gru import GRUConfig, predict_examples, train_gru
 from analysis.model.metrics import (binary_log_loss, calibration_table, loss_metrics, multiclass_log_loss,
                                     next_step_metrics)
@@ -205,9 +207,11 @@ def train_final(stories: list[Story], vocab: Vocab, config: GRUConfig, cv_summar
     """Train on every story (15% held out for early stopping) and save weights + model card."""
     fit_part, val_part = holdout_by_story(stories, seed=config.seed)
     model, log = train_gru(fit_part, val_part, vocab, config)
-    torch.save({"state_dict": model.state_dict(), "config": config.to_dict(),
-                "steps": list(vocab.steps), "scam_types": list(vocab.scam_types),
-                "targets": list(vocab.targets)}, MODEL_PATH)
+    saved = {"state_dict": model.state_dict(), "config": config.to_dict(),
+             "steps": list(vocab.steps), "scam_types": list(vocab.scam_types),
+             "targets": list(vocab.targets)}
+    torch.save(saved, MODEL_PATH)
+    export_weights(saved)          # gru_weights.npz for numpy-only inference, always in sync
     card = {
         "name": MODEL_NAME,
         "version": MODEL_VERSION,
