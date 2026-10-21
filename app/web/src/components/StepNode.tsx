@@ -2,8 +2,11 @@ import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { CSSProperties } from 'react'
 import { knownPct, label, lower, pct, pts } from '../api'
 import { NODE_W, ZONE_H, type StepFlowNode, type StepNodeData } from './graphLayout'
+import { Badge } from '@/components/ui/badge'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { TAG } from '@/lib/retro'
 
-function tooltip(d: StepNodeData): string {
+function tooltip(d: StepNodeData): string[] {
   const lines = [`${label(d.step)}: ${d.count} ${d.count === 1 ? 'story' : 'stories'}, ${knownPct(d.loss_rate, d.n_known)} lost money`]
   if (d.pinch) {
     lines.push(
@@ -11,7 +14,7 @@ function tooltip(d: StepNodeData): string {
     )
   }
   if (d.escape) lines.push(`Escape point: ${d.escape.exit_count} got out right after this step`)
-  return lines.join('\n')
+  return lines
 }
 
 const OUTCOME_NAME: Record<string, string> = { money_lost: 'MONEY LOST', victim_exits: 'GOT OUT' }
@@ -34,16 +37,25 @@ export function StepNode({ data: d }: NodeProps<StepFlowNode>) {
   const next = d.state === 'next'
 
   return (
-    <div className={cls} style={style} title={tooltip(d)}>
+    <div className={cls} style={style}>
       <div className="node__badges">
-        {d.pinch && <span className="tag tag--orange">▲ {pts(d.pinch.jump)}{next && ' · next?'}</span>}
-        {next && !d.pinch && <span className="tag tag--orange">next?</span>}
-        {d.escape && <span className="tag tag--blue">↗ {d.escape.exit_count} out</span>}
+        {d.pinch && <Badge variant="destructive" className={TAG}>▲ {pts(d.pinch.jump)}{next && ' · next?'}</Badge>}
+        {next && !d.pinch && <Badge variant="destructive" className={TAG}>next?</Badge>}
+        {d.escape && <Badge className={`${TAG} bg-escape text-primary-foreground`}>↗ {d.escape.exit_count} out</Badge>}
       </div>
-      <div className="node__box">
-        {d.count}
-        {d.seqIndex != null && d.seqIndex > 0 && <span className="node__seq">{d.seqIndex}</span>}
-      </div>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="node__box">
+            {d.count}
+            {d.seqIndex != null && d.seqIndex > 0 && <span className="node__seq">{d.seqIndex}</span>}
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="top" sideOffset={8} className="flex-col items-start gap-0 font-normal">
+          {tooltip(d).map((line) => (
+            <span key={line}>{line}</span>
+          ))}
+        </TooltipContent>
+      </Tooltip>
       <div className="node__label">
         <div className="node__name">{d.isOutcome ? OUTCOME_NAME[d.step] : lower(d.step)}</div>
         {!d.isOutcome && <div className="node__meta">{d.loss_rate == null ? 'unknown' : `${pct(d.loss_rate)} lost`}</div>}

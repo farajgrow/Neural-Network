@@ -1,3 +1,7 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* Our palette. Everything below (and the shadcn tokens) reads from these. */
 :root {
   --ground: #FFFBF3;
   --ink: #141414;
@@ -15,20 +19,83 @@
   --font: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   color-scheme: light;
   font-family: var(--font);
-  font-size: 13px;
-  line-height: 1.5;
+  /* Root stays 16px so Tailwind's rem utilities keep their usual sizes; the 13px base is on body. */
   color: var(--ink);
   background: var(--ground);
 }
 
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--ground); }
-h1, h2, h3 { margin: 0; }
-p { margin: 0; }
-button, select, textarea, input { font: inherit; color: inherit; border-radius: 0; }
-button { cursor: pointer; }
-button:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-code { font-family: var(--font); }
+/*
+ * shadcn / neobrutalism tokens mapped onto the palette above, so the ui/
+ * components come out cream-and-ink rather than neobrutalism's bright default.
+ */
+@theme inline {
+  --color-background: var(--ground);
+  --color-foreground: var(--ink);
+  --color-primary: var(--ink);
+  --color-primary-foreground: var(--ground);
+  --color-primary-hover: var(--ink);
+  --color-secondary: var(--node);
+  --color-secondary-foreground: var(--ink);
+  --color-secondary-hover: var(--node-unknown);
+  --color-muted: var(--node-unknown);
+  --color-muted-foreground: var(--muted);
+  --color-accent: var(--node);
+  --color-accent-foreground: var(--ink);
+  --color-destructive: var(--orange);
+  --color-destructive-foreground: var(--ground);
+  --color-main: var(--orange);
+  --color-main-foreground: var(--ground);
+  --color-escape: var(--blue);
+  --color-card: var(--ground);
+  --color-card-foreground: var(--ink);
+  --color-popover: var(--ground);
+  --color-popover-foreground: var(--ink);
+  --color-input: var(--ground);
+  --color-paper: var(--paper);
+  --color-border: var(--ink);
+  --color-ring: var(--ink);
+  --color-rule: var(--rule);
+  --color-orange-text: var(--orange-text);
+  --color-orange-tint: var(--orange-tint);
+
+  --font-sans: var(--font);
+  --font-mono: var(--font);
+  --font-head: var(--font);
+  --font-base: var(--font);
+
+  /* No rounding anywhere. */
+  --radius: 0px;
+  --radius-xs: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+
+  /* Hard offset shadows. */
+  --shadow-xs: 1px 1px 0 var(--ink);
+  --shadow-sm: 2px 2px 0 var(--ink);
+  --shadow-md: 4px 4px 0 var(--ink);
+  --shadow-lg: 6px 6px 0 var(--ink);
+  --shadow-xl: 8px 8px 0 var(--ink);
+}
+
+/*
+ * Element resets live in the base layer so Tailwind utilities on the ui/
+ * components can override them; component classes below stay unlayered and
+ * win over preflight.
+ */
+@layer base {
+  *, ::before, ::after { border-color: var(--ink); }
+  body { margin: 0; background: var(--ground); font-size: 13px; line-height: 1.5; }
+  h1, h2, h3 { margin: 0; font-weight: 700; }
+  p { margin: 0; }
+  button, select, textarea, input { font: inherit; color: inherit; border-radius: 0; }
+  button { cursor: pointer; }
+  button:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  code { font-family: var(--font); }
+  ol { list-style: decimal; }
+}
 
 .muted { color: var(--muted); }
 .small { font-size: 12px; }
@@ -52,12 +119,6 @@ code { font-family: var(--font); }
 .brand__sub { font-weight: 400; color: var(--muted); letter-spacing: 0; }
 
 .tabs { display: flex; flex-wrap: wrap; }
-.tab {
-  min-height: 44px; display: flex; align-items: center; padding: 0 11px;
-  border: 0; background: transparent; font-size: 12px; white-space: nowrap;
-}
-.tab:hover { background: var(--node); }
-.tab.active { background: var(--ink); color: var(--ground); }
 
 .banner { padding: 10px 24px; border-bottom: 2px solid var(--orange); color: var(--orange-text); }
 
@@ -93,14 +154,9 @@ code { font-family: var(--font); }
 .graph-body { padding: 14px 18px 12px; }
 .graph-toolbar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; min-height: 32px; }
 .variant { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; }
-.variant select {
-  min-height: 32px; min-width: 0; width: 320px; max-width: 100%; border: 2px solid var(--ink); background: var(--ground);
-  font-size: 12px; font-weight: 500; padding: 0 8px;
-}
-.variant select:disabled { opacity: 0.5; cursor: not-allowed; }
 .graph-status { text-align: right; }
 
-.link-btn { border: 0; background: none; padding: 0 0 0 8px; font-weight: 700; color: var(--ink); }
+.link-btn { border: 0; background: none; padding: 0; font-weight: 700; color: var(--ink); }
 .link-btn:hover { color: var(--orange); }
 .link-btn--inline { padding: 0; font-weight: 400; text-decoration: underline; text-underline-offset: 2px; }
 
@@ -112,8 +168,6 @@ code { font-family: var(--font); }
   display: flex; flex-wrap: wrap; gap: 6px 20px; align-items: center;
   padding-top: 10px; border-top: 1px solid var(--ink); font-size: 11px; color: var(--muted);
 }
-.legend__toggle { border: 0; background: none; padding: 0; font-size: 11px; color: var(--ink); margin-left: auto; }
-.legend__toggle:hover { color: var(--orange); }
 
 /* React Flow, made quiet. */
 .react-flow { --xy-background-color: transparent; --xy-edge-stroke-default: var(--edge); background: transparent; }
@@ -128,9 +182,6 @@ code { font-family: var(--font); }
   height: 40px; display: flex; flex-wrap: wrap; gap: 3px; justify-content: center;
   align-items: flex-end; align-content: flex-end; padding-bottom: 7px;
 }
-.tag { padding: 1px 6px; font-size: 10px; font-weight: 700; white-space: nowrap; color: var(--ground); line-height: 1.5; }
-.tag--orange { background: var(--orange); }
-.tag--blue { background: var(--blue); }
 
 .node__box {
   position: relative; width: var(--s); height: var(--s);
@@ -195,8 +246,6 @@ code { font-family: var(--font); }
 .story__id { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .story__type { font-size: 11px; color: var(--muted); margin-top: -4px; }
 .story p { font-size: 12px; line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
-.btn-ghost { align-self: flex-start; border: 0; background: none; padding: 0; font-weight: 700; }
-.btn-ghost:hover { color: var(--orange); }
 
 /* ---- Matcher ----------------------------------------------------------- */
 
@@ -205,17 +254,9 @@ code { font-family: var(--font); }
   padding: 10px; font-size: 12px; line-height: 1.55; min-height: 96px;
 }
 .matcher textarea::placeholder { color: var(--rule); }
-.btn-primary {
-  min-height: 44px; border: 2px solid var(--ink); background: var(--ink); color: var(--ground);
-  font-weight: 700; font-size: 13px; box-shadow: 3px 3px 0 var(--rule); transition: transform .08s, box-shadow .08s;
-}
-.btn-primary:hover:not(:disabled) { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--rule); }
-.btn-primary:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--rule); }
-.btn-primary:disabled { cursor: not-allowed; opacity: 0.55; }
 
 .result { display: flex; flex-direction: column; gap: 10px; padding-top: 12px; border-top: 1px dashed var(--ink); }
 .result__meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11px; color: var(--muted); }
-.source-tag { font-size: 10px; color: var(--muted); border: 1px solid var(--rule); padding: 0 5px; line-height: 1.6; cursor: default; }
 .result__type { font-size: 22px; font-weight: 700; line-height: 1; }
 .result__steps { margin: 0; padding-left: 22px; font-size: 12px; line-height: 1.8; }
 .result__steps .is-next { color: var(--orange-text); font-weight: 700; }

@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react'
 import { knownPct, lower, money, pct, pts, type Graph, type Step, type StorySummary } from '../api'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { TAG } from '@/lib/retro'
 
 interface Props {
   graph: Graph | null
@@ -43,9 +47,9 @@ export function StoryStrip({ graph, step, onSelectStep, stories, loading, error 
       <h2 className="strip__title">
         &gt; cases that reached {lower(step)}{' '}
         <span className="muted">[{loading ? '…' : error ? '!' : stories.length}]</span>
-        <button className="link-btn" onClick={() => onSelectStep(null)} aria-label="Close stories">
+<Button variant="text" size="bare" className="ml-2" onClick={() => onSelectStep(null)} aria-label="Close stories">
           [×]
-        </button>
+        </Button>
       </h2>
       <div className="strip__facts small">
         {node && (
@@ -79,8 +83,15 @@ export function StoryStrip({ graph, step, onSelectStep, stories, loading, error 
       {loading && (
         <div className="strip__grid">
           {[0, 1, 2].map((i) => (
-            <article key={i} className="story story--skeleton">
-              <span className="muted blink">loading…</span>
+            <article key={i} className="story story--skeleton" aria-busy>
+              <div className="story__head">
+                <Skeleton className="h-3 w-2/5 border-0" />
+                <Skeleton className="h-3 w-1/5 border-0" />
+              </div>
+              <Skeleton className="h-2.5 w-full border-0" />
+              <Skeleton className="h-2.5 w-11/12 border-0" />
+              <Skeleton className="h-2.5 w-4/5 border-0" />
+              <Skeleton className="h-2.5 w-3/5 border-0" />
             </article>
           ))}
         </div>
@@ -101,9 +112,9 @@ export function StoryStrip({ graph, step, onSelectStep, stories, loading, error 
         </div>
       )}
       {!loading && stories.length > limit && (
-        <button className="btn-ghost" onClick={() => setLimit((l) => l + PAGE * 2)}>
+        <Button variant="text" size="bare" className="self-start" onClick={() => setLimit((l) => l + PAGE * 2)}>
           [ show more · {stories.length - limit} left ]
-        </button>
+        </Button>
       )}
     </section>
   )
@@ -112,8 +123,12 @@ export function StoryStrip({ graph, step, onSelectStep, stories, loading, error 
 function Outcome({ story: s }: { story: StorySummary }) {
   if (s.outcome === 'lost_money') {
     const m = money(s.amount_lost_usd)
-    return <span className="c-orange-text">{m ? `−${m}` : 'lost money'}</span>
+    return <Badge variant="destructive" className={TAG}>{m ? `−${m}` : 'lost money'}</Badge>
   }
-  if (s.outcome === 'escaped') return <span className="c-blue">got out</span>
-  return <span className="muted">unknown</span>
+  if (s.outcome === 'escaped') return <Badge className={`${TAG} bg-escape text-primary-foreground`}>got out</Badge>
+  return (
+    <Badge variant="outline" className={`${TAG} border border-rule py-0 font-normal text-muted-foreground`}>
+      unknown
+    </Badge>
+  )
 }

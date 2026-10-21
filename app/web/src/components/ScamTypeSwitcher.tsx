@@ -1,4 +1,5 @@
 import { label, pct, type GraphKey, type ScamTypeSummary } from '../api'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 interface Props {
   types: ScamTypeSummary[]
@@ -16,18 +17,20 @@ export function ScamTypeSwitcher({ types, allLossRate, value, onChange }: Props)
     { key: 'all', n: total, loss: allLossRate },
   ]
   return (
-    <nav className="tabs" aria-label="Scam type">
-      {options.map((o) => (
-        <button
-          key={o.key}
-          className={o.key === value ? 'tab active' : 'tab'}
-          aria-pressed={o.key === value}
-          onClick={() => onChange(o.key)}
-          title={`${o.n} stories · ${pct(o.loss)} lost money`}
-        >
-          {o.key === 'all' ? 'All types' : label(o.key)} · {pct(o.loss)}
-        </button>
-      ))}
-    </nav>
+    // Manual activation: arrow keys move focus, Enter/Space switches (each switch refetches the graph).
+    <Tabs value={value} onValueChange={(v) => onChange(v as GraphKey)} activationMode="manual" className="min-w-0 flex-row gap-0">
+      <TabsList aria-label="Scam type" className="tabs h-auto! w-auto justify-start rounded-none border-0 bg-transparent p-0 shadow-none">
+        {options.map((o) => (
+          <TabsTrigger
+            key={o.key}
+            value={o.key}
+            title={`${o.n} stories · ${pct(o.loss)} lost money`}
+            className="h-11 flex-none rounded-none border-0! px-[11px] py-0 text-xs font-normal text-foreground shadow-none! transition-none hover:bg-secondary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
+            {o.key === 'all' ? 'All types' : label(o.key)} · {pct(o.loss)}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+    </Tabs>
   )
 }

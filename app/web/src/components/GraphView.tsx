@@ -15,6 +15,7 @@ import { decorate, layoutGraph, type Highlight, type Layout } from './graphLayou
 import { Legend } from './Legend'
 import { StepNode } from './StepNode'
 import { Window } from './Window'
+import { Button } from '@/components/ui/button'
 
 const nodeTypes: NodeTypes = { step: StepNode }
 const edgeTypes: EdgeTypes = { flow: FlowEdge }
@@ -81,9 +82,9 @@ export function GraphView(props: Props) {
                     <b className="c-orange-text">{lower(match.likely_next_step)}</b>
                   </>
                 )}
-                <button className="link-btn" onClick={props.onClearMatch} aria-label="Clear match highlight">
+                <Button variant="text" size="bare" className="ml-2" onClick={props.onClearMatch} aria-label="Clear match highlight">
                   [×]
-                </button>
+                </Button>
               </>
             )}
             {!props.loading && !match && props.graph && (
