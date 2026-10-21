@@ -16,11 +16,14 @@ import numpy as np
 import torch
 
 from analysis.model.baselines import BaseRateLoss, LogisticLoss, MarkovNext, MostFrequentNext
-from analysis.model.data import Example, Story, Vocab, holdout_by_story, kfold_by_story, load_dataset, prefix_examples
+from analysis.model.data import (Example, Story, Vocab, holdout_by_story, kfold_by_story, load_dataset,
+                                 loss_examples, next_step_examples, prefix_examples)
 from analysis.model.gru import GRUConfig, predict_examples, train_gru
 from analysis.model.metrics import (binary_log_loss, calibration_table, loss_metrics, multiclass_log_loss,
                                     next_step_metrics)
 
+MODEL_NAME = "gru-v2"
+MODEL_VERSION = 2
 MODEL_DIR = Path(__file__).resolve().parent
 RESULTS_PATH = MODEL_DIR / "results.json"
 MODEL_PATH = MODEL_DIR / "gru.pt"
@@ -41,10 +44,19 @@ def early_examples(stories: list[Story], k: int) -> list[Example]:
     return [Example(s.id, s.scam_type, s.script[:k], "", s.lost) for s in stories if s.lost is not None]
 
 
-def pick_by_validation(make, grid, fit_part: list[Story], val_part: list[Story], score) -> float:
-    """Return the grid value whose model, fitted on fit_part, scores lowest on val_part."""
-    fit_ex, val_ex = prefix_examples(fit_part), prefix_examples(val_part)
+def pick_by_validation(make, grid, fit_ex: list[Example], val_ex: list[Example], score) -> float:
+    """Return the grid value whose model, fitted on fit_ex, scores lowest on val_ex."""
     return min(grid, key=lambda value: score(make(value).fit(fit_ex), val_ex))
+
+
+def seen_mask(examples: list[Example], vocab: Vocab) -> np.ndarray:
+    """(n, n_targets) boolean: which moves already appear in each prefix."""
+    seen = np.zeros((len(examples), len(vocab.targets)), dtype=bool)
+    for i, e in enumerate(examples):
+        for step in e.prefix:
+            if step in vocab.targets:
+                seen[i, vocab.target_id(step)] = True
+    return seen
 
 
 def fit_models(train: list[Story], vocab: Vocab, config: GRUConfig) -> tuple[dict, dict, dict]:
@@ -54,7 +66,7 @@ def fit_models(train: list[Story], vocab: Vocab, config: GRUConfig) -> tuple[dic
     early stopping, so the baselines get the same split to choose their one knob
     (Markov backoff strength, logistic L2). The test fold is never looked at.
     """
-    examples = prefix_examples(train)
+    next_ex, loss_ex = next_step_examples(train), loss_examples(train)
     fit_part, val_part = holdout_by_story(train, seed=config.seed)
 
     def next_log_loss(model, val_ex):
@@ -62,57 +74,65 @@ def fit_models(train: list[Story], vocab: Vocab, config: GRUConfig) -> tuple[dic
         return multiclass_log_loss(model.predict_proba(val_ex), targets)
 
     def risk_log_loss(model, val_ex):
-        known = [e for e in val_ex if e.lost is not None]
-        return binary_log_loss(model.predict(known), np.array([e.lost for e in known], dtype=float))
+        return binary_log_loss(model.predict(val_ex), np.array([e.lost for e in val_ex], dtype=float))
 
-    next_models = {"most_frequent": MostFrequentNext(vocab).fit(examples)}
+    next_models = {"most_frequent": MostFrequentNext(vocab).fit(next_ex)}
     for name, order, by_type in MARKOV_VARIANTS:
         def make(b, order=order, by_type=by_type):
             return MarkovNext(vocab, order=order, by_type=by_type, backoff=b)
-        backoff = pick_by_validation(make, BACKOFF_GRID, fit_part, val_part, next_log_loss)
-        next_models[name] = make(backoff).fit(examples)
+        backoff = pick_by_validation(make, BACKOFF_GRID, next_step_examples(fit_part), next_step_examples(val_part),
+                                     next_log_loss)
+        next_models[name] = make(backoff).fit(next_ex)
 
-    l2 = pick_by_validation(lambda c: LogisticLoss(vocab, l2=c), L2_GRID, fit_part, val_part, risk_log_loss)
-    loss_models = {"base_rate": BaseRateLoss().fit(examples), "logistic": LogisticLoss(vocab, l2=l2).fit(examples)}
+    l2 = pick_by_validation(lambda c: LogisticLoss(vocab, l2=c), L2_GRID, loss_examples(fit_part),
+                            loss_examples(val_part), risk_log_loss)
+    loss_models = {"base_rate": BaseRateLoss().fit(loss_ex), "logistic": LogisticLoss(vocab, l2=l2).fit(loss_ex)}
 
     gru, log = train_gru(fit_part, val_part, vocab, config)
     chosen = {name: m.backoff for name, m in next_models.items() if isinstance(m, MarkovNext)} | {"logistic_l2": l2}
     return next_models, loss_models, {"model": gru, "log": log, "baseline_choices": chosen}
 
 
-def predict_all(next_models, loss_models, gru, examples, vocab) -> tuple[dict, dict]:
-    """Next-step probabilities and loss probabilities from every model, keyed by name."""
-    gru_next, gru_loss = predict_examples(gru, examples, vocab)
-    next_probs = {name: m.predict_proba(examples) for name, m in next_models.items()} | {"gru": gru_next}
-    loss_probs = {name: m.predict(examples) for name, m in loss_models.items()} | {"gru": gru_loss}
-    return next_probs, loss_probs
+def predict_next(next_models, gru, examples, vocab) -> dict:
+    """Next-move probabilities from every model, keyed by name."""
+    gru_next, _ = predict_examples(gru, examples, vocab)
+    return {name: m.predict_proba(examples) for name, m in next_models.items()} | {"gru": gru_next}
+
+
+def predict_loss(loss_models, gru, examples, vocab) -> dict:
+    """Loss probabilities from every model, keyed by name."""
+    _, gru_loss = predict_examples(gru, examples, vocab)
+    return {name: m.predict(examples) for name, m in loss_models.items()} | {"gru": gru_loss}
 
 
 def evaluate_fold(train: list[Story], test: list[Story], vocab: Vocab, config: GRUConfig) -> tuple[dict, dict]:
     """Metrics for one fold, plus the raw loss predictions (for pooled calibration)."""
     next_models, loss_models, gru = fit_models(train, vocab, config)
-    examples = prefix_examples(test)
-    targets = np.array([vocab.target_id(e.next_step) for e in examples])
-    lengths = np.array([len(e.prefix) for e in examples])
-    next_probs, loss_probs = predict_all(next_models, loss_models, gru["model"], examples, vocab)
+    next_ex, loss_ex = next_step_examples(test), loss_examples(test)
+    targets = np.array([vocab.target_id(e.next_step) for e in next_ex])
+    lengths = np.array([len(e.prefix) for e in next_ex])
+    seen = seen_mask(next_ex, vocab)
+    next_probs = predict_next(next_models, gru["model"], next_ex, vocab)
+    loss_probs = predict_loss(loss_models, gru["model"], loss_ex, vocab)
 
-    known = np.array([e.lost is not None for e in examples])
-    y = np.array([e.lost for e in examples if e.lost is not None], dtype=float)
+    y = np.array([e.lost for e in loss_ex], dtype=float)
     fold = {
         "n_test_stories": len(test),
-        "n_test_prefixes": len(examples),
+        "n_test_prefixes": len(prefix_examples(test)),
+        "n_test_next_step_examples": len(next_ex),
+        "n_test_loss_examples": len(loss_ex),
         "gru_training": gru["log"],
         "baseline_choices": gru["baseline_choices"],
-        "next_step": {name: next_step_metrics(p, targets, lengths) for name, p in next_probs.items()},
-        "loss_all_prefixes": {name: loss_metrics(p[known], y) for name, p in loss_probs.items()},
+        "next_step": {name: next_step_metrics(p, targets, lengths, seen) for name, p in next_probs.items()},
+        "loss_all_prefixes": {name: loss_metrics(p, y) for name, p in loss_probs.items()},
         "early_warning": {},
     }
     for k in EARLY_STEPS:
         early = early_examples(test, k)
         y_early = np.array([e.lost for e in early], dtype=float)
-        _, early_probs = predict_all(next_models, loss_models, gru["model"], early, vocab)
+        early_probs = predict_loss(loss_models, gru["model"], early, vocab)
         fold["early_warning"][f"first_{k}"] = {name: loss_metrics(p, y_early) for name, p in early_probs.items()}
-    raw = {"y": y, **{name: p[known] for name, p in loss_probs.items()}}
+    raw = {"y": y, **loss_probs}
     return fold, raw
 
 
@@ -141,6 +161,8 @@ def aggregate(folds: list[dict]) -> dict:
     summary["paired_differences"] = {
         "next_top1_gru_minus_markov1_by_type": summarize(
             [f["next_step"]["gru"]["top1"] - f["next_step"]["markov1_by_type"]["top1"] for f in folds]),
+        "next_top1_unseen_gru_minus_markov1_by_type": summarize(
+            [f["next_step"]["gru"]["top1_unseen"] - f["next_step"]["markov1_by_type"]["top1_unseen"] for f in folds]),
         "next_log_loss_gru_minus_markov1_by_type": summarize(
             [f["next_step"]["gru"]["log_loss"] - f["next_step"]["markov1_by_type"]["log_loss"] for f in folds]),
         "loss_auc_gru_minus_logistic": summarize(
@@ -157,11 +179,12 @@ def fmt(stat: dict | None, digits: int = 3) -> str:
 
 def results_table(summary: dict) -> str:
     """Plain-text tables for the terminal (and to paste into findings.md)."""
-    lines = ["Next step (all prefixes of test stories, 14 classes incl. END)",
-             f"{'model':<17} {'top-1':>15} {'top-3':>15} {'log loss':>15} {'top-1 len1':>15} {'top-1 len4+':>15}"]
+    lines = ["Next scam move (test prefixes with a later move, 11 move classes, reactions skipped)",
+             f"{'model':<17} {'top-1':>15} {'top-1 unseen':>15} {'top-3':>15} {'log loss':>15} "
+             f"{'top-1 len1':>15} {'top-1 len4+':>15}"]
     for name, m in summary["next_step"].items():
-        lines.append(f"{name:<17} {fmt(m['top1']):>15} {fmt(m['top3']):>15} {fmt(m['log_loss']):>15} "
-                     f"{fmt(m['top1_len1']):>15} {fmt(m['top1_len4+']):>15}")
+        lines.append(f"{name:<17} {fmt(m['top1']):>15} {fmt(m['top1_unseen']):>15} {fmt(m['top3']):>15} "
+                     f"{fmt(m['log_loss']):>15} {fmt(m['top1_len1']):>15} {fmt(m['top1_len4+']):>15}")
     lines += ["", "Loss risk (all prefixes of known-outcome test stories)",
               f"{'model':<17} {'ROC AUC':>15} {'Brier':>15} {'log loss':>15}"]
     for name, m in summary["loss_all_prefixes"].items():
@@ -186,16 +209,23 @@ def train_final(stories: list[Story], vocab: Vocab, config: GRUConfig, cv_summar
                 "steps": list(vocab.steps), "scam_types": list(vocab.scam_types),
                 "targets": list(vocab.targets)}, MODEL_PATH)
     card = {
+        "name": MODEL_NAME,
+        "version": MODEL_VERSION,
         "model": "ScamGRU (analysis/model/gru.py)",
         "trained_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "inputs": {"steps": list(vocab.steps), "step_ids": "1..13 in this order, 0 = padding",
                    "scam_types": list(vocab.scam_types)},
         "next_step_targets": list(vocab.targets),
-        "outputs": {"next_step_probs": "softmax over next_step_targets; END = the story stops here",
+        "next_step_definition": "the scammer's next move later in the story: reactions (victim_suspicious, "
+                                "third_party_intervened, victim_exits) are skipped, outcomes are never targets, "
+                                "and prefixes with no later move have no next-step target (no END class). "
+                                "Reactions stay in the inputs.",
+        "outputs": {"next_step_probs": "softmax over next_step_targets (scammer moves only)",
                     "p_loss": "probability the story ends with the victim losing money"},
         "excluded_from_inputs": ["money_lost", "victim_exits"],
         "hyperparameters": config.to_dict(),
-        "training": {"n_stories": len(stories), "n_fit": len(fit_part), "n_early_stopping_val": len(val_part),
+        "training": {"n_stories": len(stories), "n_next_step_examples": len(next_step_examples(stories)),
+                     "n_loss_examples": len(loss_examples(stories)), "n_fit": len(fit_part), "n_early_stopping_val": len(val_part),
                      "n_known_outcome": sum(s.lost is not None for s in stories),
                      "n_lost": sum(s.lost == 1 for s in stories), **log},
         "n_parameters": sum(p.numel() for p in model.parameters()),
@@ -203,8 +233,10 @@ def train_final(stories: list[Story], vocab: Vocab, config: GRUConfig, cv_summar
                        "gru_loss_all_prefixes": cv_summary["loss_all_prefixes"]["gru"],
                        "gru_early_warning": {k: v["gru"] for k, v in cv_summary["early_warning"].items()}},
         "caveats": "487 self-reported r/Scams stories, LLM-extracted labels, 277 known outcomes. "
-                   "The loss head sees payment steps, so part of its signal is built in. "
-                   "Roughly matches simple baselines; see analysis/findings.md.",
+                   "Only 554 prefixes (from 315 stories) have a later scammer move to predict. "
+                   "The loss head sees payment steps and victim_suspicious, so part of its signal is built in. "
+                   "Ties the Markov and logistic baselines. "
+                   "See analysis/findings.md, 'Neural network (v2: next scam move)'.",
     }
     CARD_PATH.write_text(json.dumps(card, indent=2) + "\n", encoding="utf-8")
     return card
@@ -236,6 +268,9 @@ def main() -> None:
         "n_stories": len(stories),
         "n_known_outcome": sum(s.lost is not None for s in stories),
         "n_prefixes": len(prefix_examples(stories)),
+        "n_next_step_examples": len(next_step_examples(stories)),
+        "n_loss_examples": len(loss_examples(stories)),
+        "model_name": MODEL_NAME,
         "folds": N_FOLDS, "seed": SEED, "gru_config": config.to_dict(),
         "summary": summary, "per_fold": folds,
     }
