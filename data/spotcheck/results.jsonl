@@ -1,0 +1,20 @@
+{"id": "reddit-ckg3bq", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
+{"id": "reddit-1wvcgbr", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review: bail demand not captured but no payment stated"}
+{"id": "reddit-1xaq58n", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review: payouts could also be fake_proof_shown"}
+{"id": "reddit-mhgkfy", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review: borderline non-story"}
+{"id": "reddit-1x6obgy", "checks": {"scam_type": null, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review: could be a real debt collector, impersonation unclear"}
+{"id": "reddit-1egxrkm", "checks": {"scam_type": true, "events": false, "outcome": false, "amount_lost_usd": true}, "note": "model review: missed the purchase; victim_exits is really a warning to others; paid for a bad product so lost_money"}
+{"id": "reddit-1uko1k7", "checks": {"scam_type": true, "events": false, "outcome": true, "amount_lost_usd": true}, "note": "model review: first 100 EUR deposit should be small_payment, not large_payment"}
+{"id": "reddit-1x7pfsm", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review: authority_claim (Salesforce recruiter) missing, minor"}
+{"id": "reddit-1x7g6oj", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
+{"id": "reddit-1x1w9ka", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
+{"id": "reddit-shblf6", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
+{"id": "reddit-1xb4ppj", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review: chargeback pending; lost_money defensible"}
+{"id": "reddit-alaej4", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
+{"id": "reddit-1vmtip1", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
+{"id": "reddit-1x7cgzp", "checks": {"scam_type": true, "events": true, "outcome": false, "amount_lost_usd": true}, "note": "model review: bed was delivered and the extra fee not paid, so escaped not unknown"}
+{"id": "reddit-1wnm1ig", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
+{"id": "reddit-1x8hhwa", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review: initial contact and Telegram switch missing, minor"}
+{"id": "reddit-mhil2a", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
+{"id": "reddit-pyptg5", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
+{"id": "reddit-1tta3b5", "checks": {"scam_type": true, "events": true, "outcome": true, "amount_lost_usd": true}, "note": "model review"}
