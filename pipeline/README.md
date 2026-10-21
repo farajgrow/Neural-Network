@@ -34,3 +34,17 @@ Each line is one post that passed the filters:
 | `n_chars` | int | `len(text)` |
 
 `pipeline.clean` also prints a count of posts dropped at each filter.
+
+## Spot-check (committed)
+
+### `data/spotcheck/results.jsonl`: written by `pipeline.spotcheck`
+
+`python -m pipeline.spotcheck` shows a seeded sample of 20 stories next to their clean posts and asks whether each field is right. It saves after every story, so it can be stopped and resumed. `--report` prints the accuracy for the README.
+
+Each line is one checked story:
+
+| field | type | notes |
+|---|---|---|
+| `id` | str | story id |
+| `checks` | object | `scam_type`, `events`, `outcome`, `amount_lost_usd`: `true`, `false`, or `null` for can't tell |
+| `note` | str | free text, `""` if none |
