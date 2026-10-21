@@ -81,3 +81,39 @@ These are associations in self-reported data, not causes.
   }
 }
 ```
+
+## Neural network (`analysis/model/`)
+
+A small GRU that predicts the **next step** and the **probability of losing money** from the steps seen so far plus the scam type. It is cross-validated against Markov and logistic-regression baselines. Results and an honest read are in `findings.md` under "Neural network (v1)". In short, it ties the baselines.
+
+This is the only part of `analysis/` that needs third-party packages. The rest stays standard library only.
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r analysis/requirements.txt -r app/requirements.txt pytest
+.venv/bin/python -m analysis.model.train     # 5-fold CV + final model, about 5 s on CPU
+.venv/bin/python -m pytest analysis/tests    # torch tests are skipped if torch is missing
+```
+
+```python
+from analysis.model.predict import predict
+predict(["initial_contact", "platform_switch"], "pig_butchering")
+# {"next_step_probs": {...14 keys incl. "END"...}, "top_next": "trust_building", "p_loss": 0.2}
+```
+
+| File | What it is |
+|---|---|
+| `data.py` | Stories → script sequences (outcome steps removed) → prefix examples. Also builds the 5-fold story-level split, stratified by scam type. |
+| `baselines.py` | Most-frequent next step, Markov (order 1/2, optionally per scam type, with backoff), base-rate and logistic-regression loss models. |
+| `gru.py` | The PyTorch model (step and type embeddings → 1-layer GRU(32) → two heads), masked training loss, and early stopping. |
+| `metrics.py` | Top-k accuracy, log loss, ROC AUC, Brier score and calibration bins, in numpy. |
+| `train.py` | Runs the CV, prints the table, and writes `results.json`. Then trains on all stories and writes `gru.pt` and `model_card.json`. |
+| `predict.py` | `predict(steps, scam_type)` using the saved `gru.pt`. |
+| `results.json`, `gru.pt`, `model_card.json` | Committed outputs (the model is about 28 KB), so the app can load it without retraining. |
+
+Definitions:
+
+- **Inputs** are the collapsed steps with `money_lost` and `victim_exits` removed. Repeats created by that removal are collapsed again. The model never sees the outcome.
+- **Next-step targets** are the 13 script steps plus `END`, meaning the story stops here. The outcome steps are deliberately not targets, so the next-step head predicts the script and not the ending.
+- **Loss label:** 1 = `lost_money`, 0 = `escaped`, applied to every prefix of the story. `unknown` stories train only the next-step head, because the loss head's loss is masked for them.
+- **Fair comparison:** the GRU's early-stopping split (15% of the training stories) is also used to pick each baseline's single setting. Test folds are only used for scoring. Runs are seeded and deterministic.
