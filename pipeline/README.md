@@ -97,16 +97,18 @@ The current `data/stories.json` was built with `--from-cache-only`. No API key w
 
 `python -m pipeline.spotcheck` shows a seeded sample of 20 stories next to their clean posts and asks, for each one, whether `scam_type`, `events`, `outcome` and `amount_lost_usd` are right. `--report` prints accuracy per field and overall.
 
-Spot-check accuracy (n = 20). These checks were made by a model review of each story against its post, not by hand (every row in `data/spotcheck/results.jsonl` is noted "model review"):
+Spot-check accuracy (n = 20, the same seeded sample both times). The hand check is in `data/spotcheck/results_hand.jsonl` (`--results data/spotcheck/results_hand.jsonl --report`). An earlier model review of the same stories is in `data/spotcheck/results.jsonl`:
 
-| Field | Correct |
-|---|---|
-| `scam_type` | 100% (19/19; one story was marked unsure, as it could be a real debt collector) |
-| `events` | 90% (18/20) |
-| `outcome` | 90% (18/20) |
-| `amount_lost_usd` | 100% (20/20) |
-| All four fields right | 85% (17/20) |
-| Overall (field checks) | 94.9% (75/79) |
+| Field | By hand | Model review |
+|---|---|---|
+| `scam_type` | 95% (19/20) | 100% (19/19; one marked unsure, as it could be a real debt collector) |
+| `events` | 100% (20/20) | 90% (18/20) |
+| `outcome` | 95% (19/20) | 90% (18/20) |
+| `amount_lost_usd` | 95% (19/20) | 100% (20/20) |
+| All four fields right | 95% (19/20) | 85% (17/20) |
+| Overall (field checks) | 96.2% (77/80) | 94.9% (75/79) |
+
+The two checks disagree on 5 stories. By hand, the only miss was the PayPal "mistaken payment" story (`reddit-ckg3bq`), wrong on scam type, outcome and amount. The model review accepted that one but was stricter on four others, about which payment step and outcome labels fit.
 
 ### Caveats
 
