@@ -1,0 +1,172 @@
+[
+  {
+    "id": "mock-001",
+    "source": "reddit",
+    "scam_type": "pig_butchering",
+    "events": [
+      {"step": "initial_contact", "actor": "scammer", "detail": "Wrong-number text asking about a golf booking"},
+      {"step": "trust_building", "actor": "scammer", "detail": "Weeks of friendly daily chat and photos"},
+      {"step": "platform_switch", "actor": "scammer", "detail": "Moved the conversation to WhatsApp"},
+      {"step": "fake_proof_shown", "actor": "scammer", "detail": "Screenshots of big crypto trading profits"},
+      {"step": "small_payment", "actor": "victim", "detail": "Deposited $1,000 on a trading site"},
+      {"step": "large_payment", "actor": "victim", "detail": "Added savings after a small test withdrawal worked"},
+      {"step": "withdrawal_blocked", "actor": "scammer", "detail": "Site demanded a 20% tax before withdrawal"},
+      {"step": "money_lost", "actor": "victim", "detail": "Account frozen and contact went silent"}
+    ],
+    "outcome": "lost_money",
+    "amount_lost_usd": 42000,
+    "snippet": "A wrong-number text turned into a weeks-long friendship and a crypto 'opportunity'. After a small withdrawal worked, the victim deposited their savings and the platform then demanded a tax to release it."
+  },
+  {
+    "id": "mock-002",
+    "source": "reddit",
+    "scam_type": "pig_butchering",
+    "events": [
+      {"step": "initial_contact", "actor": "scammer", "detail": "Match on a dating app"},
+      {"step": "platform_switch", "actor": "scammer", "detail": "Asked to move to Telegram"},
+      {"step": "trust_building", "actor": "scammer", "detail": "Talked about a future together"},
+      {"step": "fake_proof_shown", "actor": "scammer", "detail": "Showed an uncle's insider trading app"},
+      {"step": "small_payment", "actor": "victim", "detail": "Started with $500"},
+      {"step": "large_payment", "actor": "victim", "detail": "Took a loan to invest more"},
+      {"step": "withdrawal_blocked", "actor": "scammer", "detail": "Account 'flagged', needed a security deposit"},
+      {"step": "victim_suspicious", "actor": "victim", "detail": "Reverse image search found the photos elsewhere"},
+      {"step": "money_lost", "actor": "victim", "detail": "Funds never recovered"}
+    ],
+    "outcome": "lost_money",
+    "amount_lost_usd": 18500,
+    "snippet": "A dating match moved the chat to Telegram and introduced a 'family' trading app. The victim borrowed to invest more before withdrawals were blocked."
+  },
+  {
+    "id": "mock-003",
+    "source": "reddit",
+    "scam_type": "pig_butchering",
+    "events": [
+      {"step": "initial_contact", "actor": "scammer", "detail": "Wrong-number text from a 'business owner'"},
+      {"step": "platform_switch", "actor": "scammer", "detail": "Moved to WhatsApp"},
+      {"step": "trust_building", "actor": "scammer", "detail": "Shared lifestyle photos and daily check-ins"},
+      {"step": "fake_proof_shown", "actor": "scammer", "detail": "Sent a link to a crypto platform with fake gains"},
+      {"step": "victim_suspicious", "actor": "victim", "detail": "Noticed the site was registered a month ago"},
+      {"step": "third_party_intervened", "actor": "third_party", "detail": "A friend recognised the pattern"},
+      {"step": "victim_exits", "actor": "victim", "detail": "Blocked the number before depositing"}
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A friendly wrong-number contact pushed a new crypto platform. A friend recognised the script and the victim blocked them before sending any money."
+  },
+  {
+    "id": "mock-004",
+    "source": "reddit",
+    "scam_type": "pig_butchering",
+    "events": [
+      {"step": "initial_contact", "actor": "scammer", "detail": "Message on a dating app"},
+      {"step": "trust_building", "actor": "scammer", "detail": "Long conversations about family and careers"},
+      {"step": "platform_switch", "actor": "scammer", "detail": "Moved to WhatsApp"},
+      {"step": "fake_proof_shown", "actor": "scammer", "detail": "Walked the victim through a 'guaranteed' trade"},
+      {"step": "small_payment", "actor": "victim", "detail": "Deposited $500 to try it"},
+      {"step": "withdrawal_blocked", "actor": "scammer", "detail": "Minimum balance required before withdrawing"},
+      {"step": "victim_suspicious", "actor": "victim", "detail": "Searched the platform name and found scam reports"},
+      {"step": "victim_exits", "actor": "victim", "detail": "Stopped replying and reported the site"}
+    ],
+    "outcome": "lost_money",
+    "amount_lost_usd": 500,
+    "snippet": "After a first small deposit, the victim was told they needed a bigger balance to withdraw. They searched the platform, found scam reports and walked away down $500."
+  },
+  {
+    "id": "mock-005",
+    "source": "reddit",
+    "scam_type": "pig_butchering",
+    "events": [
+      {"step": "initial_contact", "actor": "scammer", "detail": "Connection request from a 'finance professional'"},
+      {"step": "trust_building", "actor": "scammer", "detail": "Mentorship-style chats about markets"},
+      {"step": "platform_switch", "actor": "scammer", "detail": "Invited to a private Telegram group"},
+      {"step": "fake_proof_shown", "actor": "scammer", "detail": "Group members posting profit screenshots"},
+      {"step": "urgency_pressure", "actor": "scammer", "detail": "Limited window to join a 'signal' trade"}
+    ],
+    "outcome": "unknown",
+    "amount_lost_usd": null,
+    "snippet": "A self-described finance mentor invited the poster into a private trading group full of profit screenshots. The poster asked whether to join the time-limited trade."
+  },
+  {
+    "id": "mock-006",
+    "source": "reddit",
+    "scam_type": "fake_job",
+    "events": [
+      {"step": "initial_contact", "actor": "scammer", "detail": "Unsolicited text offering remote work"},
+      {"step": "platform_switch", "actor": "scammer", "detail": "Moved to Telegram with a 'trainer'"},
+      {"step": "authority_claim", "actor": "scammer", "detail": "Claimed to represent a known staffing agency"},
+      {"step": "fake_proof_shown", "actor": "scammer", "detail": "Dashboard showing commission from 'tasks'"},
+      {"step": "small_payment", "actor": "victim", "detail": "Topped up $100 to unlock a task set"},
+      {"step": "urgency_pressure", "actor": "scammer", "detail": "Combo task would expire unless funded now"},
+      {"step": "large_payment", "actor": "victim", "detail": "Kept depositing to clear a negative balance"},
+      {"step": "withdrawal_blocked", "actor": "scammer", "detail": "Earnings locked until more tasks were paid"},
+      {"step": "money_lost", "actor": "victim", "detail": "Account closed by the 'company'"}
+    ],
+    "outcome": "lost_money",
+    "amount_lost_usd": 3200,
+    "snippet": "A remote 'task' job required topping up the account to unlock work. Each round needed a bigger deposit, and the earnings were never released."
+  },
+  {
+    "id": "mock-007",
+    "source": "cfpb",
+    "scam_type": "fake_job",
+    "events": [
+      {"step": "initial_contact", "actor": "scammer", "detail": "Recruiter message on a job board"},
+      {"step": "authority_claim", "actor": "scammer", "detail": "Offer letter on a real company's letterhead"},
+      {"step": "platform_switch", "actor": "scammer", "detail": "Interview held over a chat app"},
+      {"step": "fake_proof_shown", "actor": "scammer", "detail": "Mailed a check to buy home-office equipment"},
+      {"step": "victim_suspicious", "actor": "victim", "detail": "Asked to send leftover funds to a 'vendor'"},
+      {"step": "third_party_intervened", "actor": "third_party", "detail": "Bank teller flagged the check as fraudulent"},
+      {"step": "victim_exits", "actor": "victim", "detail": "Did not send any money"}
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A chat-only 'interview' led to a check for home-office equipment and a request to forward the extra to a vendor. A bank teller flagged the check before any money moved."
+  },
+  {
+    "id": "mock-008",
+    "source": "cfpb",
+    "scam_type": "fake_job",
+    "events": [
+      {"step": "initial_contact", "actor": "scammer", "detail": "Email inviting an application for a data entry role"},
+      {"step": "platform_switch", "actor": "scammer", "detail": "Onboarding moved to a messaging app"},
+      {"step": "trust_building", "actor": "scammer", "detail": "Professional-looking onboarding documents"},
+      {"step": "credentials_shared", "actor": "victim", "detail": "Gave SSN and bank login for 'direct deposit'"},
+      {"step": "money_lost", "actor": "victim", "detail": "Bank account drained"}
+    ],
+    "outcome": "lost_money",
+    "amount_lost_usd": 1200,
+    "snippet": "A data entry 'onboarding' asked for an SSN and bank login to set up payroll. The account was emptied within days."
+  },
+  {
+    "id": "mock-009",
+    "source": "reddit",
+    "scam_type": "fake_job",
+    "events": [
+      {"step": "initial_contact", "actor": "scammer", "detail": "Text claiming the poster's resume was shortlisted"},
+      {"step": "authority_claim", "actor": "scammer", "detail": "Named a large online retailer as the employer"},
+      {"step": "urgency_pressure", "actor": "scammer", "detail": "Must confirm today or lose the spot"},
+      {"step": "victim_suspicious", "actor": "victim", "detail": "Never applied to that company"},
+      {"step": "victim_exits", "actor": "victim", "detail": "Ignored and reported the number"}
+    ],
+    "outcome": "escaped",
+    "amount_lost_usd": null,
+    "snippet": "A text claimed the poster was shortlisted at a big retailer and had to confirm the same day. They had never applied, so they reported it."
+  },
+  {
+    "id": "mock-010",
+    "source": "reddit",
+    "scam_type": "fake_job",
+    "events": [
+      {"step": "initial_contact", "actor": "scammer", "detail": "WhatsApp message offering paid product reviews"},
+      {"step": "platform_switch", "actor": "scammer", "detail": "Added to a Telegram 'team' channel"},
+      {"step": "fake_proof_shown", "actor": "scammer", "detail": "Paid out $20 for the first few reviews"},
+      {"step": "small_payment", "actor": "victim", "detail": "Prepaid $150 for a 'merchant task'"},
+      {"step": "urgency_pressure", "actor": "scammer", "detail": "Team bonus lost if the task wasn't finished"},
+      {"step": "large_payment", "actor": "victim", "detail": "Sent several larger deposits in crypto"},
+      {"step": "money_lost", "actor": "victim", "detail": "Channel deleted"}
+    ],
+    "outcome": "lost_money",
+    "amount_lost_usd": 8000,
+    "snippet": "A product review side job paid out small amounts at first, then needed prepaid 'merchant tasks'. Pressure from the 'team' pushed the victim into much larger crypto deposits."
+  }
+]
