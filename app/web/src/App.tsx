@@ -41,13 +41,23 @@ export default function App() {
       .scamTypes()
       .then((t) => {
         setTypes(t)
-        if (t.length > 0) setScamType(t[0].scam_type)
       })
       .catch((e: Error) => setTypesError(e))
     api.graph('all').then((g) => setAllLossRate(g.loss_rate)).catch(() => {})
-    // Clusters are optional: hide the control if they are missing or fail to load.
-    api.clusters().then(setClusters).catch(() => setClusters(null))
   }, [])
+
+  // Variants for the selected type. Optional: hide the control if missing or failing.
+  useEffect(() => {
+    let cancelled = false
+    setClusterId(null)
+    api
+      .clusters(scamType)
+      .then((c) => !cancelled && setClusters(c))
+      .catch(() => !cancelled && setClusters(null))
+    return () => {
+      cancelled = true
+    }
+  }, [scamType])
 
   useEffect(() => {
     let cancelled = false
@@ -96,7 +106,12 @@ export default function App() {
   // A matched message takes precedence over a cluster highlight.
   const highlight = useMemo<Highlight | null>(() => {
     if (match) return { kind: 'match', sequence: match.steps_so_far, next: match.likely_next_step }
-    if (cluster) return { kind: 'cluster', sequence: cluster.typical_sequence }
+    if (cluster) {
+      // A variant's strong transitions, not just its single typical sequence.
+      const min = Math.max(2, Math.ceil(cluster.size * 0.1))
+      const edges = (cluster.edges ?? []).filter((e) => e.count >= min && e.from !== e.to)
+      return { kind: 'cluster', sequence: cluster.typical_sequence, edges }
+    }
     return null
   }, [match, cluster])
 

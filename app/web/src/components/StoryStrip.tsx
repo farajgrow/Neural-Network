@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { lower, money, pct, pts, type Graph, type Step, type StorySummary } from '../api'
+import { knownPct, lower, money, pct, pts, type Graph, type Step, type StorySummary } from '../api'
 
 interface Props {
   graph: Graph | null
@@ -50,12 +50,13 @@ export function StoryStrip({ graph, step, onSelectStep, stories, loading, error 
       <div className="strip__facts small">
         {node && (
           <span>
-            {node.count} stories · <b className={node.loss_rate == null ? undefined : 'c-orange-text'}>{pct(node.loss_rate)}</b> lost
+            {node.count} stories · <b className={node.loss_rate == null ? undefined : 'c-orange-text'}>{knownPct(node.loss_rate, node.n_known)}</b> lost
           </span>
         )}
         {pinch && (
           <span className="c-orange-text">
-            ▲ pinch {pts(pinch.jump)} ({pct(pinch.prev_loss_rate)}→{pct(pinch.loss_rate)})
+            ▲ pinch {pts(pinch.jump)} ({pct(pinch.prev_loss_rate)}→{pct(pinch.loss_rate)}
+            {pinch.n_known != null && `, ${pinch.n_known} known`})
           </span>
         )}
         {escape && <span className="c-blue">↗ {escape.exit_count} got out right after</span>}

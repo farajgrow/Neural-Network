@@ -27,6 +27,8 @@ export type GraphNode = {
   step: Step
   count: number
   loss_rate: number | null
+  /** Stories at this step with a known outcome (the loss rate's denominator). */
+  n_known?: number
   avg_position: number
 }
 
@@ -34,6 +36,8 @@ export interface GraphEdge {
   from: Step
   to: Step
   count: number
+  loss_rate?: number | null
+  n_known?: number
 }
 
 export interface PinchPoint {
@@ -41,6 +45,8 @@ export interface PinchPoint {
   loss_rate: number | null
   prev_loss_rate: number | null
   jump: number
+  n_known?: number
+  score?: number
 }
 
 export interface EscapePoint {
@@ -66,11 +72,16 @@ export interface Cluster {
   label: string
   size: number
   loss_rate: number | null
+  n_known?: number
   scam_type_counts: Partial<Record<ScamType, number>>
   typical_sequence: Step[]
   medoid_id?: string
   outlier?: boolean
   story_ids?: string[]
+  /** Steps named in the label. */
+  label_steps?: Step[]
+  /** Transitions within this variant's stories. */
+  edges?: { from: Step; to: Step; count: number }[]
 }
 
 export interface ClusterAgreement {
@@ -157,7 +168,12 @@ export const api = {
     if (params.step) q.set('step', params.step)
     return request<StorySummary[]>(`/api/stories?${q}`)
   },
-  clusters: () => request<Clusters | null>('/api/clusters'),
+  /**
+   * Variants for one scam type, or across types for "all". The scam_type
+   * parameter is ignored by APIs that only serve the cross-type clusters.
+   */
+  clusters: (key: GraphKey) =>
+    request<Clusters | null>(key === 'all' ? '/api/clusters' : `/api/clusters?scam_type=${encodeURIComponent(key)}`),
   match: (text: string) =>
     request<MatchResult>('/api/match', {
       method: 'POST',
@@ -190,3 +206,10 @@ export const pts = (x: number) => `${x >= 0 ? '+' : '−'}${Math.round(Math.abs(
 
 export const money = (n: number | null | undefined) => (n == null ? null : `$${Math.round(n).toLocaleString()}`)
 export const pct = (x: number | null | undefined) => (x == null ? '—' : `${Math.round(x * 100)}%`)
+
+/** "34% (10/29 known)": a loss rate with its known-outcome denominator. */
+export const knownPct = (rate: number | null | undefined, nKnown: number | null | undefined) => {
+  if (nKnown == null) return pct(rate)
+  if (rate == null || nKnown === 0) return `— (0 known)`
+  return `${pct(rate)} (${Math.round(rate * nKnown)}/${nKnown} known)`
+}

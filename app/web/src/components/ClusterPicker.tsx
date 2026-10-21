@@ -1,4 +1,10 @@
-import { humanize, pct, type Clusters } from '../api'
+import { humanize, knownPct, pct, SCAM_TYPES, type Clusters } from '../api'
+
+/** Drop a leading "fake_job · " when every variant shares the type anyway. */
+const short = (l: string) => {
+  const [head, ...rest] = l.split(' · ')
+  return rest.length && (SCAM_TYPES as readonly string[]).includes(head) ? rest.join(' · ') : l
+}
 
 interface Props {
   clusters: Clusters
@@ -25,7 +31,7 @@ export function ClusterPicker({ clusters, value, onChange, disabled }: Props) {
         <option value="">all stories</option>
         {clusters.clusters.map((c, i) => (
           <option key={c.id} value={c.id}>
-            {c.outlier ? 'outliers' : `${i + 1}: ${humanize(c.label).toLowerCase()}`} ({c.size}) · {pct(c.loss_rate)} lost
+            {c.outlier ? 'outliers' : `${i + 1}: ${humanize(short(c.label)).toLowerCase()}`} ({c.size}) · {knownPct(c.loss_rate, c.n_known)} lost
           </option>
         ))}
       </select>

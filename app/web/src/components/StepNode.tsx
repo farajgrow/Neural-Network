@@ -1,13 +1,13 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import type { CSSProperties } from 'react'
-import { label, lower, pct, pts } from '../api'
+import { knownPct, label, lower, pct, pts } from '../api'
 import { NODE_W, ZONE_H, type StepFlowNode, type StepNodeData } from './graphLayout'
 
 function tooltip(d: StepNodeData): string {
-  const lines = [`${label(d.step)}: ${d.count} ${d.count === 1 ? 'story' : 'stories'}, ${pct(d.loss_rate)} lost money`]
+  const lines = [`${label(d.step)}: ${d.count} ${d.count === 1 ? 'story' : 'stories'}, ${knownPct(d.loss_rate, d.n_known)} lost money`]
   if (d.pinch) {
     lines.push(
-      `Pinch point: ${pts(d.pinch.jump)} loss rate (${pct(d.pinch.prev_loss_rate)} before → ${pct(d.pinch.loss_rate)} here)`,
+      `Pinch point: ${pts(d.pinch.jump)} loss rate (${pct(d.pinch.prev_loss_rate)} before → ${knownPct(d.pinch.loss_rate, d.pinch.n_known)} here)`,
     )
   }
   if (d.escape) lines.push(`Escape point: ${d.escape.exit_count} got out right after this step`)

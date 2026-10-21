@@ -1,5 +1,5 @@
 import type { EdgeProps } from '@xyflow/react'
-import { label } from '../api'
+import { knownPct, label } from '../api'
 import type { FlowEdge as FlowEdgeType } from './graphLayout'
 
 type Pt = { x: number; y: number }
@@ -46,7 +46,15 @@ export function FlowEdge({ source, target, sourceX, sourceY, targetX, targetY, d
   if (data.minor && (data.state === 'normal' || data.state === 'dim')) return null
   const s = { x: sourceX, y: sourceY }
   const t = { x: targetX, y: targetY }
-  const path = data.back ? loopBack(s, t) : curveThrough([s, ...data.points, t])
+  let path: string
+  if (data.sameCol) {
+    // Centre to centre, bulging right; the boxes hide the ends.
+    const a = { x: sourceX - data.sourceSize / 2, y: sourceY }
+    const b = { x: targetX + data.targetSize / 2, y: targetY }
+    const bulge = 26 + Math.abs(b.y - a.y) * 0.08
+    const dy = (b.y - a.y) / 3
+    path = `M ${a.x},${a.y} C ${a.x + bulge},${a.y + dy} ${b.x + bulge},${b.y - dy} ${b.x},${b.y}`
+  } else path = data.back ? loopBack(s, t) : curveThrough([s, ...data.points, t])
   const baseWidth = data.back ? Math.min(1.5, data.width) : data.width
 
   let stroke: string = KIND_STROKE[data.kind]
@@ -80,6 +88,7 @@ export function FlowEdge({ source, target, sourceX, sourceY, targetX, targetY, d
       <path d={path} fill="none" stroke="transparent" strokeWidth={Math.max(14, width + 8)}>
         <title>
           {label(source)} → {label(target)}: {data.count} {data.count === 1 ? 'story' : 'stories'}
+          {data.nKnown != null && `, ${knownPct(data.lossRate, data.nKnown)} lost money`}
         </title>
       </path>
     </g>
